@@ -1,7 +1,7 @@
 {
   "project": "editor-platform",
   "slug": "03-chart-studio",
-  "title": "P05: Chart & Data Visualization Studio (v6 Master Toolkit)",
+  "title": "Trình Thiết Kế Biểu Đồ & Phân Tích Dữ Liệu (v7.0)",
   "domain": "04-creative-editor",
   "persona": "creator-builder",
   "approved_version": "",
@@ -15,6 +15,11 @@
       "version": "v6-master-toolkit-chart",
       "created_at": "2026-11-18T12:10:54+07:00",
       "notes": "v6.0 — Bổ sung đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12), Rulers/Guides, Hierarchical Layer Tree, Precision Inspector, Motion Timeline & Export Preflight QA cho Chart Studio"
+    },
+    {
+      "version": "v7-clean-gdocs-chart",
+      "created_at": "2026-11-18T13:29:50+07:00",
+      "notes": "v7.0 — Giao diện 100% Tiếng Việt chuẩn Google Docs/Word, ẩn số mục (giữ Alt để xem), thanh chân trang cố định, chèn Ảnh/Video thật & Biểu đồ ECharts"
     }
   ]
 }

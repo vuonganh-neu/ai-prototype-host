@@ -48,3 +48,7 @@ Các công cụ thiết kế và quản lý tài nguyên sáng tạo (như dự 
 *(Khu vực này được cập nhật tự động qua lệnh `proto learn --domain 04-creative-editor` sau mỗi dự án)*
 - Trong bảng Inspector bên phải, không đặt nhãn (Label) nằm trên ô Input gây tốn chiều dọc; hãy dùng nhãn ký hiệu ngắn nằm ngang hoặc bên trong ô (`X 120`, `Y 45`, `W 320`, `H 180`) chia lưới 2 cột hoặc 4 cột gọn gàng.
 - Luôn thiết kế trạng thái có ít nhất 1 đối tượng đang được chọn trên Canvas (kèm khung viền xanh và 8 điểm kéo góc) để người review đánh giá được ngay tương tác thật giữa Canvas và bảng Inspector.
+- **[2026-11-18]** Không hiển thị số mục tài liệu đặc tả (như 5.1, 5.2, 4.2, 1., 2.) trực tiếp trên giao diện người dùng; lưu trong thuộc tính data-spec-ref và chỉ hiển thị nhãn tra cứu khi người dùng nhấn giữ phím Alt.
+- **[2026-11-18]** Nút thu gọn/mở rộng ngăn công cụ (Drawer Toggle Ear) phải đặt bên ngoài thẻ <aside> của ngăn đó để khi ngăn thu gọn (hidden), nút bấm mở lại vẫn hiển thị cố định tại mép màn hình.
+- **[2026-11-18]** Đồng nhất 100% ngôn ngữ Tiếng Việt và dùng 1 phông chữ giao diện duy nhất (Inter với tabular-nums), kết hợp white-space: nowrap cho mọi nút để không bao giờ bị rớt dòng biến dạng nút (như 'Trang 1', '+ Trang').
+- **[2026-11-18]** Tận dụng thanh công cụ viên thuốc (Google Docs Pill Toolbar) kết hợp thanh trạng thái chân trang cố định (Microsoft Word Docked Footer) để gom điều hướng trang, đơn vị đo và thanh trượt thu phóng, tránh tạo nhiều thanh nổi chồng chéo.

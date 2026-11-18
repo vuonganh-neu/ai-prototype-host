@@ -1,7 +1,7 @@
 {
   "project": "editor-platform",
   "slug": "06-poster-catalog-studio",
-  "title": "P08: Poster, Banner, Catalog 3D & Brochure Studio (v6 Master Toolkit)",
+  "title": "Trình Thiết Kế Áp Phích, Biểu Ngữ & Ấn Phẩm Nhiều Trang (v7.0)",
   "domain": "04-creative-editor",
   "persona": "creator-builder",
   "approved_version": "",
@@ -15,6 +15,11 @@
       "version": "v6-master-toolkit-poster",
       "created_at": "2026-11-18T12:10:55+07:00",
       "notes": "v6.0 — Bổ sung đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12), Print Bleed 3mm & Crop Marks, Safe Area, CMYK Profile, Text on Path, Pen/Boolean Vector, Multi-page Flip & Export PDF/X QA"
+    },
+    {
+      "version": "v7-clean-gdocs-poster",
+      "created_at": "2026-11-18T13:29:50+07:00",
+      "notes": "v7.0 — Giao diện 100% Tiếng Việt chuẩn Google Docs/Word, ẩn số mục (giữ Alt để xem), thanh chân trang cố định, chèn Ảnh/Video thật & Vùng xén lề in 3mm"
     }
   ]
 }

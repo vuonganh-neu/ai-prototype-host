@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trình Thiết Kế Đa Lĩnh Vực (Phiên bản 7.0)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="h-screen flex flex-col overflow-hidden select-none">
+
+  <!-- Hidden File Input for Uploading Real Images & Videos from User's Computer (5.3) -->
+  <input id="real-media-file-input" type="file" accept="image/*,video/*" class="hidden" onchange="handleUserMediaUpload(this)" />
+
+  <!-- =========================================================================
+       1. THANH TIÊU ĐỀ & ĐỊNH DẠNG ẤN PHẨM (Kiểu Google Docs / Microsoft Word — Gọn, 100% Tiếng Việt)
+       ========================================================================= -->
+  <header class="h-10 ui-panel border-b px-3 flex items-center justify-between gap-2 z-40 shrink-0" data-spec-ref="1.1-header">
+    <!-- Cụm Trái: Quay lại + Tên tài liệu + Chọn Loại ấn phẩm, Khổ giấy, Dữ liệu nguồn -->
+    <div class="flex items-center gap-2 min-w-0">
+      <a href="../../../../index.html" class="gd-icon-btn border ui-border" title="Quay về trang danh sách phiên bản">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+
+      <!-- Biểu tượng Tài liệu & Tên Tài liệu -->
+      <div class="flex items-center gap-1.5">
+        <div class="w-6 h-6 rounded-md ui-accent-btn flex items-center justify-center shrink-0">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <input id="doc-title-input" value="Hồ sơ Kiến trúc sư Hệ thống — Vũ Anh Vương" class="h-7 font-semibold text-xs bg-transparent hover:bg-zinc-500/10 focus:bg-zinc-500/10 px-2 rounded outline-none w-52 truncate" title="Đổi tên tài liệu thiết kế" />
+      </div>
+
+      <div class="gd-sep"></div>
+
+      <!-- Menu Chọn Loại Ấn Phẩm (Thay cho dãy nút tràn ngang ở v6) -->
+      <div class="h-7 ui-subpanel border px-2 rounded-md inline-flex items-center gap-1.5" data-spec-ref="3.1-3.10" title="Chọn loại ấn phẩm thiết kế">
+        <span class="ui-muted text-[11px]">Ấn phẩm:</span>
+        <select id="domain-select" onchange="switchEditorDomain(this.value)" class="bg-transparent font-semibold text-xs outline-none cursor-pointer">
+          <option value="cv">Hồ sơ năng lực (CV)</option>
+          <option value="poster">Áp phích sự kiện (Poster)</option>
+          <option value="banner">Biểu ngữ quảng cáo (Banner)</option>
+          <option value="catalog">Ấn phẩm nhiều trang (Catalog)</option>
+          <option value="web">Giao diện trang web (Website)</option>
+          <option value="chart">Biểu đồ phân tích (Chart)</option>
+          <option value="map">Bản đồ địa lý (Map)</option>
+          <option value="motion">Đồ họa chuyển động (Motion)</option>
+        </select>
+        <span class="spec-ref-badge">Mục 3</span>
+      </div>
+
+      <!-- Menu Chọn Khổ Trang Chuẩn -->
+      <div class="h-7 ui-subpanel border px-2 rounded-md inline-flex items-center gap-1.5" data-spec-ref="5.1" title="Chọn kích thước trang tiêu chuẩn">
+        <span class="ui-muted text-[11px]">Khổ:</span>
+        <select id="page-size-select" onchange="changePageSizePreset(this.value)" class="bg-transparent font-medium text-xs outline-none cursor-pointer">
+          <option value="595x842">In A4 Dọc (210 × 297 mm)</option>
+          <option value="700x990">In A3 Lớn (297 × 420 mm)</option>
+          <option value="460x650">In A5 Nhỏ (148 × 210 mm)</option>
+          <option value="640x640">Vuông mạng xã hội (1080 × 1080 px)</option>
+          <option value="560x700">Chân dung dọc (1080 × 1350 px)</option>
+          <option value="450x800">Tin dọc Story (1080 × 1920 px)</option>
+          <option value="780x408">Biểu ngữ ngang (1200 × 628 px)</option>
+          <option value="860x540">Trang web tiêu chuẩn (1440 × 900 px)</option>
+        </select>
+        <span class="spec-ref-badge">5.1</span>
+      </div>
+
+      <!-- Menu Chọn Nguồn Dữ Liệu -->
+      <div class="hidden lg:inline-flex h-7 ui-subpanel border px-2 rounded-md items-center gap-1.5" data-spec-ref="6.3" title="Chuyển đổi hồ sơ dữ liệu từ cơ sở dữ liệu ứng dụng">
+        <span class="ui-muted text-[11px]">Dữ liệu:</span>
+        <select id="host-db-select" onchange="switchHostDatabaseProfile(this.value)" class="bg-transparent font-medium text-xs outline-none cursor-pointer">
+          <option value="vuong">Vũ Anh Vương (Kiến trúc sư)</option>
+          <option value="chau">Nguyễn Minh Châu (Giám đốc sáng tạo)</option>
+          <option value="campaign">Chiến dịch Ra mắt Cloud 2026</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Cụm Phải: Phương thức làm việc (Google Docs Mode Switcher) + Đổi giao diện Sáng/Tối + Nút Xuất bản -->
+    <div class="flex items-center gap-1.5 shrink-0">
+      <div class="h-7 ui-subpanel border px-2 rounded-full inline-flex items-center gap-1.5" data-spec-ref="1.2" title="Chế độ cộng tác giữa Người dùng và AI">
+        <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <select id="collab-mode-select" onchange="switchCollabMode(this.value)" class="bg-transparent font-medium text-xs outline-none cursor-pointer">
+          <option value="collab">Cùng AI thiết kế</option>
+          <option value="human">Chỉnh sửa thủ công</option>
+          <option value="ai">AI tự động dàn trang</option>
+        </select>
+        <span class="spec-ref-badge">1.2</span>
+      </div>
+
+      <button onclick="toggleStudioTheme()" class="gd-icon-btn border ui-border" title="Chuyển đổi giao diện Sáng / Tối">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2"/></svg>
+      </button>
+
+      <button onclick="openExportPreflightModal()" class="h-7 px-3 rounded-full ui-accent-btn font-semibold text-xs inline-flex items-center gap-1.5" data-spec-ref="5.12" title="Kiểm tra kỹ thuật và Xuất bản ấn phẩm">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Xuất bản</span>
+        <span class="spec-ref-badge">5.12</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       2. THANH CÔNG CỤ ĐỊNH DẠNG VIÊN THUỐC (Chuẩn UX Google Docs — Gọn 1 dòng, Icon 28x28px đồng nhất)
+       ========================================================================= -->
+  <div id="gdocs-toolbar-wrapper" class="ui-panel border-b px-3 py-1 flex items-center z-30 shrink-0">
+    <div class="w-full h-9 ui-pill-bar rounded-full px-2.5 flex items-center justify-between gap-1 overflow-x-auto">
+
+      <div class="flex items-center gap-0.5">
+        <!-- Nút Tìm kiếm công cụ nhanh giống "Trình đơn" của Google Docs -->
+        <button onclick="openLeftTab('smart')" class="h-7 px-2.5 rounded-full bg-white/80 dark:bg-zinc-800/80 border ui-border inline-flex items-center gap-1.5 text-[11px] font-medium hover:border-blue-500" title="Tìm kiếm nhanh công cụ hoặc ra lệnh cho AI">
+          <svg class="w-3.5 h-3.5 ui-muted" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span>Tìm công cụ</span>
+        </button>
+
+        <!-- Hoàn tác / Làm lại / In nhanh -->
+        <button onclick="undoOperation()" class="gd-icon-btn" title="Hoàn tác (⌘Z)">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+        </button>
+        <button onclick="redoOperation()" class="gd-icon-btn" title="Làm lại (⇧⌘Z)">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+        </button>
+        <button onclick="openExportPreflightModal()" class="gd-icon-btn" title="In hoặc xuất tệp PDF">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        </button>
+
+        <!-- Chọn mức thu phóng nhanh giống Google Docs -->
+        <select onchange="setCanvasZoom(Number(this.value))" id="top-zoom-select" class="h-7 px-1.5 rounded-md bg-transparent hover:bg-black/5 font-medium text-xs outline-none cursor-pointer" title="Mức thu phóng bàn vẽ">
+          <option value="1">100%</option>
+          <option value="0.68">Vừa trang (68%)</option>
+          <option value="0.5">50%</option>
+          <option value="0.75">75%</option>
+          <option value="1.25">125%</option>
+          <option value="1.5">150%</option>
+        </select>
+
+        <div class="gd-sep"></div>
+
+        <!-- Đổi biến thể hiển thị của Khối Dữ liệu đang chọn (Kỹ năng / Kinh nghiệm / Dự án) -->
+        <div id="tb-section-controls" class="inline-flex items-center gap-1">
+          <select id="tb-variant-select" onchange="onChangeActiveSectionVariant(this.value)" class="h-7 px-2 rounded-md bg-white/70 dark:bg-zinc-800/70 border ui-border font-medium text-xs outline-none cursor-pointer" title="Đổi kiểu trình bày của mục đang chọn"></select>
+          <div class="gd-sep"></div>
+        </div>
+
+        <!-- Phông chữ (Font Family) -->
+        <select id="tb-font-family" onchange="applyBlockStyle('fontFamily', this.value)" class="h-7 w-32 px-2 rounded-md bg-transparent hover:bg-black/5 font-medium text-xs outline-none cursor-pointer" data-spec-ref="5.5" title="Chọn phông chữ">
+          <option value="'Inter', sans-serif">Inter</option>
+          <option value="'Playfair Display', serif">Playfair Display</option>
+          <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans</option>
+          <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
+          <option value="'Instrument Serif', serif">Instrument Serif</option>
+          <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
+          <option value="'Bebas Neue', sans-serif">Bebas Neue</option>
+        </select>
+
+        <div class="gd-sep"></div>
+
+        <!-- Cỡ chữ (- [13] +) giống hệt Google Docs -->
+        <div class="inline-flex items-center gap-0.5" title="Cỡ chữ">
+          <button onclick="stepFontSize(-1)" class="gd-icon-btn font-bold">−</button>
+          <span id="tb-fontsize-val" class="w-7 h-6 rounded border ui-border bg-white/80 dark:bg-zinc-800 inline-flex items-center justify-center font-semibold text-xs">13</span>
+          <button onclick="stepFontSize(1)" class="gd-icon-btn font-bold">+</button>
+        </div>
+
+        <div class="gd-sep"></div>
+
+        <!-- Định dạng chữ: Đậm, Nghiêng, Gạch chân, Màu chữ, Màu nền & Độ đục nền -->
+        <button onclick="toggleInlineStyle('fontWeight','bold','normal')" class="gd-icon-btn font-bold text-xs" title="In đậm (⌘B)">B</button>
+        <button onclick="toggleInlineStyle('fontStyle','italic','normal')" class="gd-icon-btn italic font-serif text-xs" title="In nghiêng (⌘I)">I</button>
+        <button onclick="toggleInlineStyle('textDecoration','underline','none')" class="gd-icon-btn underline text-xs" title="Gạch chân (⌘U)">U</button>
+
+        <!-- Màu chữ (A có vạch màu dưới) -->
+        <label class="gd-icon-btn flex-col gap-0.5" title="Màu văn bản">
+          <span class="font-bold text-[11px] leading-none">A</span>
+          <input type="color" value="#18181b" oninput="applyBlockStyle('color', this.value); this.nextElementSibling.style.backgroundColor=this.value" class="sr-only" />
+          <span class="w-3.5 h-1 rounded-full bg-zinc-900"></span>
+        </label>
+
+        <!-- Màu nền khối & Thanh trượt Độ đục nền (Bg Alpha 0..100%) -->
+        <div class="h-7 px-2 rounded-md bg-white/70 dark:bg-zinc-800/70 border ui-border inline-flex items-center gap-1.5" data-spec-ref="5.4" title="Màu nền khối & Độ đục của riêng nền (0% = nền trong suốt)">
+          <input id="tb-bg-color" type="color" value="#ffffff" oninput="updateBlockBgColorAndAlpha()" class="w-4 h-4 border-0 bg-transparent cursor-pointer" />
+          <input id="tb-bg-alpha" type="range" min="0" max="100" value="90" oninput="updateBlockBgColorAndAlpha()" class="w-12 accent-blue-600" />
+          <span id="tb-bg-alpha-lbl" class="text-[11px] font-medium w-7">90%</span>
+        </div>
+
+        <div class="gd-sep"></div>
+
+        <!-- Căn lề văn bản -->
+        <button onclick="applyBlockStyle('textAlign','left')" class="gd-icon-btn" title="Căn lề trái văn bản">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+        </button>
+        <button onclick="applyBlockStyle('textAlign','center')" class="gd-icon-btn" title="Căn giữa văn bản">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="10" x2="6" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="18" y1="18" x2="6" y2="18"/></svg>
+        </button>
+
+        <div class="gd-sep"></div>
+
+        <!-- Cụm Icon Chèn nhanh kiểu Google Docs: Chèn Ảnh, Chèn Video, Hình vẽ, Biểu đồ, Bản đồ -->
+        <button onclick="openLeftTab('media'); insertRealSampleImage(0)" class="gd-icon-btn" data-spec-ref="5.3" title="Chèn ảnh từ kho Media hoặc máy tính">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </button>
+        <button onclick="openLeftTab('media'); insertRealSampleVideo(0)" class="gd-icon-btn" data-spec-ref="5.3" title="Chèn video MP4 chạy trực tiếp trên trang">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><polygon points="10 9 15 12 10 15 10 9"/></svg>
+        </button>
+        <button onclick="openLeftTab('shapes'); addVectorShape('rect')" class="gd-icon-btn" data-spec-ref="5.2" title="Chèn hình khối hoặc đường vẽ Vector">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="11" height="11" rx="1"/><circle cx="16" cy="16" r="5"/></svg>
+        </button>
+
+        <div class="gd-sep"></div>
+
+        <!-- Cụm Icon Căn chỉnh vị trí Khối, Cắt khung, Sửa điểm neo, Lật hình -->
+        <button onclick="alignSelectedBlock('left')" class="gd-icon-btn" data-spec-ref="5.6" title="Căn khối sát lề trái trang">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="4" y1="3" x2="4" y2="21"/><rect x="8" y="6" width="12" height="4" rx="1"/><rect x="8" y="14" width="8" height="4" rx="1"/></svg>
+        </button>
+        <button onclick="alignSelectedBlock('h-center')" class="gd-icon-btn" data-spec-ref="5.6" title="Căn khối vào chính giữa trang">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="3" x2="12" y2="21"/><rect x="5" y="6" width="14" height="4" rx="1"/><rect x="7" y="14" width="10" height="4" rx="1"/></svg>
+        </button>
+        <button onclick="toggleCropMode()" id="tb-btn-crop" class="gd-icon-btn" data-spec-ref="5.3" title="Cắt khung hình ảnh không phá hủy">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>
+        </button>
+        <button onclick="toggleNodeEditMode()" id="tb-btn-node-edit" class="gd-icon-btn" data-spec-ref="5.2" title="Chỉnh sửa điểm neo đường cong Bezier">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 20C8 8 16 8 20 20"/><circle cx="12" cy="11" r="2.5"/><line x1="5" y1="11" x2="19" y2="11"/></svg>
+        </button>
+        <button onclick="flipSelectedBlock('h')" class="gd-icon-btn" data-spec-ref="5.8" title="Lật ngang đối tượng">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3v18"/><polygon points="4 7 9 12 4 17 4 7"/><polygon points="20 7 15 12 20 17 20 7"/></svg>
+        </button>
+      </div>
+
+      <!-- Cụm Phải của Thanh Pill: Quản lý Lớp nhanh (Nhóm, Khóa, Lên, Xuống, Nhân bản, Xóa) -->
+      <div class="flex items-center gap-0.5 shrink-0 pl-2">
+        <button onclick="groupSelectedBlocks()" class="gd-icon-btn" data-spec-ref="5.7" title="Gộp nhóm đối tượng (⌘G)">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><path d="M14 5h5v5M5 14v5h5"/></svg>
+        </button>
+        <button onclick="toggleLockActiveBlock()" id="tb-btn-lock" class="gd-icon-btn" data-spec-ref="5.7" title="Khóa hoặc mở khóa vị trí khối">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </button>
+        <button onclick="moveBlockLayer(1)" class="gd-icon-btn" title="Đưa lên một lớp">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
+        <button onclick="moveBlockLayer(-1)" class="gd-icon-btn" title="Đưa xuống một lớp">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <button onclick="duplicateActiveBlock()" class="gd-icon-btn" title="Nhân bản khối đang chọn">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+        <button onclick="deleteActiveBlock()" class="gd-icon-btn text-red-600 hover:bg-red-500/10" title="Xóa khối đang chọn">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       3. VÙNG LÀM VIỆC CHÍNH: THANH CÔNG CỤ TRÁI + NGĂN KÉO (CÓ NÚT ĐÓNG/MỞ CỐ ĐỊNH) + BÀN VẼ + BẢNG THUỘC TÍNH PHẢI
+       ========================================================================= -->
+  <div class="flex-1 flex overflow-hidden relative">
+
+    <!-- 3A. THANH BIỂU TƯỢNG TRÁI (60px — 100% Tiếng Việt, Không hiện số thứ tự, Giữ Alt mới hiện mã mục) -->
+    <nav class="w-[62px] ui-panel border-r flex flex-col items-center py-2 gap-1 z-30 shrink-0 overflow-y-auto">
+      <button onclick="openLeftTab('canvas')" id="rail-btn-canvas" class="rail-btn is-active" data-spec-ref="5.1" title="Thiết lập trang, khổ giấy, thước đo, lưới và phong cách">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+        <span>Trang</span>
+        <span class="spec-ref-badge">5.1</span>
+      </button>
+      <button onclick="openLeftTab('domain')" id="rail-btn-domain" class="rail-btn" data-spec-ref="3.1-3.10" title="Các mục nội dung và dữ liệu theo loại ấn phẩm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Bố cục</span>
+        <span class="spec-ref-badge">Mục 3</span>
+      </button>
+      <button onclick="openLeftTab('shapes')" id="rail-btn-shapes" class="rail-btn" data-spec-ref="5.2" title="Hình khối, bút vẽ đường cong và phép toán gộp hình">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><circle cx="11" cy="11" r="2"/></svg>
+        <span>Hình vẽ</span>
+        <span class="spec-ref-badge">5.2</span>
+      </button>
+      <button onclick="openLeftTab('typography')" id="rail-btn-typography" class="rail-btn" data-spec-ref="5.5" title="Kiểu chữ, chia cột, chữ uốn cong và phông chữ">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+        <span>Văn bản</span>
+        <span class="spec-ref-badge">5.5</span>
+      </button>
+      <button onclick="openLeftTab('media')" id="rail-btn-media" class="rail-btn" data-spec-ref="5.3" title="Kho ảnh, video của ứng dụng và tải tệp từ máy tính">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2.18"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span>Hình ảnh</span>
+        <span class="spec-ref-badge">5.3</span>
+      </button>
+      <button onclick="openLeftTab('assets')" id="rail-btn-assets" class="rail-btn" data-spec-ref="5.10" title="Thư viện biểu tượng, nhãn dán, biểu trưng và mã QR">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span>Thư viện</span>
+        <span class="spec-ref-badge">5.10</span>
+      </button>
+      <button onclick="openLeftTab('layers')" id="rail-btn-layers" class="rail-btn" data-spec-ref="5.7" title="Cây phân cấp nhóm và lớp đối tượng">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        <span>Cây lớp</span>
+        <span class="spec-ref-badge">5.7</span>
+      </button>
+      <button onclick="openLeftTab('smart')" id="rail-btn-smart" class="rail-btn" data-spec-ref="5.11" title="Trợ lý thiết kế AI và kiểm định chất lượng">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>
+        <span>Trợ lý AI</span>
+        <span class="spec-ref-badge">5.11</span>
+      </button>
+    </nav>
+
+    <!-- 3B. NGĂN CÔNG CỤ BÊN TRÁI (300px) + NÚT ĐÓNG/MỞ CỐ ĐỊNH KHÔNG BAO GIỜ BIẾN MẤT -->
+    <div class="relative flex items-center z-20 shrink-0">
+      <aside id="left-drawer" class="w-[300px] h-full ui-panel border-r flex flex-col shrink-0">
+        <div class="flex-1 p-3.5 overflow-y-auto space-y-4">
+
+          <!-- ===============================================================
+               NGĂN 1: THIẾT LẬP TRANG & PHONG CÁCH (Mục 5.1, 4.2, 4.3)
+               =============================================================== -->
+          <div id="ltab-canvas" class="space-y-4" data-spec-ref="5.1">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-semibold text-xs">Thiết lập Trang & Khung vẽ <span class="spec-ref-badge">Mục 5.1</span></h3>
+                <p class="ui-muted text-[11px]">Kích thước, hệ màu, thước đo, vùng in và phong cách</p>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+              <div class="font-medium text-[11px]">Kích thước tùy chỉnh & Hệ màu</div>
+              <div class="grid grid-cols-3 gap-1.5">
+                <div class="prop-box"><span class="prop-lbl">R</span><input id="canvas-custom-w" type="number" value="595" onchange="applyCustomCanvasSize()" /></div>
+                <div class="prop-box"><span class="prop-lbl">C</span><input id="canvas-custom-h" type="number" value="842" onchange="applyCustomCanvasSize()" /></div>
+                <div class="prop-box">
+                  <select id="canvas-color-profile" onchange="showToast('Đã đổi hệ màu: '+this.value)">
+                    <option value="sRGB">sRGB</option>
+                    <option value="CMYK">In CMYK</option>
+                    <option value="P3">Màn hình P3</option>
+                  </select>
+                </div>
+              </div>
+              <div class="flex items-center justify-between pt-1">
+                <span class="ui-muted text-[11px]">Màu nền trang</span>
+                <div class="flex items-center gap-1.5">
+                  <input type="color" id="canvas-bg-picker" value="#FAF6F0" oninput="setArtboardBackground(this.value)" class="w-5 h-5 border-0 bg-transparent cursor-pointer" />
+                  <button onclick="setArtboardBackground('#FAF6F0')" class="px-2 py-0.5 rounded border ui-border text-[10px]">Giấy kem</button>
+                  <button onclick="setArtboardBackground('#FFFFFF')" class="px-2 py-0.5 rounded border ui-border text-[10px]">Trắng</button>
+                  <button onclick="setArtboardBackground('#0F172A')" class="px-2 py-0.5 rounded border ui-border text-[10px]">Xanh đen</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-lg ui-subpanel border space-y-2" data-spec-ref="5.1-overlays">
+              <div class="font-medium text-[11px]">Đường dẫn hướng & Vùng kỹ thuật <span class="spec-ref-badge">5.1 & 5.6</span></div>
+              <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+                <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chk-rulers" checked onchange="toggleCanvasOverlay('rulers', this.checked)" class="accent-blue-600" /><span>Thước đo ngang dọc</span></label>
+                <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chk-bleed" onchange="toggleCanvasOverlay('bleed', this.checked)" class="accent-red-600" /><span>Vùng xén lề in 3mm</span></label>
+                <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chk-safe" onchange="toggleCanvasOverlay('safe', this.checked)" class="accent-emerald-600" /><span>Vùng an toàn hiển thị</span></label>
+                <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chk-margin" onchange="toggleCanvasOverlay('margin', this.checked)" class="accent-blue-600" /><span>Khung căn lề trang</span></label>
+                <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chk-grid" onchange="toggleCanvasOverlay('grid', this.checked)" class="accent-red-600" /><span>Lưới 12 cột dọc</span></label>
+                <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chk-baseline" onchange="toggleCanvasOverlay('baseline', this.checked)" class="accent-blue-600" /><span>Đường dòng cơ sở</span></label>
+                <label class="flex items-center gap-1.5 cursor-pointer col-span-2"><input type="checkbox" id="chk-snap" checked onchange="showToast('Tự động bắt điểm căn chỉnh: '+(this.checked?'Bật':'Tắt'))" class="accent-blue-600" /><span>Tự động bắt dính lưới khi kéo thả</span></label>
+              </div>
+            </div>
+
+            <div class="space-y-2" data-spec-ref="4.2">
+              <div class="font-semibold text-[11px]">Phong cách Thẩm mỹ Chủ đạo <span class="spec-ref-badge">Mục 4.2</span></div>
+              <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+                <button onclick="applyDesignStylePreset('editorial')" class="p-2 rounded-lg border ui-border hover:border-blue-600 text-left">
+                  <div class="font-semibold">Tạp chí Nghệ thuật</div>
+                  <div class="text-[10px] ui-muted">Chữ có chân • Thanh lịch</div>
+                </button>
+                <button onclick="applyDesignStylePreset('swiss')" class="p-2 rounded-lg border ui-border hover:border-blue-600 text-left">
+                  <div class="font-semibold">Thụy Sĩ Hiện đại</div>
+                  <div class="text-[10px] ui-muted">Lưới chặt • Khúc chiết</div>
+                </button>
+                <button onclick="applyDesignStylePreset('bauhaus')" class="p-2 rounded-lg border ui-border hover:border-blue-600 text-left">
+                  <div class="font-semibold">Hình học Bauhaus</div>
+                  <div class="text-[10px] ui-muted">Màu nguyên bản • Mạnh mẽ</div>
+                </button>
+                <button onclick="applyDesignStylePreset('brutalism')" class="p-2 rounded-lg border ui-border hover:border-blue-600 text-left">
+                  <div class="font-semibold">Tương phản Phá cách</div>
+                  <div class="text-[10px] ui-muted">Viền đậm • Đổ bóng cứng</div>
+                </button>
+                <button onclick="applyDesignStylePreset('luxury')" class="p-2 rounded-lg border ui-border hover:border-blue-600 text-left">
+                  <div class="font-semibold">Sang trọng Nền tối</div>
+                  <div class="text-[10px] ui-muted">Đen sâu • Sắc vàng kim</div>
+                </button>
+                <button onclick="applyDesignStylePreset('minimal')" class="p-2 rounded-lg border ui-border hover:border-blue-600 text-left">
+                  <div class="font-semibold">Tối giản Tinh gọn</div>
+                  <div class="text-[10px] ui-muted">Nhiều khoảng nghỉ thoáng</div>
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-1.5" data-spec-ref="4.3">
+              <div class="font-semibold text-[11px]">Mẫu Tổ chức Bố cục <span class="spec-ref-badge">Mục 4.3 & 5.6</span></div>
+              <div class="grid grid-cols-3 gap-1 text-[10.5px]">
+                <button onclick="applyCompositionPattern('asymmetric')" class="p-1.5 rounded border ui-border hover:border-blue-600 font-medium">Bất đối xứng</button>
+                <button onclick="applyCompositionPattern('symmetric')" class="p-1.5 rounded border ui-border hover:border-blue-600 font-medium">Đối xứng cân</button>
+                <button onclick="applyCompositionPattern('modular')" class="p-1.5 rounded border ui-border hover:border-blue-600 font-medium">Ô lưới Bento</button>
+                <button onclick="applyCompositionPattern('split')" class="p-1.5 rounded border ui-border hover:border-blue-600 font-medium">Chia đôi cột</button>
+                <button onclick="applyCompositionPattern('fullbleed')" class="p-1.5 rounded border ui-border hover:border-blue-600 font-medium">Tràn viền</button>
+                <button onclick="applyCompositionPattern('typo')" class="p-1.5 rounded border ui-border hover:border-blue-600 font-medium">Chữ chủ đạo</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===============================================================
+               NGĂN 2: BỐ CỤC CHUYÊN NGÀNH & DỮ LIỆU (Mục 3)
+               =============================================================== -->
+          <div id="ltab-domain" class="hidden space-y-3" data-spec-ref="3.1-3.10">
+            <div>
+              <h3 class="font-semibold text-xs">Bố cục Chuyên ngành & Dữ liệu <span class="spec-ref-badge">Mục 3</span></h3>
+              <p class="ui-muted text-[11px]">Tùy chỉnh các khối dữ liệu theo loại ấn phẩm đang mở</p>
+            </div>
+
+            <div id="domain-specific-controls" class="space-y-3"></div>
+
+            <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="font-semibold text-blue-600">Mục Kỹ năng & Năng lực</span>
+                <span class="text-[10px] ui-muted">4 kiểu hiển thị</span>
+              </div>
+              <div class="grid grid-cols-2 gap-1 text-[11px]">
+                <button onclick="setSkillsVariant('tags')" class="p-1.5 rounded border ui-border ui-panel font-medium">Nhãn từ khóa</button>
+                <button onclick="setSkillsVariant('grid')" class="p-1.5 rounded border ui-border ui-panel font-medium">Lưới 2 cột</button>
+                <button onclick="setSkillsVariant('bars')" class="p-1.5 rounded border ui-border ui-panel font-medium">Thanh mức độ %</button>
+                <button onclick="setSkillsVariant('list')" class="p-1.5 rounded border ui-border ui-panel font-medium">Danh sách dọc</button>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="font-semibold text-blue-600">Mục Kinh nghiệm & Hoạt động</span>
+                <span class="text-[10px] ui-muted">3 kiểu hiển thị</span>
+              </div>
+              <div class="grid grid-cols-3 gap-1 text-[11px]">
+                <button onclick="setExpVariant('timeline')" class="p-1.5 rounded border ui-border ui-panel font-medium">Dòng thời gian</button>
+                <button onclick="setExpVariant('cards')" class="p-1.5 rounded border ui-border ui-panel font-medium">Thẻ 2 cột</button>
+                <button onclick="setExpVariant('minimal')" class="p-1.5 rounded border ui-border ui-panel font-medium">Tối giản</button>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+              <div class="font-medium text-[11px]">Thêm nhanh dữ liệu vào hồ sơ</div>
+              <div class="flex gap-1">
+                <input id="inp-new-skill" placeholder="Nhập kỹ năng hoặc nhãn mới..." class="flex-1 px-2 py-1 rounded border ui-border bg-transparent" />
+                <button onclick="addSkillToDb()" class="px-2.5 py-1 rounded ui-accent-btn font-medium">Thêm</button>
+              </div>
+              <button onclick="addExperienceItemToDb()" class="w-full py-1.5 rounded border ui-border hover:border-blue-600 font-medium">+ Thêm dòng Kinh nghiệm / Sản phẩm</button>
+            </div>
+          </div>
+
+          <!-- ===============================================================
+               NGĂN 3: HÌNH VẼ & ĐƯỜNG CONG VECTOR (Mục 5.2)
+               =============================================================== -->
+          <div id="ltab-shapes" class="hidden space-y-3.5" data-spec-ref="5.2">
+            <div>
+              <h3 class="font-semibold text-xs">Hình khối & Công cụ Vẽ Vector <span class="spec-ref-badge">Mục 5.2</span></h3>
+              <p class="ui-muted text-[11px]">Hình cơ bản, bút vẽ Bezier, phép toán gộp hình và điểm neo</p>
+            </div>
+
+            <div class="space-y-1.5">
+              <div class="font-medium text-[11px]">Hình học cơ bản</div>
+              <div class="grid grid-cols-3 gap-1.5 text-[11px]">
+                <button onclick="addVectorShape('rect')" class="p-2 rounded-lg border ui-border hover:border-blue-600 flex flex-col items-center gap-1"><span>▭</span><span>Chữ nhật</span></button>
+                <button onclick="addVectorShape('circle')" class="p-2 rounded-lg border ui-border hover:border-blue-600 flex flex-col items-center gap-1"><span>◯</span><span>Hình tròn</span></button>
+                <button onclick="addVectorShape('ellipse')" class="p-2 rounded-lg border ui-border hover:border-blue-600 flex flex-col items-center gap-1"><span>⬭</span><span>Hình elip</span></button>
+                <button onclick="addVectorShape('line')" class="p-2 rounded-lg border ui-border hover:border-blue-600 flex flex-col items-center gap-1"><span>╱</span><span>Đường thẳng</span></button>
+                <button onclick="addVectorShape('polygon')" class="p-2 rounded-lg border ui-border hover:border-blue-600 flex flex-col items-center gap-1"><span>⬡</span><span>Đa giác</span></button>
+                <button onclick="addVectorShape('star')" class="p-2 rounded-lg border ui-border hover:border-blue-600 flex flex-col items-center gap-1"><span>★</span><span>Ngôi sao</span></button>
+                <button onclick="addVectorShape('arrow')" class="p-2 rounded-lg border ui-border hover:border-blue-600 flex flex-col items-center gap-1"><span>➔</span><span>Mũi tên</span></button>
+                <button onclick="addVectorShape('bubble')" class="p-2 rounded-lg border ui-border hover:border-blue-600 flex flex-col items-center gap-1"><span>🗨</span><span>Hộp thoại</span></button>
+                <button onclick="addVectorShape('ornament')" class="p-2 rounded-lg border ui-border hover:border-blue-600 flex flex-col items-center gap-1"><span>✦</span><span>Hoa văn</span></button>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+              <div class="font-medium text-[11px]">Công cụ Vẽ đường dẫn & Điểm neo</div>
+              <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+                <button onclick="addVectorShape('bezier')" class="p-2 rounded border ui-border ui-panel hover:border-blue-600 text-left font-medium">Bút vẽ đường cong</button>
+                <button onclick="addVectorShape('pencil')" class="p-2 rounded border ui-border ui-panel hover:border-blue-600 text-left font-medium">Bút chì vẽ tay</button>
+                <button onclick="addVectorShape('pattern')" class="p-2 rounded border ui-border ui-panel hover:border-blue-600 text-left font-medium">Mảng họa tiết lặp</button>
+                <button onclick="toggleNodeEditMode()" class="p-2 rounded border border-purple-500/40 bg-purple-500/10 text-purple-600 text-left font-semibold">Sửa điểm neo</button>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+              <div class="font-medium text-[11px]">Phép toán Gộp / Trừ hình khối</div>
+              <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+                <button onclick="applyBooleanOp('union')" class="p-1.5 rounded border ui-border ui-panel hover:border-blue-600 font-medium">Hợp nhất khối</button>
+                <button onclick="applyBooleanOp('subtract')" class="p-1.5 rounded border ui-border ui-panel hover:border-blue-600 font-medium">Trừ khối trên</button>
+                <button onclick="applyBooleanOp('intersect')" class="p-1.5 rounded border ui-border ui-panel hover:border-blue-600 font-medium">Lấy phần giao</button>
+                <button onclick="applyBooleanOp('exclude')" class="p-1.5 rounded border ui-border ui-panel hover:border-blue-600 font-medium">Loại trừ phần giao</button>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-lg ui-subpanel border space-y-1.5">
+              <div class="font-medium text-[11px]">Chèn mã hình vẽ SVG</div>
+              <textarea id="inp-svg" rows="2" class="w-full p-1.5 rounded border ui-border bg-transparent font-mono text-[10px]"><svg viewBox="0 0 100 100" width="80" height="80"><circle cx="50" cy="50" r="40" fill="none" stroke="#0b57d0" stroke-width="8" stroke-dasharray="10 6"/></svg></textarea>
+              <button onclick="insertCustomSvg()" class="w-full py-1.5 rounded ui-accent-btn font-medium">+ Chèn hình SVG vào trang</button>
+            </div>
+          </div>
+
+          <!-- ===============================================================
+               NGĂN 4: VĂN BẢN & CHẾ BẢN CHỮ (Mục 5.5)
+               =============================================================== -->
+          <div id="ltab-typography" class="hidden space-y-3.5" data-spec-ref="5.5">
+            <div>
+              <h3 class="font-semibold text-xs">Văn bản & Chế bản Chữ <span class="spec-ref-badge">Mục 5.5</span></h3>
+              <p class="ui-muted text-[11px]">Cấp độ tiêu đề, chia cột, chữ uốn cong, ký tự đặc biệt và tải phông</p>
+            </div>
+
+            <div class="space-y-1.5">
+              <div class="font-medium text-[11px]">Thêm nhanh khối văn bản</div>
+              <button onclick="addFreeTextBlock('display')" class="w-full p-2 rounded-lg border ui-border hover:border-blue-600 text-left font-serif font-bold text-sm">+ Tiêu đề lớn nổi bật (36pt)</button>
+              <button onclick="addFreeTextBlock('heading')" class="w-full p-2 rounded-lg border ui-border hover:border-blue-600 text-left font-semibold text-xs">+ Tiêu đề chuyên mục (20pt)</button>
+              <button onclick="addFreeTextBlock('body')" class="w-full p-2 rounded-lg border ui-border hover:border-blue-600 text-left text-xs">+ Đoạn văn bản nội dung (13pt)</button>
+              <button onclick="addTextOnPathBlock()" class="w-full p-2 rounded-lg border border-blue-500/40 bg-blue-500/10 text-blue-600 text-left font-semibold text-xs">+ Chữ uốn theo đường cong</button>
+            </div>
+
+            <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+              <div class="font-medium text-[11px]">Khoảng cách dòng, chữ & Chia cột</div>
+              <div class="grid grid-cols-3 gap-1.5">
+                <div class="prop-box" title="Chiều cao dòng"><span class="prop-lbl">Dòng</span><input type="number" step="0.1" value="1.4" oninput="applyBlockStyle('lineHeight', this.value)" /></div>
+                <div class="prop-box" title="Khoảng cách chữ"><span class="prop-lbl">Chữ</span><input type="number" step="0.5" value="0" oninput="applyBlockStyle('letterSpacing', this.value+'px')" /></div>
+                <div class="prop-box" title="Khoảng cách từ"><span class="prop-lbl">Từ</span><input type="number" step="1" value="0" oninput="applyBlockStyle('wordSpacing', this.value+'px')" /></div>
+              </div>
+              <div class="grid grid-cols-3 gap-1 text-[10.5px] pt-1">
+                <button onclick="applyBlockStyle('columnCount','1')" class="p-1 rounded border ui-border ui-panel font-medium">1 Cột</button>
+                <button onclick="applyBlockStyle('columnCount','2'); applyBlockStyle('columnGap','12px')" class="p-1 rounded border ui-border ui-panel font-medium">2 Cột báo</button>
+                <button onclick="applyBlockStyle('columnCount','3'); applyBlockStyle('columnGap','10px')" class="p-1 rounded border ui-border ui-panel font-medium">3 Cột báo</button>
+              </div>
+              <div class="grid grid-cols-4 gap-1 text-[10.5px]">
+                <button onclick="applyBlockStyle('textTransform','none')" class="p-1 rounded border ui-border ui-panel">Bình thường</button>
+                <button onclick="applyBlockStyle('textTransform','uppercase')" class="p-1 rounded border ui-border ui-panel font-semibold">IN HOA</button>
+                <button onclick="applyBlockStyle('textTransform','lowercase')" class="p-1 rounded border ui-border ui-panel">chữ thường</button>
+                <button onclick="toggleTextDirection()" class="p-1 rounded border ui-border ui-panel">Đổi chiều</button>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+              <div class="font-medium text-[11px]">Thuộc tính chữ nâng cao & Ký tự đặc biệt</div>
+              <div class="grid grid-cols-2 gap-1 text-[10.5px]">
+                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" checked onchange="applyBlockStyle('fontVariantLigatures', this.checked?'common-ligatures':'none')" class="accent-blue-600" /><span>Nối nét chữ (fi, fl)</span></label>
+                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" checked onchange="applyBlockStyle('fontKerning', this.checked?'normal':'none')" class="accent-blue-600" /><span>Căn khoảng chữ quang học</span></label>
+                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" onchange="applyBlockStyle('fontVariantCaps', this.checked?'small-caps':'normal')" class="accent-blue-600" /><span>Chữ hoa thu nhỏ</span></label>
+                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" onchange="autoFitSelectedText()" class="accent-blue-600" /><span>Tự co giãn khung chữ</span></label>
+              </div>
+              <div>
+                <div class="flex justify-between text-[10.5px] ui-muted"><span>Độ đậm phông biến thiên</span><span id="lbl-var-wght">600</span></div>
+                <input type="range" min="100" max="900" step="50" value="600" oninput="applyBlockStyle('fontWeight', this.value); document.getElementById('lbl-var-wght').textContent=this.value" class="w-full accent-blue-600" />
+              </div>
+              <div class="space-y-1">
+                <div class="text-[10.5px] ui-muted">Chèn nhanh ký tự đặc biệt:</div>
+                <div class="grid grid-cols-8 gap-1 text-center font-serif text-xs">
+                  <button onclick="insertGlyph('✦')" class="p-1 rounded border ui-border ui-panel hover:border-blue-600">✦</button>
+                  <button onclick="insertGlyph('§')" class="p-1 rounded border ui-border ui-panel hover:border-blue-600">§</button>
+                  <button onclick="insertGlyph('©')" class="p-1 rounded border ui-border ui-panel hover:border-blue-600">©</button>
+                  <button onclick="insertGlyph('®')" class="p-1 rounded border ui-border ui-panel hover:border-blue-600">®</button>
+                  <button onclick="insertGlyph('™')" class="p-1 rounded border ui-border ui-panel hover:border-blue-600">™</button>
+                  <button onclick="insertGlyph('→')" class="p-1 rounded border ui-border ui-panel hover:border-blue-600">→</button>
+                  <button onclick="insertGlyph('↗')" class="p-1 rounded border ui-border ui-panel hover:border-blue-600">↗</button>
+                  <button onclick="insertGlyph('∞')" class="p-1 rounded border ui-border ui-panel hover:border-blue-600">∞</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+              <div class="font-medium text-[11px]">Nạp phông chữ Google & Hiệu ứng chữ</div>
+              <div class="flex gap-1">
+                <input id="inp-gfont" placeholder="Nhập tên phông: Lora, Oswald..." class="flex-1 px-2 py-1 rounded border ui-border bg-transparent" />
+                <button onclick="importCustomGoogleFont()" class="px-2.5 py-1 rounded ui-accent-btn font-medium">Nạp</button>
+              </div>
+              <div class="grid grid-cols-3 gap-1 pt-1 text-[10.5px]">
+                <button onclick="setTextFx('none')" class="p-1.5 rounded border ui-border ui-panel">Mặc định</button>
+                <button onclick="setTextFx('fx-hollow')" class="p-1.5 rounded border ui-border ui-panel font-semibold">Chữ rỗng</button>
+                <button onclick="setTextFx('fx-splice')" class="p-1.5 rounded border ui-border ui-panel font-semibold">Tách bóng</button>
+                <button onclick="setTextFx('fx-neon')" class="p-1.5 rounded border ui-border ui-panel font-semibold text-blue-600">Phát sáng</button>
+                <button onclick="setTextFx('fx-gradient')" class="p-1.5 rounded border ui-border ui-panel font-semibold">Chuyển sắc</button>
+                <button onclick="applyBlockStyle('textShadow','2px 3px 6px rgba(0,0,0,0.35)')" class="p-1.5 rounded border ui-border ui-panel">Đổ bóng</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===============================================================
+               NGĂN 5: HÌNH ẢNH & ĐA PHƯƠNG TIỆN — CHÈN ẢNH/VIDEO THẬT TỪ KHO HOẶC MÁY TÍNH (Mục 5.3)
+               =============================================================== -->
+          <div id="ltab-media" class="hidden space-y-3.5" data-spec-ref="5.3">
+            <div>
+              <h3 class="font-semibold text-xs">Hình ảnh & Đa phương tiện <span class="spec-ref-badge">Mục 5.3</span></h3>
+              <p class="ui-muted text-[11px]">Bấm chọn ảnh/video trong kho ứng dụng hoặc tải từ máy tính để chèn trực tiếp vào trang</p>
+            </div>
+
+            <!-- Nút Tải Ảnh / Video thật từ máy tính -->
+            <button onclick="document.getElementById('real-media-file-input').click()" class="w-full py-2 px-3 rounded-lg ui-accent-btn font-semibold text-xs flex items-center justify-center gap-2 shadow-xs">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Tải Ảnh / Video từ máy tính</span>
+            </button>
+
+            <!-- Kho Hình Ảnh Ứng Dụng (Bấm để chèn ảnh thật <img> vào Artboard) -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between items-center">
+                <span class="font-semibold text-[11px]">Kho Ảnh có sẵn của Ứng dụng</span>
+                <span class="text-[10px] ui-muted">Bấm để chèn vào trang</span>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div onclick="insertRealSampleImage(0)" class="group rounded-lg border ui-border overflow-hidden cursor-pointer hover:border-blue-600 bg-zinc-100">
+                  <img id="sample-img-thumb-0" alt="Chân dung Studio" class="w-full h-20 object-cover group-hover:scale-105 transition" />
+                  <div class="p-1.5 text-[10.5px] font-medium flex justify-between"><span>Chân dung Studio</span><span class="text-blue-600">+ Chèn</span></div>
+                </div>
+                <div onclick="insertRealSampleImage(1)" class="group rounded-lg border ui-border overflow-hidden cursor-pointer hover:border-blue-600 bg-zinc-100">
+                  <img id="sample-img-thumb-1" alt="Kiến trúc Đô thị" class="w-full h-20 object-cover group-hover:scale-105 transition" />
+                  <div class="p-1.5 text-[10.5px] font-medium flex justify-between"><span>Kiến trúc Đô thị</span><span class="text-blue-600">+ Chèn</span></div>
+                </div>
+                <div onclick="insertRealSampleImage(2)" class="group rounded-lg border ui-border overflow-hidden cursor-pointer hover:border-blue-600 bg-zinc-100">
+                  <img id="sample-img-thumb-2" alt="Không gian Sáng tạo" class="w-full h-20 object-cover group-hover:scale-105 transition" />
+                  <div class="p-1.5 text-[10.5px] font-medium flex justify-between"><span>Không gian Sáng tạo</span><span class="text-blue-600">+ Chèn</span></div>
+                </div>
+                <div onclick="insertRealSampleImage(3)" class="group rounded-lg border ui-border overflow-hidden cursor-pointer hover:border-blue-600 bg-zinc-100">
+                  <img id="sample-img-thumb-3" alt="Sóng Nghệ thuật" class="w-full h-20 object-cover group-hover:scale-105 transition" />
+                  <div class="p-1.5 text-[10.5px] font-medium flex justify-between"><span>Sóng Nghệ thuật</span><span class="text-blue-600">+ Chèn</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Kho Video & 3D của Ứng Dụng (Bấm để chèn Video chạy thật lên Artboard) -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between items-center">
+                <span class="font-semibold text-[11px]">Kho Video & Vật thể 3D</span>
+                <span class="text-[10px] ui-muted">Phát trực tiếp trên trang</span>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <button onclick="insertRealSampleVideo(0)" class="p-2 rounded-lg border ui-border ui-subpanel hover:border-blue-600 text-left space-y-1">
+                  <div class="h-14 rounded bg-slate-900 text-white flex flex-col items-center justify-center relative overflow-hidden">
+                    <span class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-[10px]">▶</span>
+                    <span class="text-[9px] opacity-80 mt-0.5">Sóng Chuyển Động</span>
+                  </div>
+                  <div class="text-[10.5px] font-medium flex justify-between"><span>Video Sóng Số</span><span class="text-blue-600">+ Chèn</span></div>
+                </button>
+                <button onclick="insertRealSampleVideo(1)" class="p-2 rounded-lg border ui-border ui-subpanel hover:border-blue-600 text-left space-y-1">
+                  <div class="h-14 rounded bg-indigo-950 text-white flex flex-col items-center justify-center relative overflow-hidden">
+                    <span class="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center text-[10px]">▶</span>
+                    <span class="text-[9px] opacity-80 mt-0.5">Hạt Ánh Sáng</span>
+                  </div>
+                  <div class="text-[10.5px] font-medium flex justify-between"><span>Video Hạt Sáng</span><span class="text-blue-600">+ Chèn</span></div>
+                </button>
+              </div>
+              <button onclick="addMediaBlock('3d')" class="w-full p-2 rounded-lg border ui-border hover:border-blue-600 text-left font-medium text-[11px] flex items-center justify-between">
+                <span>Khối Lập phương 3D Xoay</span><span class="text-blue-600 font-semibold">+ Chèn 3D</span>
+              </button>
+            </div>
+
+            <!-- Thao tác xử lý ảnh không phá hủy -->
+            <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+              <div class="font-medium text-[11px]">Xử lý Ảnh Không phá hủy</div>
+              <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+                <button onclick="toggleCropMode()" class="p-1.5 rounded border ui-border ui-panel hover:border-blue-600 font-medium">Cắt khung ảnh</button>
+                <button onclick="simulateAiRemoveBg()" class="p-1.5 rounded border border-emerald-500/40 bg-emerald-500/10 text-emerald-700 font-semibold">Tách nền bằng AI</button>
+                <button onclick="flipSelectedBlock('h')" class="p-1.5 rounded border ui-border ui-panel hover:border-blue-600 font-medium">Lật ngang</button>
+                <button onclick="flipSelectedBlock('v')" class="p-1.5 rounded border ui-border ui-panel hover:border-blue-600 font-medium">Lật dọc</button>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+              <div class="font-medium text-[11px]">Lồng khung Cắt hình (Mask)</div>
+              <div class="grid grid-cols-4 gap-1 text-[10.5px]">
+                <button onclick="applyClipMask('none')" class="p-1.5 rounded border ui-border ui-panel">Nguyên gốc</button>
+                <button onclick="applyClipMask('clip-circle')" class="p-1.5 rounded border ui-border ui-panel">Khung tròn</button>
+                <button onclick="applyClipMask('clip-arch')" class="p-1.5 rounded border ui-border ui-panel">Khung vòm</button>
+                <button onclick="applyClipMask('clip-hexagon')" class="p-1.5 rounded border ui-border ui-panel">Lục giác</button>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+              <div class="font-medium text-[11px]">Hiệu ứng Màu nghệ thuật & Chất liệu</div>
+              <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+                <button onclick="applyCreativeMediaEffect('duotone')" class="p-1.5 rounded border ui-border ui-panel hover:border-blue-600 font-medium">Màu kép Duotone</button>
+                <button onclick="applyCreativeMediaEffect('double-exp')" class="p-1.5 rounded border ui-border ui-panel hover:border-blue-600 font-medium">Phơi sáng kép</button>
+                <button onclick="applyCreativeMediaEffect('grain')" class="p-1.5 rounded border ui-border ui-panel hover:border-blue-600 font-medium">Phủ hạt giấy in</button>
+                <button onclick="applyCreativeMediaEffect('reset')" class="p-1.5 rounded border ui-border ui-panel hover:border-blue-600">Khôi phục gốc</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===============================================================
+               NGĂN 6: THƯ VIỆN TÀI NGUYÊN & MÃ QR (Mục 5.10)
+               =============================================================== -->
+          <div id="ltab-assets" class="hidden space-y-3" data-spec-ref="5.10">
+            <div>
+              <h3 class="font-semibold text-xs">Thư viện Tài nguyên & Bản quyền <span class="spec-ref-badge">Mục 5.10</span></h3>
+              <p class="ui-muted text-[11px]">Biểu tượng, nhãn dán, biểu trưng thương hiệu và tạo mã QR</p>
+            </div>
+
+            <div class="flex gap-1">
+              <input id="asset-search-inp" oninput="filterAssetLibrary()" placeholder="Tìm biểu tượng, nhãn dán, biểu trưng..." class="flex-1 px-2 py-1.5 rounded-lg border ui-border bg-transparent text-[11px]" />
+              <select id="asset-license-filter" onchange="filterAssetLibrary()" class="px-1.5 py-1 rounded-lg border ui-border ui-subpanel text-[10.5px] font-medium">
+                <option value="all">Tất cả quyền</option>
+                <option value="CC0">Miễn phí CC0</option>
+                <option value="PRO">Thương mại</option>
+                <option value="BRAND">Nội bộ</option>
+              </select>
+            </div>
+
+            <div class="flex flex-wrap gap-1 text-[10.5px]">
+              <button onclick="insertRealSampleImage(0)" class="px-2 py-1 rounded-md border ui-border ui-subpanel hover:border-blue-600 font-medium">+ Ảnh mẫu</button>
+              <button onclick="spawnAssetItem('icon')" class="px-2 py-1 rounded-md border ui-border ui-subpanel hover:border-blue-600 font-medium">+ Biểu tượng</button>
+              <button onclick="spawnAssetItem('sticker')" class="px-2 py-1 rounded-md border ui-border ui-subpanel hover:border-blue-600 font-medium">+ Nhãn khuyến mãi</button>
+              <button onclick="spawnAssetItem('logo')" class="px-2 py-1 rounded-md border ui-border ui-subpanel hover:border-blue-600 font-medium">+ Con dấu thương hiệu</button>
+              <button onclick="spawnAssetItem('frame')" class="px-2 py-1 rounded-md border ui-border ui-subpanel hover:border-blue-600 font-medium">+ Khung thiết bị</button>
+            </div>
+
+            <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="font-semibold text-[11px]">Tạo Mã QR Vector trực tiếp</span>
+                <span class="text-[9.5px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 font-semibold">Miễn phí</span>
+              </div>
+              <div class="flex gap-1">
+                <input id="inp-qr-url" value="https://id.vuonganhvu.vn" class="flex-1 px-2 py-1 rounded border ui-border bg-transparent text-[11px]" />
+                <button onclick="spawnAssetItem('qr')" class="px-2.5 py-1 rounded ui-accent-btn font-medium">Chèn QR</button>
+              </div>
+            </div>
+
+            <div id="asset-library-grid" class="space-y-1.5">
+              <div onclick="spawnAssetItem('logo')" class="p-2 rounded-lg border ui-border hover:border-blue-600 cursor-pointer flex items-center justify-between">
+                <div><div class="font-semibold text-[11px]">Biểu trưng & Con dấu VAV</div><div class="text-[10px] ui-muted">Vector SVG • Nhận diện thương hiệu</div></div>
+                <span class="text-[9.5px] px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-700 font-semibold">Nội bộ</span>
+              </div>
+              <div onclick="spawnAssetItem('sticker')" class="p-2 rounded-lg border ui-border hover:border-blue-600 cursor-pointer flex items-center justify-between">
+                <div><div class="font-semibold text-[11px]">Nhãn "Ưu đãi -40%"</div><div class="text-[10px] ui-muted">Nhãn dán chuyển đổi • Vector</div></div>
+                <span class="text-[9.5px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 font-semibold">Thương mại</span>
+              </div>
+              <div onclick="insertRealSampleImage(2)" class="p-2 rounded-lg border ui-border hover:border-blue-600 cursor-pointer flex items-center justify-between">
+                <div><div class="font-semibold text-[11px]">Ảnh Không gian Sáng tạo</div><div class="text-[10px] ui-muted">Độ phân giải 300 DPI • Sẵn sàng in</div></div>
+                <span class="text-[9.5px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 font-semibold">Miễn phí CC0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===============================================================
+               NGĂN 7: CÂY PHÂN CẤP LỚP & ĐỐI TƯỢNG (Mục 5.7)
+               =============================================================== -->
+          <div id="ltab-layers" class="hidden space-y-3" data-spec-ref="5.7">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-semibold text-xs">Cây Phân cấp Lớp (Layer Tree) <span class="spec-ref-badge">Mục 5.7</span></h3>
+                <p class="ui-muted text-[10.5px]">Quan hệ Nhóm cha – Lớp con, Khóa và Ẩn/Hiện</p>
+              </div>
+              <button onclick="groupSelectedBlocks()" class="px-2 py-1 rounded border ui-border hover:border-blue-600 font-medium text-[10.5px]">+ Gộp nhóm</button>
+            </div>
+            <div id="layer-tree-list" class="space-y-1"></div>
+          </div>
+
+          <!-- ===============================================================
+               NGĂN 8: TRỢ LÝ THIẾT KẾ AI & KIỂM ĐỊNH 5 LỚP (Mục 5.11, 8, 9)
+               =============================================================== -->
+          <div id="ltab-smart" class="hidden space-y-3.5" data-spec-ref="5.11">
+            <div>
+              <h3 class="font-semibold text-xs">Trợ lý Thiết kế AI & Kiểm định <span class="spec-ref-badge">Mục 5.11 & 9</span></h3>
+              <p class="ui-muted text-[11px]">Tự động căn chỉnh, phối màu và kiểm định chất lượng 5 bước</p>
+            </div>
+
+            <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="font-semibold text-blue-600">Yêu cầu AI Thiết kế & Tinh chỉnh</span>
+                <span class="text-[9.5px] px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-700 font-semibold">Sẵn sàng</span>
+              </div>
+              <textarea id="ai-prompt-input" rows="2" class="w-full p-1.5 rounded border ui-border bg-transparent text-[11px]" placeholder="Nhập yêu cầu: Ví dụ 'Sắp xếp lại theo lưới Thụy Sĩ, tăng độ tương phản tiêu đề'..."></textarea>
+              <button onclick="runAiDesignWorkflow()" class="w-full py-1.5 rounded ui-accent-btn font-semibold">Thực thi tự động trên Trang</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+              <button onclick="smartAutoAlignAll()" class="p-2 rounded border ui-border hover:border-blue-600 text-left font-medium">Căn chỉnh khoảng cách</button>
+              <button onclick="suggestFontPairing()" class="p-2 rounded border ui-border hover:border-blue-600 text-left font-medium">Gợi ý cặp phông chữ</button>
+              <button onclick="suggestColorHarmony()" class="p-2 rounded border ui-border hover:border-blue-600 text-left font-medium">Phối màu hài hòa</button>
+              <button onclick="runConsistencyCheck()" class="p-2 rounded border ui-border hover:border-blue-600 text-left font-medium">Kiểm tra tính đồng nhất</button>
+            </div>
+
+            <div class="p-2.5 rounded-lg ui-subpanel border flex items-center justify-between">
+              <div>
+                <div class="font-semibold text-[11px]">Độ tương phản chữ & nền</div>
+                <div class="text-[10px] ui-muted">Chữ `#18181B` trên nền `#FFFFFF`</div>
+              </div>
+              <span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 font-semibold text-[11px]">14.8:1 (Đạt chuẩn AAA)</span>
+            </div>
+
+            <div class="p-2.5 rounded-lg ui-subpanel border space-y-1.5" data-spec-ref="9.1-9.5">
+              <div class="flex justify-between items-center">
+                <span class="font-semibold text-[11px]">Kiểm định Chất lượng 5 Lớp <span class="spec-ref-badge">Mục 9</span></span>
+                <span id="qa-score-badge" class="font-semibold text-emerald-600">98/100 Đạt</span>
+              </div>
+              <div class="space-y-1 text-[10.5px]">
+                <div class="flex justify-between"><span>1. Ngữ nghĩa & Thông điệp chính</span><span class="text-emerald-600 font-semibold">Đạt</span></div>
+                <div class="flex justify-between"><span>2. Phân cấp thị giác & Bố cục</span><span class="text-emerald-600 font-semibold">Đạt</span></div>
+                <div class="flex justify-between"><span id="qa-domain-lbl">3. Tiêu chuẩn chuyên ngành (CV ATS)</span><span class="text-emerald-600 font-semibold">Đạt</span></div>
+                <div class="flex justify-between"><span>4. Kỹ thuật in & Nhúng phông (300 DPI)</span><span class="text-emerald-600 font-semibold">Đạt</span></div>
+                <div class="flex justify-between"><span>5. Hiển thị trực quan (Không đè lề)</span><span class="text-emerald-600 font-semibold">Đạt</span></div>
+              </div>
+            </div>
+
+            <div class="p-2 rounded-lg ui-subpanel border space-y-1" data-spec-ref="6.4">
+              <div class="font-medium text-[10px] ui-muted">Nhật ký Lệnh Thao tác (Operation API) <span class="spec-ref-badge">Mục 6.4</span></div>
+              <pre id="op-api-log" class="font-mono text-[9.5px] leading-tight overflow-x-auto max-h-20 text-blue-600">{"op":"init_document","domain":"cv","dpi":300}</pre>
+            </div>
+          </div>
+
+        </div>
+      </aside>
+
+      <!-- NÚT ĐÓNG / MỞ NGĂN CÔNG CỤ TRÁI CỐ ĐỊNH (Luôn hiển thị kể cả khi ngăn trái đã thu gọn!) -->
+      <button id="left-drawer-ear"
+              onclick="toggleLeftDrawerCollapse()"
+              class="drawer-toggle-ear rounded-r-md border-l-0"
+              title="Thu gọn hoặc mở rộng ngăn công cụ bên trái">
+        <span id="left-ear-icon" class="text-xs font-bold leading-none">‹</span>
+      </button>
+    </div>
+
+    <!-- =======================================================================
+         3C. VÙNG BÀN VẼ TRUNG TÂM: THƯỚC ĐO NGANG/DỌC + ARTBOARD + BĂNG CHUYỀN CHUYỂN ĐỘNG
+         ======================================================================= -->
+    <div class="flex-1 flex flex-col overflow-hidden relative canvas-stage-bg">
+
+      <!-- THƯỚC ĐO NGANG PHÍA TRÊN -->
+      <div id="ruler-top-row" class="flex shrink-0">
+        <div class="ruler-corner" id="ruler-unit-badge">px</div>
+        <div id="ruler-h-bar" onclick="addHorizontalGuideFromRuler(event)" class="ruler-h flex-1 flex items-end" title="Bấm vào thước ngang để thêm đường gióng ngang"></div>
+      </div>
+
+      <!-- HÀNG GIỮA: THƯỚC ĐO DỌC BÊN TRÁI + VÙNG CUỘN BÀN VẼ (Đã bỏ thanh trạng thái nổi thừa ở trên để chuyển xuống chân trang!) -->
+      <div class="flex-1 flex overflow-hidden relative">
+        <div id="ruler-v-bar" onclick="addVerticalGuideFromRuler(event)" class="ruler-v shrink-0 flex flex-col items-end" title="Bấm vào thước dọc để thêm đường gióng dọc"></div>
+
+        <!-- VÙNG BÀN VẼ ARTBOARD -->
+        <main id="canvas-viewport" onclick="deselectAllIfBackground(event)" class="flex-1 flex flex-col items-center justify-center p-6 overflow-auto relative">
+
+          <div id="page-artboard"
+               style="width: 595px; height: 842px; background-color: #FAF6F0;"
+               class="text-zinc-900 rounded-xs shadow-[0_20px_60px_rgba(0,0,0,0.16)] relative transition-all duration-200 origin-top shrink-0 my-auto">
+
+            <!-- Các lớp hiển thị kỹ thuật: Bleed, Crop Marks, Safe Area, Margin, Lưới 12 cột, Baseline -->
+            <div id="ovl-bleed" class="overlay-bleed hidden">
+              <div class="crop-mark cm-tl"></div><div class="crop-mark cm-tr"></div>
+              <div class="crop-mark cm-bl"></div><div class="crop-mark cm-br"></div>
+            </div>
+            <div id="ovl-safe" class="overlay-safe hidden"></div>
+            <div id="ovl-margin" class="overlay-margin hidden"></div>
+            <div id="ovl-grid" class="overlay-grid-cols hidden">
+              <div></div><div></div><div></div><div></div><div></div><div></div>
+              <div></div><div></div><div></div><div></div><div></div><div></div>
+            </div>
+            <div id="ovl-baseline" class="overlay-baseline hidden"></div>
+            <div id="smart-guide-h" class="smart-guide-x"></div>
+            <div id="smart-guide-v" class="smart-guide-y"></div>
+            <div id="user-guides-container" class="absolute inset-0 pointer-events-none z-90"></div>
+
+            <!-- CÁC ĐỐI TƯỢNG TRÊN BÀN VẼ -->
+            <div id="artboard-objects-root" class="w-full h-full relative overflow-hidden">
+
+              <!-- Lớp ánh sáng nền hòa trộn -->
+              <div id="blk-ambient-orb"
+                   data-block-type="shape"
+                   data-parent-group="grp-background"
+                   data-block-title="Vầng sáng nền hòa trộn"
+                   data-bg-hex="#fda4af"
+                   data-bg-alpha="45"
+                   style="left: 365px; top: -24px; width: 245px; height: 245px; z-index: 2; mix-blend-mode: multiply; background-color: rgba(253, 164, 175, 0.45); filter: blur(18px);"
+                   class="studio-block rounded-full">
+                <div class="block-badge">Vầng sáng nền (Nhân màu)</div>
+              </div>
+
+              <!-- KHỐI 1: THÔNG TIN ĐỊNH DANH / TIÊU ĐỀ TRANG -->
+              <div id="blk-sec-personal"
+                   data-block-type="section"
+                   data-section-key="personal"
+                   data-parent-group="grp-header"
+                   data-block-title="Khối Tiêu đề & Thông tin cá nhân"
+                   data-bg-hex="#ffffff"
+                   data-bg-alpha="82"
+                   style="left: 32px; top: 28px; width: 531px; height: 128px; z-index: 10; background-color: rgba(255, 255, 255, 0.82); backdrop-filter: blur(8px);"
+                   class="studio-block p-5 rounded-2xl border border-stone-200/80 flex items-center justify-between gap-4">
+                <div class="block-badge">Khối Tiêu đề & Thông tin cá nhân</div>
+                <div class="space-y-1 flex-1">
+                  <div id="bind-eyebrow" contenteditable="true" class="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-800 outline-none">Hồ sơ Kiến trúc & Thiết kế Hệ thống</div>
+                  <h1 id="bind-fullname" contenteditable="true" style="font-family: 'Playfair Display', serif; font-size: 28px;" class="font-bold tracking-tight outline-none">
+                    Vũ Anh Vương
+                  </h1>
+                  <p id="bind-headline" contenteditable="true" class="text-xs font-semibold text-blue-700 outline-none">
+                    Kiến trúc sư Trưởng Hệ thống Phân tán & Nền tảng Thiết kế
+                  </p>
+                  <p id="bind-contact" contenteditable="true" class="text-[11px] opacity-75 outline-none">
+                    vuonganhvu@vuonganhvu.vn • Hà Nội, Việt Nam • id.vuonganhvu.vn
+                  </p>
+                </div>
+                <div id="hero-avatar-box" class="w-16 h-16 rounded-full bg-gradient-to-tr from-stone-900 to-amber-700 text-white flex items-center justify-center font-serif text-xl font-bold shrink-0 shadow overflow-hidden">V</div>
+              </div>
+
+              <!-- KHỐI 2: MỤC KINH NGHIỆM CHUYÊN MÔN -->
+              <div id="blk-sec-experiences"
+                   data-block-type="section"
+                   data-section-key="experiences"
+                   data-parent-group="grp-body"
+                   data-block-title="Mục Kinh nghiệm chuyên môn"
+                   data-bg-hex="#ffffff"
+                   data-bg-alpha="90"
+                   style="left: 32px; top: 172px; width: 336px; height: 295px; z-index: 12; background-color: rgba(255, 255, 255, 0.90);"
+                   class="studio-block p-5 rounded-2xl border border-stone-200/80 overflow-hidden">
+                <div class="block-badge">Mục Kinh nghiệm chuyên môn</div>
+                <div class="flex items-center justify-between border-b border-current/10 pb-2 mb-3">
+                  <span id="lbl-sec-exp-title" class="text-[11px] font-bold uppercase tracking-wider">Kinh nghiệm Chuyên môn</span>
+                  <span class="text-[10px] opacity-55">Dàn tự động</span>
+                </div>
+                <div id="render-experiences" class="space-y-3 text-xs"></div>
+              </div>
+
+              <!-- KHỐI 3: MỤC DỰ ÁN TRỌNG ĐIỂM / BIỂU ĐỒ / BẢN ĐỒ -->
+              <div id="blk-sec-projects"
+                   data-block-type="section"
+                   data-section-key="projects"
+                   data-parent-group="grp-body"
+                   data-block-title="Mục Dự án & Trực quan hóa"
+                   data-bg-hex="#ffffff"
+                   data-bg-alpha="90"
+                   style="left: 32px; top: 482px; width: 336px; height: 265px; z-index: 14; background-color: rgba(255, 255, 255, 0.90);"
+                   class="studio-block p-4 rounded-2xl border border-stone-200/80 overflow-hidden flex flex-col">
+                <div class="block-badge">Mục Dự án & Trực quan hóa</div>
+                <div class="flex items-center justify-between border-b border-current/10 pb-2 mb-2.5 shrink-0">
+                  <span id="lbl-sec-proj-title" class="text-[11px] font-bold uppercase tracking-wider">Dự án Trọng điểm</span>
+                  <span id="lbl-sec-proj-badge" class="text-[9.5px] px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-700 font-semibold">Kết nối dữ liệu</span>
+                </div>
+                <div id="render-projects" class="space-y-2.5 text-xs flex-1 overflow-hidden"></div>
+                <div id="live-chart-container" class="hidden w-full flex-1 min-h-[195px]"></div>
+                <div id="live-map-container" class="hidden w-full flex-1 min-h-[195px] rounded-xl overflow-hidden"></div>
+              </div>
+
+              <!-- KHỐI 4: MỤC KỸ NĂNG CỐT LÕI -->
+              <div id="blk-sec-skills"
+                   data-block-type="section"
+                   data-section-key="skills"
+                   data-parent-group="grp-sidebar"
+                   data-block-title="Mục Kỹ năng cốt lõi"
+                   data-bg-hex="#ffffff"
+                   data-bg-alpha="90"
+                   style="left: 382px; top: 172px; width: 181px; height: 295px; z-index: 16; background-color: rgba(255, 255, 255, 0.90);"
+                   class="studio-block is-selected p-4 rounded-2xl border border-stone-200/80 overflow-hidden">
+                <div class="block-badge">Mục Kỹ năng cốt lõi</div>
+                <div id="lbl-sec-skills-title" class="text-[11px] font-bold uppercase tracking-wider border-b border-current/10 pb-2 mb-3">Kỹ năng Cốt lõi</div>
+                <div id="render-skills" class="text-[11px]"></div>
+              </div>
+
+              <!-- KHỐI 5: KHỐI ĐA PHƯƠNG TIỆN / 3D -->
+              <div id="blk-media-3d"
+                   data-block-type="media"
+                   data-parent-group="grp-sidebar"
+                   data-block-title="Khối Đa phương tiện 3D"
+                   data-bg-hex="#0f172a"
+                   data-bg-alpha="92"
+                   style="left: 382px; top: 482px; width: 181px; height: 155px; z-index: 18; background-color: rgba(15, 23, 42, 0.92);"
+                   class="studio-block p-3 rounded-2xl text-white shadow-lg flex flex-col items-center justify-between overflow-hidden">
+                <div class="block-badge">Khối Đa phương tiện 3D</div>
+                <div class="text-[10px] font-semibold text-sky-300 uppercase tracking-wider">Mô hình 3D Tương tác</div>
+                <div class="cube-3d-scene my-auto">
+                  <div class="cube-3d">
+                    <div class="cube-face cf-front">3D</div><div class="cube-face cf-back">WEB</div>
+                    <div class="cube-face cf-right">IN</div><div class="cube-face cf-left">AI</div>
+                    <div class="cube-face cf-top">BẢN</div><div class="cube-face cf-bottom">ĐỒ</div>
+                  </div>
+                </div>
+                <div class="text-[10px] text-zinc-300">Xoay 360° • 60 khung hình/giây</div>
+              </div>
+
+              <!-- KHỐI 6: GHI CHÚ VĂN BẢN NỀN TRONG SUỐT (Độ đục nền 0%) -->
+              <div id="blk-free-note"
+                   data-block-type="text"
+                   data-parent-group="grp-sidebar"
+                   data-block-title="Khối Chữ tự do (Nền trong suốt)"
+                   data-bg-hex="#ffffff"
+                   data-bg-alpha="0"
+                   style="left: 382px; top: 652px; width: 181px; height: 95px; z-index: 25; background-color: rgba(255, 255, 255, 0);"
+                   class="studio-block p-2 rounded-xl">
+                <div class="block-badge">Khối Chữ tự do (Nền trong suốt 0%)</div>
+                <div id="free-note-content" contenteditable="true" style="font-family: 'Cormorant Garamond', serif" class="text-sm italic font-bold text-amber-900 leading-snug outline-none">
+                  “Mọi đối tượng đều có thể kéo thả, chỉnh tọa độ chính xác và tách độ trong suốt của nền độc lập với chữ.”
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </main>
+      </div>
+
+      <!-- =====================================================================
+           3D. BĂNG CHUYỀN CHUYỂN ĐỘNG & KHUNG HÌNH THEN CHỐT (Mục 5.9 — Đóng/mở từ chân trang)
+           ===================================================================== -->
+      <section id="motion-timeline-drawer" class="hidden h-44 ui-panel border-t flex flex-col z-30 shrink-0" data-spec-ref="5.9">
+        <div class="h-9 border-b ui-border px-3 flex items-center justify-between text-[11px] ui-subpanel">
+          <div class="flex items-center gap-2">
+            <span class="font-semibold text-blue-600">Dòng thời gian Chuyển động <span class="spec-ref-badge">Mục 5.9</span></span>
+            <button onclick="playAllBlocksAnimation()" class="px-2.5 py-0.5 rounded ui-accent-btn font-semibold">▶ Phát thử</button>
+            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="tl-loop-chk" onchange="toggleSelectedLoopAnim(this.checked)" class="accent-blue-600" /><span>Lặp lại</span></label>
+            <div class="gd-sep"></div>
+            <span class="ui-muted">Tốc độ:</span>
+            <select id="tl-fps" onchange="showToast('Tốc độ khung hình: '+this.value)" class="bg-transparent font-semibold outline-none">
+              <option value="60">60 khung/giây</option>
+              <option value="30">30 khung/giây</option>
+              <option value="24">24 khung/giây</option>
+            </select>
+            <div class="gd-sep"></div>
+            <span class="ui-muted">Nhịp điệu:</span>
+            <select id="tl-easing" onchange="updateAnimationTiming()" class="bg-transparent font-medium outline-none">
+              <option value="cubic-bezier(0.16, 1, 0.3, 1)">Mượt dần (Ease Out)</option>
+              <option value="cubic-bezier(0.34, 1.56, 0.64, 1)">Đàn hồi (Spring)</option>
+              <option value="ease-in-out">Đều hai đầu</option>
+              <option value="linear">Tuyến tính đều</option>
+            </select>
+            <div class="prop-box w-24"><span class="prop-lbl">Thời lượng</span><input id="tl-duration" type="number" step="0.1" value="0.6" oninput="updateAnimationTiming()" /></div>
+            <div class="prop-box w-20"><span class="prop-lbl">Trễ</span><input id="tl-delay" type="number" step="0.1" value="0.0" oninput="updateAnimationTiming()" /></div>
+          </div>
+
+          <div class="flex items-center gap-1">
+            <button onclick="triggerBlockAnim('anim-fade')" class="px-2 py-0.5 rounded border ui-border hover:border-blue-600">Hiện dần</button>
+            <button onclick="triggerBlockAnim('anim-slide')" class="px-2 py-0.5 rounded border ui-border hover:border-blue-600">Trượt vào</button>
+            <button onclick="triggerBlockAnim('anim-zoom')" class="px-2 py-0.5 rounded border ui-border hover:border-blue-600">Phóng to</button>
+            <button onclick="triggerBlockAnim('anim-rotate')" class="px-2 py-0.5 rounded border ui-border hover:border-blue-600">Xoay nhẹ</button>
+            <button onclick="triggerBlockAnim('anim-bounce')" class="px-2 py-0.5 rounded border ui-border hover:border-blue-600">Nảy đàn hồi</button>
+            <button onclick="triggerBlockAnim('anim-reveal')" class="px-2 py-0.5 rounded border ui-border hover:border-blue-600">Mở màn chắn</button>
+            <button onclick="triggerBlockAnim('anim-morph')" class="px-2 py-0.5 rounded border ui-border hover:border-blue-600">Biến hình</button>
+            <button onclick="runTypewriterAnim()" class="px-2 py-0.5 rounded border ui-border hover:border-blue-600">Gõ từng chữ</button>
+            <button onclick="toggleMotionTimeline()" class="gd-icon-btn ml-1" title="Đóng dòng thời gian">✕</button>
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-2.5 space-y-1.5 text-[10.5px]">
+          <div class="grid grid-cols-12 items-center ui-muted border-b ui-border pb-1">
+            <div class="col-span-3 font-semibold text-current">Lớp đối tượng</div>
+            <div class="col-span-9 flex justify-between px-2"><span>0.0 giây</span><span>0.5 giây</span><span>1.0 giây</span><span>1.5 giây</span><span>2.0 giây</span><span>2.5 giây</span><span>3.0 giây</span></div>
+          </div>
+          <div class="grid grid-cols-12 items-center py-1 hover:bg-zinc-500/5 rounded">
+            <div class="col-span-3 font-medium">Khối Tiêu đề & Thông tin cá nhân</div>
+            <div class="col-span-9 h-4 ui-subpanel rounded relative flex items-center">
+              <div class="absolute left-[2%] w-[28%] h-2.5 rounded bg-blue-500/25 border border-blue-600 flex items-center justify-between px-1.5 text-[9.5px] text-blue-700"><span>◆</span><span>Hiện dần lên</span><span>◆</span></div>
+            </div>
+          </div>
+          <div class="grid grid-cols-12 items-center py-1 hover:bg-zinc-500/5 rounded">
+            <div class="col-span-3 font-medium">Mục Kinh nghiệm chuyên môn</div>
+            <div class="col-span-9 h-4 ui-subpanel rounded relative flex items-center">
+              <div class="absolute left-[14%] w-[35%] h-2.5 rounded bg-emerald-500/25 border border-emerald-600 flex items-center justify-between px-1.5 text-[9.5px] text-emerald-700"><span>◆</span><span>Mở màn chắn</span><span>◆</span></div>
+            </div>
+          </div>
+          <div class="grid grid-cols-12 items-center py-1 hover:bg-zinc-500/5 rounded">
+            <div class="col-span-3 font-medium">Mục Kỹ năng cốt lõi</div>
+            <div class="col-span-9 h-4 ui-subpanel rounded relative flex items-center">
+              <div class="absolute left-[25%] w-[32%] h-2.5 rounded bg-amber-500/25 border border-amber-600 flex items-center justify-between px-1.5 text-[9.5px] text-amber-700"><span>◆</span><span>Nảy đàn hồi</span><span>◆</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- =======================================================================
+         3E. BẢNG THUỘC TÍNH CHI TIẾT BÊN PHẢI (296px) + NÚT ĐÓNG/MỞ CỐ ĐỊNH
+         ======================================================================= -->
+    <div class="relative flex items-center z-20 shrink-0">
+      <!-- NÚT ĐÓNG / MỞ BẢNG THUỘC TÍNH PHẢI CỐ ĐỊNH -->
+      <button id="right-inspector-ear"
+              onclick="toggleRightInspector()"
+              class="drawer-toggle-ear rounded-l-md border-r-0"
+              title="Thu gọn hoặc mở rộng bảng thuộc tính bên phải">
+        <span id="right-ear-icon" class="text-xs font-bold leading-none">›</span>
+      </button>
+
+      <aside id="right-inspector" class="w-[296px] h-full ui-panel border-l flex flex-col shrink-0">
+        <div class="h-9 px-3 border-b ui-border flex items-center justify-between">
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span class="w-2 h-2 rounded-full bg-blue-600 shrink-0"></span>
+            <h3 id="insp-title" class="font-semibold text-xs truncate">Thuộc tính: Mục Kỹ năng cốt lõi</h3>
+          </div>
+          <button onclick="toggleRightInspector()" class="gd-icon-btn" title="Thu gọn bảng thuộc tính">✕</button>
+        </div>
+
+        <div class="flex-1 p-3 overflow-y-auto space-y-3.5 text-[11px]">
+
+          <!-- KHỐI 1: KÍCH THƯỚC, TỌA ĐỘ & BIẾN ĐỔI CHÍNH XÁC (Mục 5.8) -->
+          <div class="space-y-2 pb-3 border-b ui-border" data-spec-ref="5.8">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-[11px]">Kích thước & Vị trí <span class="spec-ref-badge">Mục 5.8</span></span>
+              <button onclick="toggleAspectRatioLock()" id="btn-aspect-lock" class="px-2 py-0.5 rounded border ui-border text-[10px] font-medium text-blue-600" title="Khóa tỷ lệ chiều rộng và chiều cao">Khóa tỷ lệ</button>
+            </div>
+
+            <div class="flex gap-2 items-center">
+              <div class="grid grid-cols-2 gap-1.5 flex-1">
+                <div class="prop-box" title="Tọa độ ngang X"><span class="prop-lbl">X</span><input id="insp-x" type="number" value="382" oninput="applyPrecisionTransform()" /></div>
+                <div class="prop-box" title="Tọa độ dọc Y"><span class="prop-lbl">Y</span><input id="insp-y" type="number" value="172" oninput="applyPrecisionTransform()" /></div>
+                <div class="prop-box" title="Chiều rộng"><span class="prop-lbl">Rộng</span><input id="insp-w" type="number" value="181" oninput="applyPrecisionTransform()" /></div>
+                <div class="prop-box" title="Chiều cao"><span class="prop-lbl">Cao</span><input id="insp-h" type="number" value="295" oninput="applyPrecisionTransform()" /></div>
+                <div class="prop-box" title="Góc xoay (độ)"><span class="prop-lbl">Xoay°</span><input id="insp-rot" type="number" value="0" oninput="applyPrecisionTransform()" /></div>
+                <div class="prop-box" title="Độ nghiêng (độ)"><span class="prop-lbl">Nghiêng°</span><input id="insp-skew" type="number" value="0" oninput="applyPrecisionTransform()" /></div>
+              </div>
+
+              <!-- Ma trận 9 điểm tâm xoay -->
+              <div class="p-1.5 rounded border ui-border ui-subpanel grid grid-cols-3 gap-1.5" title="Chọn tâm xoay và biến đổi (9 điểm neo)">
+                <div onclick="setTransformPivot('top left', this)" class="anchor-dot"></div>
+                <div onclick="setTransformPivot('top center', this)" class="anchor-dot"></div>
+                <div onclick="setTransformPivot('top right', this)" class="anchor-dot"></div>
+                <div onclick="setTransformPivot('center left', this)" class="anchor-dot"></div>
+                <div onclick="setTransformPivot('center center', this)" class="anchor-dot active"></div>
+                <div onclick="setTransformPivot('center right', this)" class="anchor-dot"></div>
+                <div onclick="setTransformPivot('bottom left', this)" class="anchor-dot"></div>
+                <div onclick="setTransformPivot('bottom center', this)" class="anchor-dot"></div>
+                <div onclick="setTransformPivot('bottom right', this)" class="anchor-dot"></div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-1.5">
+              <div class="prop-box" title="Bo tròn góc (px)"><span class="prop-lbl">Bo góc</span><input id="insp-radius" type="number" value="16" oninput="applyBlockStyle('borderRadius', this.value+'px')" /></div>
+              <div class="prop-box" title="Chiều sâu phối cảnh 3D"><span class="prop-lbl">3D</span><input id="insp-persp" type="number" value="0" oninput="applyPrecisionTransform()" /></div>
+              <div class="prop-box" title="Khoảng đệm bên trong"><span class="prop-lbl">Đệm</span><input id="insp-pad" type="number" value="16" oninput="applyBlockStyle('padding', this.value+'px')" /></div>
+            </div>
+          </div>
+
+          <!-- KHỐI 2: DÀN TRANG TỰ ĐỘNG & NEO VỊ TRÍ (Mục 5.6) -->
+          <div class="space-y-2 pb-3 border-b ui-border" data-spec-ref="5.6">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-[11px]">Dàn tự động & Neo cố định <span class="spec-ref-badge">Mục 5.6</span></span>
+            </div>
+            <div class="grid grid-cols-4 gap-1 text-[10.5px]">
+              <button onclick="setBlockAutoLayout('free')" class="p-1 rounded border ui-border ui-subpanel font-medium">Tự do</button>
+              <button onclick="setBlockAutoLayout('row')" class="p-1 rounded border ui-border ui-subpanel font-medium">Hàng ngang</button>
+              <button onclick="setBlockAutoLayout('col')" class="p-1 rounded border ui-border ui-subpanel font-medium">Cột dọc</button>
+              <button onclick="setBlockAutoLayout('grid')" class="p-1 rounded border ui-border ui-subpanel font-medium">Chia lưới</button>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5">
+              <div class="prop-box"><span class="prop-lbl">Neo ngang</span>
+                <select onchange="showToast('Đã đặt neo ngang: '+this.value)">
+                  <option>Trái</option><option>Phải</option><option>Trái + Phải</option><option>Giữa</option><option>Co giãn</option>
+                </select>
+              </div>
+              <div class="prop-box"><span class="prop-lbl">Neo dọc</span>
+                <select onchange="showToast('Đã đặt neo dọc: '+this.value)">
+                  <option>Trên</option><option>Dưới</option><option>Trên + Dưới</option><option>Giữa</option><option>Co giãn</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- KHỐI 3: MÀU SẮC, TÔ NỀN & ĐƯỜNG VIỀN (Mục 5.4) -->
+          <div class="space-y-2 pb-3 border-b ui-border" data-spec-ref="5.4">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-[11px]">Màu sắc, Nền & Viền <span class="spec-ref-badge">Mục 5.4</span></span>
+              <div class="flex items-center gap-1">
+                <button onclick="pickScreenColor()" class="px-2 py-0.5 rounded border ui-border text-[10px] font-medium" title="Hút màu bất kỳ trên màn hình">Hút màu</button>
+                <select id="color-space-select" onchange="switchColorSpaceView(this.value)" class="bg-transparent font-semibold text-[10.5px] outline-none">
+                  <option value="HEX">Mã HEX</option>
+                  <option value="RGB">Hệ RGB</option>
+                  <option value="HSL">Hệ HSL</option>
+                  <option value="CMYK">Hệ in CMYK</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="color-space-readout" class="p-1.5 rounded ui-subpanel border text-[10.5px] flex justify-between font-medium">
+              <span>#FFFFFF (90%)</span><span>RGB(255,255,255)</span><span>CMYK(0,0,0,0)</span>
+            </div>
+
+            <div class="grid grid-cols-4 gap-1 text-[10.5px]">
+              <button onclick="setBlockFillType('solid')" class="p-1 rounded border ui-border ui-subpanel font-medium">Màu đặc</button>
+              <button onclick="setBlockFillType('linear')" class="p-1 rounded border ui-border ui-subpanel font-medium">Chuyển thẳng</button>
+              <button onclick="setBlockFillType('radial')" class="p-1 rounded border ui-border ui-subpanel font-medium">Chuyển tròn</button>
+              <button onclick="setBlockFillType('pattern')" class="p-1 rounded border ui-border ui-subpanel font-medium">Họa tiết</button>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              <input id="g-c1" type="color" value="#ffecd2" oninput="applyGrad()" class="w-6 h-6 rounded border-0 bg-transparent cursor-pointer" />
+              <input id="g-c2" type="color" value="#fcb69f" oninput="applyGrad()" class="w-6 h-6 rounded border-0 bg-transparent cursor-pointer" />
+              <input id="g-ang" type="range" min="0" max="360" value="135" oninput="applyGrad()" class="flex-1 accent-blue-600" title="Góc chuyển sắc 0°..360°" />
+              <span id="g-ang-lbl" class="text-[10.5px] w-8 text-right font-medium">135°</span>
+            </div>
+
+            <div class="flex items-center justify-between pt-0.5">
+              <span class="text-[10.5px] ui-muted">Bảng màu thương hiệu:</span>
+              <div class="flex gap-1">
+                <button onclick="applyBrandSwatch('#18181b')" class="w-4 h-4 rounded-full bg-zinc-900 border border-white/30"></button>
+                <button onclick="applyBrandSwatch('#0b57d0')" class="w-4 h-4 rounded-full bg-[#0b57d0]"></button>
+                <button onclick="applyBrandSwatch('#059669')" class="w-4 h-4 rounded-full bg-emerald-600"></button>
+                <button onclick="applyBrandSwatch('#d97706')" class="w-4 h-4 rounded-full bg-amber-600"></button>
+                <button onclick="applyBrandSwatch('#e11d48')" class="w-4 h-4 rounded-full bg-rose-600"></button>
+                <button onclick="applyBrandSwatch('#FAF6F0')" class="w-4 h-4 rounded-full bg-[#FAF6F0] border border-zinc-400"></button>
+              </div>
+            </div>
+
+            <div class="pt-1.5 space-y-1.5">
+              <div class="text-[10.5px] font-medium">Đường viền (Độ dày, Kiểu nét & Vị trí)</div>
+              <div class="grid grid-cols-3 gap-1.5">
+                <div class="prop-box">
+                  <input id="stroke-color" type="color" value="#d6d3d1" oninput="applyStrokeProps()" class="w-4 h-4 border-0" />
+                  <input id="stroke-width" type="number" min="0" max="16" value="1" oninput="applyStrokeProps()" />
+                </div>
+                <div class="prop-box">
+                  <select id="stroke-style" onchange="applyStrokeProps()">
+                    <option value="solid">Nét liền</option>
+                    <option value="dashed">Nét đứt</option>
+                    <option value="dotted">Nét chấm</option>
+                    <option value="double">Nét đôi</option>
+                  </select>
+                </div>
+                <div class="prop-box">
+                  <select id="stroke-align" onchange="showToast('Vị trí đường viền: '+this.value)">
+                    <option value="inside">Bên trong</option>
+                    <option value="center">Chính giữa</option>
+                    <option value="outside">Bên ngoài</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- KHỐI 4: HÒA TRỘN LỚP & HIỆU ỨNG ĐỘC LẬP (Mục 5.4 & 5.3) -->
+          <div class="space-y-2" data-spec-ref="5.4-effects">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-[11px]">Hòa trộn & Hiệu ứng <span class="spec-ref-badge">Mục 5.4 & 5.3</span></span>
+            </div>
+
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[10.5px] ui-muted">Chế độ hòa trộn:</span>
+              <select id="tb-blend-mode" onchange="applyBlockStyle('mixBlendMode', this.value)" class="h-6 px-2 rounded border ui-border ui-subpanel font-medium text-[11px] outline-none cursor-pointer">
+                <option value="normal">Bình thường</option>
+                <option value="multiply">Nhân màu (Làm sẫm)</option>
+                <option value="screen">Làm sáng</option>
+                <option value="overlay">Phủ tương phản</option>
+                <option value="darken">Giữ màu tối</option>
+                <option value="lighten">Giữ màu sáng</option>
+                <option value="color-dodge">Tăng sáng mạnh</option>
+                <option value="color-burn">Tăng tối mạnh</option>
+                <option value="soft-light">Ánh sáng dịu</option>
+                <option value="hard-light">Ánh sáng gắt</option>
+                <option value="difference">Khác biệt màu</option>
+                <option value="exclusion">Loại trừ màu</option>
+                <option value="luminosity">Độ chói</option>
+              </select>
+            </div>
+
+            <div>
+              <div class="flex justify-between text-[10.5px] mb-0.5"><span>Độ rõ toàn khối</span><span id="lbl-layer-op">100%</span></div>
+              <input type="range" min="10" max="100" value="100" oninput="applyBlockStyle('opacity', this.value/100); document.getElementById('lbl-layer-op').textContent=this.value+'%'" class="w-full accent-blue-600" />
+            </div>
+
+            <div>
+              <div class="flex justify-between text-[10.5px] mb-0.5"><span>Độ mờ kính xuyên lớp</span><span id="lbl-blur-glass">8px</span></div>
+              <input type="range" min="0" max="28" value="8" oninput="applyBlockStyle('backdropFilter','blur('+this.value+'px)'); document.getElementById('lbl-blur-glass').textContent=this.value+'px'" class="w-full accent-blue-600" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
+              <button onclick="applyBlockStyle('boxShadow','0 14px 32px rgba(0,0,0,0.14)')" class="p-1.5 rounded border ui-border ui-subpanel hover:border-blue-600 text-left">Đổ bóng ngoài</button>
+              <button onclick="toggleBlockClass('ps-fx-innershadow')" class="p-1.5 rounded border ui-border ui-subpanel hover:border-blue-600 text-left">Bóng đổ trong</button>
+              <button onclick="toggleBlockClass('ps-fx-outerglow')" class="p-1.5 rounded border ui-border ui-subpanel hover:border-blue-600 text-left">Phát sáng viền</button>
+              <button onclick="toggleBlockClass('ps-fx-bevel')" class="p-1.5 rounded border ui-border ui-subpanel hover:border-blue-600 text-left">Chạm nổi 3D</button>
+              <button onclick="toggleBlockClass('ps-fx-grain')" class="p-1.5 rounded border ui-border ui-subpanel hover:border-blue-600 text-left">Nhiễu hạt giấy</button>
+              <button onclick="toggleBlockClass('ps-fx-outline')" class="p-1.5 rounded border ui-border ui-subpanel hover:border-blue-600 text-left">Viền bao ngoài</button>
+            </div>
+
+            <div class="p-2 rounded-lg ui-subpanel border space-y-1.5">
+              <div class="font-medium text-[10.5px]">Chỉnh màu Hình ảnh</div>
+              <div class="flex items-center gap-2 text-[10.5px]"><span class="w-16 ui-muted">Độ sáng</span><input id="flt-b" type="range" min="50" max="150" value="100" oninput="applyFilters()" class="flex-1 accent-blue-600" /></div>
+              <div class="flex items-center gap-2 text-[10.5px]"><span class="w-16 ui-muted">Tương phản</span><input id="flt-c" type="range" min="50" max="160" value="100" oninput="applyFilters()" class="flex-1 accent-blue-600" /></div>
+              <div class="flex items-center gap-2 text-[10.5px]"><span class="w-16 ui-muted">Độ bão hòa</span><input id="flt-s" type="range" min="0" max="200" value="100" oninput="applyFilters()" class="flex-1 accent-blue-600" /></div>
+              <div class="flex items-center gap-2 text-[10.5px]"><span class="w-16 ui-muted">Đổi sắc độ</span><input id="flt-h" type="range" min="0" max="360" value="0" oninput="applyFilters()" class="flex-1 accent-blue-600" /></div>
+              <div class="flex items-center gap-2 text-[10.5px]"><span class="w-16 ui-muted">Làm mờ</span><input id="flt-blur" type="range" min="0" max="16" value="0" oninput="applyFilters()" class="flex-1 accent-blue-600" /></div>
+            </div>
+          </div>
+
+        </div>
+      </aside>
+    </div>
+
+  </div>
+
+  <!-- =========================================================================
+       4. THANH TRẠNG THÁI CHÂN TRANG CỐ ĐỊNH (Kiểu Microsoft Word — Không biến dạng nút, Tích hợp Điều hướng trang, Đơn vị & Thu phóng)
+       ========================================================================= -->
+  <footer class="h-8 ui-panel border-t px-3 flex items-center justify-between gap-2 text-[11px] z-40 shrink-0">
+    <!-- Trái: Điều hướng Trang bằng Icon gọn + Đối tượng đang chọn + Điểm kiểm định -->
+    <div class="flex items-center gap-2">
+      <!-- Cụm chuyển trang bằng Icon (Không bao giờ xuống dòng hay méo nút như ảnh chụp ở v6) -->
+      <div class="inline-flex items-center gap-1 ui-subpanel border rounded-md px-1.5 h-6" title="Quản lý trang trong tài liệu">
+        <button onclick="switchDocumentPage(1)" class="w-5 h-5 rounded hover:bg-black/10 inline-flex items-center justify-center" title="Trang trước">‹</button>
+        <span id="footer-page-indicator" class="px-1 font-semibold">Trang 1 / 2</span>
+        <button onclick="switchDocumentPage(2)" class="w-5 h-5 rounded hover:bg-black/10 inline-flex items-center justify-center" title="Trang tiếp theo">›</button>
+        <div class="w-px h-3.5 bg-zinc-300 mx-0.5"></div>
+        <button onclick="addNewDocumentPage()" class="w-5 h-5 rounded hover:bg-black/10 inline-flex items-center justify-center font-bold" title="Thêm trang mới">+</button>
+      </div>
+
+      <div class="gd-sep"></div>
+
+      <!-- Tên đối tượng đang chọn -->
+      <span class="ui-muted">Đang chọn: <strong id="tb-block-name" class="text-current font-semibold">Mục Kỹ năng cốt lõi</strong></span>
+
+      <div class="gd-sep hidden md:block"></div>
+
+      <!-- Nút Kiểm định chất lượng -->
+      <button onclick="openLeftTab('smart')" class="hidden md:inline-flex items-center gap-1 text-emerald-600 font-semibold hover:underline" title="Xem chi tiết kiểm định chất lượng 5 bước">
+        <span>✓ Đạt chuẩn 98/100</span>
+      </button>
+    </div>
+
+    <!-- Giữa: Kích thước trang, Đơn vị, DPI, Bật nhanh Lưới / Vùng in / Chuyển động & Gợi ý phím Alt -->
+    <div class="hidden lg:flex items-center gap-2">
+      <span id="page-dim-readout" class="ui-muted font-medium">595 × 842</span>
+      <select id="unit-select" onchange="changeDocumentUnit(this.value)" class="h-6 px-1 rounded border ui-border ui-subpanel font-semibold text-[10.5px] outline-none cursor-pointer" title="Đơn vị đo">
+        <option value="px">px</option>
+        <option value="mm">mm</option>
+        <option value="cm">cm</option>
+        <option value="in">inch</option>
+        <option value="pt">pt</option>
+      </select>
+      <select id="dpi-select" onchange="changeDocumentDpi(this.value)" class="h-6 px-1 rounded border ui-border ui-subpanel font-medium text-[10.5px] outline-none cursor-pointer" title="Độ phân giải in ấn">
+        <option value="300">300 DPI</option>
+        <option value="150">150 DPI</option>
+        <option value="72">72 PPI</option>
+      </select>
+      <button onclick="togglePageOrientation()" class="h-6 px-2 rounded border ui-border hover:bg-black/5 font-medium text-[10.5px]" title="Đổi chiều trang Dọc / Ngang">Xoay khổ</button>
+      <button onclick="toggleMotionTimeline()" id="tb-btn-timeline" class="h-6 px-2 rounded border ui-border hover:bg-black/5 font-medium text-[10.5px]" title="Mở hoặc đóng Băng chuyền Chuyển động">Chuyển động</button>
+      <span class="text-[10px] ui-muted" title="Nhấn giữ phím Alt (Option) để xem mã mục tài liệu thiết kế">• Giữ phím <kbd class="px-1 py-0.5 rounded border ui-border ui-subpanel font-semibold">Alt</kbd> để tra mã mục</span>
+    </div>
+
+    <!-- Phải: Cụm Thu phóng chuẩn Microsoft Word -->
+    <div class="flex items-center gap-1.5 shrink-0">
+      <button onclick="setCanvasZoom(0.68)" class="h-6 px-2 rounded border ui-border hover:bg-black/5 font-medium text-[10.5px]" title="Thu nhỏ vừa khít khung nhìn">Vừa trang</button>
+      <button onclick="setCanvasZoom(currentZoom - 0.1)" class="w-5 h-5 rounded hover:bg-black/10 inline-flex items-center justify-center font-bold" title="Thu nhỏ">−</button>
+      <input id="zoom-slider" type="range" min="0.4" max="1.5" step="0.05" value="1" oninput="setCanvasZoom(Number(this.value))" class="w-20 accent-blue-600" />
+      <button onclick="setCanvasZoom(currentZoom + 0.1)" class="w-5 h-5 rounded hover:bg-black/10 inline-flex items-center justify-center font-bold" title="Phóng to">+</button>
+      <span id="zoom-pct-lbl" onclick="setCanvasZoom(1.0)" class="w-10 text-right font-semibold cursor-pointer" title="Bấm để về 100%">100%</span>
+    </div>
+  </footer>
+
+  <!-- =========================================================================
+       5. HỘP THOẠI XUẤT BẢN & KIỂM TRA KỸ THUẬT TRƯỚC IN (Mục 5.12 & 9.4)
+       ========================================================================= -->
+  <div id="export-preflight-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+    <div class="ui-panel border rounded-2xl max-w-xl w-full p-5 space-y-4 shadow-2xl text-xs">
+      <div class="flex justify-between items-center border-b ui-border pb-3">
+        <div>
+          <h3 class="font-bold text-sm">Xuất bản Ấn phẩm & Kiểm tra Kỹ thuật <span class="spec-ref-badge">Mục 5.12</span></h3>
+          <p class="ui-muted text-[11px]">Tùy chỉnh định dạng đầu ra phù hợp với môi trường in ấn, web hoặc video</p>
+        </div>
+        <button onclick="closeExportPreflightModal()" class="gd-icon-btn">✕</button>
+      </div>
+
+      <div>
+        <div class="font-semibold mb-1.5">Chọn định dạng tệp xuất bản</div>
+        <div class="grid grid-cols-4 gap-1.5 text-[11px]">
+          <button onclick="selectExportFormat('PDF/X')" class="exp-fmt-btn p-2 rounded-lg border-2 border-blue-600 bg-blue-500/10 font-semibold text-left"><div>Tệp PDF / PDF-X</div><div class="text-[10px] ui-muted">Chuẩn in & Tuyển dụng</div></button>
+          <button onclick="selectExportFormat('PNG')" class="exp-fmt-btn p-2 rounded-lg border ui-border text-left"><div>Ảnh PNG / WebP</div><div class="text-[10px] ui-muted">Độ nét cao + Nền trong</div></button>
+          <button onclick="selectExportFormat('SVG')" class="exp-fmt-btn p-2 rounded-lg border ui-border text-left"><div>Vector SVG / JPG</div><div class="text-[10px] ui-muted">Đồ họa & Trang web</div></button>
+          <button onclick="selectExportFormat('MP4')" class="exp-fmt-btn p-2 rounded-lg border ui-border text-left"><div>Video MP4 / GIF</div><div class="text-[10px] ui-muted">Chuyển động 60fps</div></button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2 p-3 rounded-xl ui-subpanel border">
+        <div>
+          <div class="text-[10.5px] ui-muted mb-1">Độ phân giải & Tỷ lệ</div>
+          <select class="w-full p-1.5 rounded border ui-border ui-panel font-medium">
+            <option>300 DPI (In chất lượng cao)</option>
+            <option>150 DPI (Bản xem tiêu chuẩn)</option>
+            <option>72 PPI (Tối ưu cho Web)</option>
+          </select>
+        </div>
+        <div>
+          <div class="text-[10.5px] ui-muted mb-1">Không gian màu</div>
+          <select class="w-full p-1.5 rounded border ui-border ui-panel font-medium">
+            <option>sRGB Tiêu chuẩn</option>
+            <option>CMYK In ấn thương mại</option>
+            <option>Display P3 Rộng</option>
+          </select>
+        </div>
+        <div>
+          <div class="text-[10.5px] ui-muted mb-1">Phạm vi trang</div>
+          <select class="w-full p-1.5 rounded border ui-border ui-panel font-medium">
+            <option>Toàn bộ các trang (1–2)</option>
+            <option>Chỉ trang hiện tại (1)</option>
+            <option>Xuất hàng loạt nhiều cỡ</option>
+          </select>
+        </div>
+        <label class="flex items-center gap-1.5 cursor-pointer pt-1"><input type="checkbox" checked class="accent-blue-600" /><span>Kèm lề xén in 3mm</span></label>
+        <label class="flex items-center gap-1.5 cursor-pointer pt-1"><input type="checkbox" checked class="accent-blue-600" /><span>Dấu cắt góc in ấn</span></label>
+        <label class="flex items-center gap-1.5 cursor-pointer pt-1"><input type="checkbox" checked class="accent-blue-600" /><span>Nhúng phông chữ vào tệp</span></label>
+      </div>
+
+      <div class="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-1.5">
+        <div class="flex justify-between items-center">
+          <span class="font-semibold text-emerald-700">✓ Kiểm tra kỹ thuật trước xuất bản (Đạt 5/5 tiêu chí)</span>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 font-semibold">Sẵn sàng xuất bản</span>
+        </div>
+        <div class="grid grid-cols-2 gap-1 text-[11px]">
+          <div>• Phông chữ: Đã nhúng đầy đủ vào tài liệu</div>
+          <div>• Độ nét hình ảnh: Đạt chuẩn ≥ 300 DPI</div>
+          <div>• Vùng an toàn & lề xén: Không có chữ bị lẹm</div>
+          <div>• Độ tương phản đọc: Đạt chuẩn AAA (14.8:1)</div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-1">
+        <button onclick="closeExportPreflightModal()" class="px-4 py-2 rounded-lg border ui-border font-medium">Hủy</button>
+        <button onclick="executeExportPublish()" class="px-5 py-2 rounded-lg ui-accent-btn font-semibold">Tải xuống & Lưu bản xuất bản</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- THÔNG BÁO NHANH -->
+  <div id="studio-toast" class="hidden fixed bottom-10 right-5 bg-zinc-900 text-white px-4 py-2.5 rounded-xl shadow-2xl border border-zinc-700 text-xs font-medium z-50"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
