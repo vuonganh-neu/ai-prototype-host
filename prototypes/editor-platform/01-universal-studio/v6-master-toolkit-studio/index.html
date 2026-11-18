@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>v6.0 Master Design & Editor Studio — All Domains & 12 Complete Design Toolkits (Mục 5.1–5.12)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="h-screen flex flex-col overflow-hidden select-none text-xs">
+
+  <!-- =========================================================================
+       1. TOP MASTER STUDIO HEADER (h-12: Domain Switcher, 3 AI Modes, 5.1 Presets/Units/DPI, DB, Export Preflight)
+       ========================================================================= -->
+  <header class="h-12 ui-panel border-b px-2.5 flex items-center justify-between gap-2 z-40 shrink-0">
+    <!-- Left: Hub Back Link + Document Title + Undo/Redo (5.7) -->
+    <div class="flex items-center gap-1.5 min-w-0">
+      <a href="../../../../index.html" class="h-7 px-2 rounded-md border ui-border hover:opacity-80 font-bold inline-flex items-center gap-1 shrink-0" title="Quay về Preview Hub">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        <span>v6.0 Master</span>
+      </a>
+      <input id="doc-title-input" value="Vũ Anh Vương — Multi-Domain Master Project" class="h-7 font-bold text-xs bg-transparent hover:bg-zinc-500/10 px-1.5 rounded outline-none w-44 truncate" title="Tên tài liệu (Document Metadata)" />
+      <div class="tb-sep"></div>
+      <button onclick="undoOperation()" class="tb-icon-btn" title="Hoàn tác (Undo — ⌘Z)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+      </button>
+      <button onclick="redoOperation()" class="tb-icon-btn" title="Làm lại (Redo — ⇧⌘Z)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+      </button>
+    </div>
+
+    <!-- Center-Left: ALL-DOMAIN OUTPUT SWITCHER (CV, Poster, Banner, Catalog, Web, Chart, Map, Motion) -->
+    <div class="flex items-center gap-1 ui-subpanel border p-0.5 rounded-lg overflow-x-auto">
+      <button onclick="switchEditorDomain('cv')" id="dom-btn-cv" class="dom-pill px-2 py-1 rounded-md font-bold ui-accent-btn shrink-0" title="CV Design (Readability, ATS Compatibility, Personal Branding)">📄 CV</button>
+      <button onclick="switchEditorDomain('poster')" id="dom-btn-poster" class="dom-pill px-2 py-1 rounded-md font-semibold ui-muted hover:opacity-100 shrink-0" title="Poster Design (Visual Impact, Focal Point, Typography)">🎨 Poster</button>
+      <button onclick="switchEditorDomain('banner')" id="dom-btn-banner" class="dom-pill px-2 py-1 rounded-md font-semibold ui-muted hover:opacity-100 shrink-0" title="Banner Ads (Attention, Conversion, CTA, Safe Area)">📢 Banner</button>
+      <button onclick="switchEditorDomain('catalog')" id="dom-btn-catalog" class="dom-pill px-2 py-1 rounded-md font-semibold ui-muted hover:opacity-100 shrink-0" title="Catalog / Brochure / Portfolio (Editorial, Multi-page, Product Data)">📖 Catalog</button>
+      <button onclick="switchEditorDomain('web')" id="dom-btn-web" class="dom-pill px-2 py-1 rounded-md font-semibold ui-muted hover:opacity-100 shrink-0" title="Web / Landing Page (UX, Responsive Desktop/Tablet/Mobile, IA)">🌐 Web</button>
+      <button onclick="switchEditorDomain('chart')" id="dom-btn-chart" class="dom-pill px-2 py-1 rounded-md font-semibold ui-muted hover:opacity-100 shrink-0" title="Chart / Data Visualization (Data Accuracy, ECharts, Insight)">📊 Chart</button>
+      <button onclick="switchEditorDomain('map')" id="dom-btn-map" class="dom-pill px-2 py-1 rounded-md font-semibold ui-muted hover:opacity-100 shrink-0" title="Map / Geographic Visualization (Spatial Layers, Satellite, Live GPS)">🗺️ Map</button>
+      <button onclick="switchEditorDomain('motion')" id="dom-btn-motion" class="dom-pill px-2 py-1 rounded-md font-semibold ui-muted hover:opacity-100 shrink-0" title="Motion Graphic (Timeline, Keyframes, Easing, Temporal Design)">🎬 Motion</button>
+    </div>
+
+    <!-- Center-Right: 5.1 Canvas Preset + Units (px/mm/cm/in/pt) + DPI + Orientation -->
+    <div class="hidden xl:flex items-center gap-1">
+      <div class="h-7 ui-subpanel border px-1.5 rounded-md inline-flex items-center gap-1" title="5.1 Kích thước Preset & Custom Dimensions">
+        <select id="page-size-select" onchange="changePageSizePreset(this.value)" class="bg-transparent font-semibold text-[11px] outline-none cursor-pointer">
+          <option value="595x842">Print A4 (210×297 mm)</option>
+          <option value="700x990">Print A3 (297×420 mm)</option>
+          <option value="460x650">Print A5 (148×210 mm)</option>
+          <option value="640x640">Social Square (1080×1080 px)</option>
+          <option value="560x700">Social Portrait (1080×1350 px)</option>
+          <option value="450x800">Story (1080×1920 px)</option>
+          <option value="780x408">Banner Landscape (1200×628 px)</option>
+          <option value="860x540">Web Desktop (1440×900 px)</option>
+        </select>
+      </div>
+      <div class="h-7 ui-subpanel border px-1.5 rounded-md inline-flex items-center gap-1" title="5.1 Đơn vị đo (px / mm / cm / inch / pt)">
+        <select id="unit-select" onchange="changeDocumentUnit(this.value)" class="bg-transparent font-mono-num font-bold text-[11px] outline-none cursor-pointer">
+          <option value="px">px</option>
+          <option value="mm">mm</option>
+          <option value="cm">cm</option>
+          <option value="in">inch</option>
+          <option value="pt">pt</option>
+        </select>
+      </div>
+      <div class="h-7 ui-subpanel border px-1.5 rounded-md inline-flex items-center gap-1" title="5.1 Độ phân giải tài liệu (DPI / PPI)">
+        <select id="dpi-select" onchange="changeDocumentDpi(this.value)" class="bg-transparent font-mono-num font-semibold text-[11px] outline-none cursor-pointer">
+          <option value="300">300 DPI</option>
+          <option value="150">150 DPI</option>
+          <option value="72">72 PPI</option>
+        </select>
+      </div>
+      <button onclick="togglePageOrientation()" class="tb-icon-btn border ui-border" title="5.1 Đổi chiều trang Dọc / Ngang (Orientation Portrait ↔ Landscape)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 6h6"/></svg>
+      </button>
+    </div>
+
+    <!-- Right: 3 Usage Modes (Mục 1.2) + Host DB + Theme + Export & Preflight (5.12) -->
+    <div class="flex items-center gap-1.5 shrink-0">
+      <div class="h-7 ui-subpanel border px-1.5 rounded-md inline-flex items-center gap-1" title="Mục 1.2: Ba phương thức sử dụng (Human-driven / Human + AI / AI-driven)">
+        <select id="collab-mode-select" onchange="switchCollabMode(this.value)" class="bg-transparent font-bold text-[11px] text-sky-600 outline-none cursor-pointer">
+          <option value="collab">✨ Human + AI Co-Pilot</option>
+          <option value="human">👤 Human-Driven</option>
+          <option value="ai">🤖 AI-Driven AutoFlow</option>
+        </select>
+      </div>
+
+      <div class="h-7 ui-subpanel border px-1.5 rounded-md inline-flex items-center gap-1" title="Chuyển đổi bản ghi từ Host Database">
+        <span class="text-[10px] font-bold text-emerald-600">DB:</span>
+        <select id="host-db-select" onchange="switchHostDatabaseProfile(this.value)" class="bg-transparent font-semibold text-[11px] outline-none cursor-pointer">
+          <option value="vuong">#1: Vũ Anh Vương</option>
+          <option value="chau">#2: Nguyễn Minh Châu</option>
+          <option value="campaign">#3: Cloud Launch 2026</option>
+        </select>
+      </div>
+
+      <button onclick="toggleStudioTheme()" class="tb-icon-btn border ui-border" title="Chuyển đổi Giao diện Sáng (Daylight) / Tối (Graphite Studio)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2"/></svg>
+      </button>
+
+      <button onclick="openExportPreflightModal()" class="h-7 px-2.5 rounded-md ui-accent-btn font-bold inline-flex items-center gap-1 shadow-xs" title="5.12 Export & Publishing + Technical Preflight QA">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Export & QA</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       2. UNIFORM ICON-FIRST CONTEXTUAL TOOLBAR (h-10, 30x30px Icon Buttons — v5 Ergonomics + Section 5 Quick Tools)
+       ========================================================================= -->
+  <div class="h-10 ui-panel border-b px-2.5 flex items-center justify-between gap-1 z-30 shrink-0 overflow-x-auto">
+    <div class="flex items-center gap-1">
+      <!-- Active Object Pill -->
+      <span id="tb-block-tag" class="h-7 px-2 rounded-md bg-sky-500/12 text-sky-600 border border-sky-500/30 font-bold inline-flex items-center gap-1 shrink-0">
+        <span id="tb-block-icon">🧩</span>
+        <span id="tb-block-name" class="max-w-[130px] truncate">Section: Kỹ năng</span>
+      </span>
+
+      <!-- Per-Section Variant & Data Switcher (Preserved from v5) -->
+      <div id="tb-section-controls" class="inline-flex items-center gap-1">
+        <button onclick="openLeftTab('domain')" class="h-7 px-2 rounded-md ui-subpanel border hover:border-sky-500 font-semibold inline-flex items-center gap-1 shrink-0" title="Chỉnh dữ liệu DB của khối đang chọn">
+          <svg class="w-3 h-3 text-sky-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <span>DB</span>
+        </button>
+        <div class="h-7 ui-subpanel border px-1.5 rounded-md inline-flex items-center gap-1 shrink-0" title="Đổi biến thể bố cục (Variant) của Section đang chọn">
+          <select id="tb-variant-select" onchange="onChangeActiveSectionVariant(this.value)" class="bg-transparent font-semibold text-[11px] outline-none cursor-pointer"></select>
+        </div>
+      </div>
+
+      <div class="tb-sep"></div>
+
+      <!-- 5.6 Quick Alignment & Distribution (6 Align + 2 Distribute) -->
+      <button onclick="alignSelectedBlock('left')" class="tb-icon-btn" title="5.6 Căn lề trái Artboard (Align Left)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="4" y1="3" x2="4" y2="21"/><rect x="8" y="6" width="12" height="4" rx="1"/><rect x="8" y="14" width="8" height="4" rx="1"/></svg>
+      </button>
+      <button onclick="alignSelectedBlock('h-center')" class="tb-icon-btn" title="5.6 Căn giữa ngang (Align Horizontal Center)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="3" x2="12" y2="21"/><rect x="5" y="6" width="14" height="4" rx="1"/><rect x="7" y="14" width="10" height="4" rx="1"/></svg>
+      </button>
+      <button onclick="alignSelectedBlock('right')" class="tb-icon-btn" title="5.6 Căn lề phải (Align Right)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="20" y1="3" x2="20" y2="21"/><rect x="4" y="6" width="12" height="4" rx="1"/><rect x="8" y="14" width="8" height="4" rx="1"/></svg>
+      </button>
+      <button onclick="alignSelectedBlock('top')" class="tb-icon-btn" title="5.6 Căn mép trên (Align Top)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="4" x2="21" y2="4"/><rect x="6" y="8" width="4" height="12" rx="1"/><rect x="14" y="8" width="4" height="8" rx="1"/></svg>
+      </button>
+      <button onclick="alignSelectedBlock('v-center')" class="tb-icon-btn" title="5.6 Căn giữa dọc (Align Vertical Middle)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="7" width="4" height="10" rx="1"/></svg>
+      </button>
+      <button onclick="alignSelectedBlock('bottom')" class="tb-icon-btn" title="5.6 Căn mép dưới (Align Bottom)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="20" x2="21" y2="20"/><rect x="6" y="4" width="4" height="12" rx="1"/><rect x="14" y="8" width="4" height="8" rx="1"/></svg>
+      </button>
+      <button onclick="distributeBlocks('horizontal')" class="tb-icon-btn" title="5.6 Phân bổ đều theo chiều ngang (Distribute Spacing)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="4" y1="4" x2="4" y2="20"/><line x1="20" y1="4" x2="20" y2="20"/><rect x="9" y="7" width="6" height="10" rx="1"/></svg>
+      </button>
+
+      <div class="tb-sep"></div>
+
+      <!-- 5.2 Boolean Operations + Node Edit + 5.3 Crop + 5.8 Flip -->
+      <button onclick="applyBooleanOp('union')" class="tb-icon-btn" title="5.2 Boolean Union (Hợp khối Vector)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="11" height="11" rx="1"/><rect x="10" y="10" width="11" height="11" rx="1"/></svg>
+      </button>
+      <button onclick="applyBooleanOp('subtract')" class="tb-icon-btn" title="5.2 Boolean Subtract (Trừ khối trên)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="11" height="11" rx="1"/><rect x="10" y="10" width="11" height="11" rx="1" stroke-dasharray="2 2"/></svg>
+      </button>
+      <button onclick="toggleNodeEditMode()" id="tb-btn-node-edit" class="tb-icon-btn" title="5.2 Chỉnh điểm neo Bezier (Node Editing Mode)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 20C8 8 16 8 20 20"/><circle cx="12" cy="11" r="2.5"/><line x1="5" y1="11" x2="19" y2="11"/></svg>
+      </button>
+      <button onclick="toggleCropMode()" id="tb-btn-crop" class="tb-icon-btn" title="5.3 Cắt cúp không phá hủy (Non-Destructive Crop)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>
+      </button>
+      <button onclick="flipSelectedBlock('h')" class="tb-icon-btn" title="5.8 Lật ngang (Flip Horizontal)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3v18"/><polygon points="4 7 9 12 4 17 4 7"/><polygon points="20 7 15 12 20 17 20 7"/></svg>
+      </button>
+
+      <div class="tb-sep"></div>
+
+      <!-- 5.5 Typography Quick Controls -->
+      <select id="tb-font-family" onchange="applyBlockStyle('fontFamily', this.value)" class="h-7 w-32 px-1.5 rounded-md border ui-border ui-subpanel font-medium text-[11px] outline-none cursor-pointer shrink-0" title="5.5 Font Family">
+        <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans</option>
+        <option value="'Playfair Display', serif">Playfair Display</option>
+        <option value="'Instrument Serif', serif">Instrument Serif</option>
+        <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
+        <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
+        <option value="'Bebas Neue', sans-serif">Bebas Neue</option>
+        <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+      </select>
+
+      <div class="h-7 inline-flex items-center border ui-border rounded-md overflow-hidden shrink-0" title="5.5 Font Size">
+        <button onclick="stepFontSize(-1)" class="w-5 h-full hover:bg-zinc-500/10 font-bold">−</button>
+        <span id="tb-fontsize-val" class="w-7 text-center font-mono-num text-[11px]">13</span>
+        <button onclick="stepFontSize(1)" class="w-5 h-full hover:bg-zinc-500/10 font-bold">+</button>
+      </div>
+
+      <button onclick="toggleInlineStyle('fontWeight','bold','normal')" class="tb-icon-btn font-extrabold" title="Bold">B</button>
+      <button onclick="toggleInlineStyle('fontStyle','italic','normal')" class="tb-icon-btn italic font-serif" title="Italic">I</button>
+      <button onclick="toggleInlineStyle('textDecoration','underline','none')" class="tb-icon-btn underline" title="Underline">U</button>
+
+      <div class="tb-sep"></div>
+
+      <!-- 5.4 Text Color + Separated Bg Alpha (v5 signature) + 16 Blend Modes -->
+      <label class="tb-icon-btn border ui-border flex-col gap-0.5" title="5.4 Màu chữ (Text Color)">
+        <span class="font-extrabold text-[10px] leading-none">A</span>
+        <input type="color" value="#18181b" oninput="applyBlockStyle('color', this.value); this.nextElementSibling.style.backgroundColor=this.value" class="sr-only" />
+        <span class="w-3.5 h-1 rounded-full bg-zinc-900"></span>
+      </label>
+
+      <div class="h-7 px-1.5 rounded-md border ui-border ui-subpanel inline-flex items-center gap-1 shrink-0" title="5.4 Màu nền & Độ trong suốt Nền (Bg Alpha 0%..100% — độc lập với độ rõ của chữ)">
+        <input id="tb-bg-color" type="color" value="#ffffff" oninput="updateBlockBgColorAndAlpha()" class="w-4 h-4 border-0 bg-transparent cursor-pointer" />
+        <input id="tb-bg-alpha" type="range" min="0" max="100" value="88" oninput="updateBlockBgColorAndAlpha()" class="w-12 accent-sky-600" />
+        <span id="tb-bg-alpha-lbl" class="font-mono-num text-[10px] w-7">88%</span>
+      </div>
+
+      <div class="h-7 px-1.5 rounded-md border ui-border ui-subpanel inline-flex items-center gap-1 shrink-0" title="5.4 16 Chế độ Hòa trộn (Blend Modes — tách biệt với Effects)">
+        <select id="tb-blend-mode" onchange="applyBlockStyle('mixBlendMode', this.value)" class="bg-transparent font-semibold text-[11px] outline-none cursor-pointer w-20">
+          <option value="normal">Normal</option>
+          <option value="multiply">Multiply</option>
+          <option value="screen">Screen</option>
+          <option value="overlay">Overlay</option>
+          <option value="darken">Darken</option>
+          <option value="lighten">Lighten</option>
+          <option value="color-dodge">Color Dodge</option>
+          <option value="color-burn">Color Burn</option>
+          <option value="soft-light">Soft Light</option>
+          <option value="hard-light">Hard Light</option>
+          <option value="difference">Difference</option>
+          <option value="exclusion">Exclusion</option>
+          <option value="hue">Hue</option>
+          <option value="saturation">Saturation</option>
+          <option value="color">Color</option>
+          <option value="luminosity">Luminosity</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Right-side Quick Object Actions: Group, Lock, Z-order, Duplicate, Delete, Timeline & Inspector Toggles -->
+    <div class="flex items-center gap-0.5 shrink-0 pl-1">
+      <button onclick="groupSelectedBlocks()" class="tb-icon-btn" title="5.7 Nhóm đối tượng (Group — ⌘G)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><path d="M14 5h5v5M5 14v5h5"/></svg>
+      </button>
+      <button onclick="toggleLockActiveBlock()" id="tb-btn-lock" class="tb-icon-btn" title="5.7 Khóa / Mở khóa đối tượng (Lock / Unlock)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </button>
+      <button onclick="moveBlockLayer(1)" class="tb-icon-btn" title="5.7 Đưa lên trên (Bring Forward)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+      </button>
+      <button onclick="moveBlockLayer(-1)" class="tb-icon-btn" title="5.7 Đưa xuống dưới (Send Backward)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <button onclick="duplicateActiveBlock()" class="tb-icon-btn" title="5.7 Nhân bản (Duplicate)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      </button>
+      <button onclick="deleteActiveBlock()" class="tb-icon-btn text-rose-600 hover:bg-rose-500/15" title="5.7 Xóa (Delete)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      </button>
+      <div class="tb-sep"></div>
+      <button onclick="toggleMotionTimeline()" id="tb-btn-timeline" class="h-7 px-2 rounded-md border ui-border hover:border-sky-500 font-semibold inline-flex items-center gap-1" title="5.9 Bật/Tắt Timeline & Keyframes">
+        <span>🎬</span><span>Timeline</span>
+      </button>
+      <button onclick="toggleRightInspector()" id="tb-btn-inspector" class="h-7 px-2 rounded-md ui-accent-btn font-semibold inline-flex items-center gap-1" title="Bật/Tắt Bảng Thuộc tính Chính xác (Right Inspector)">
+        <span>⚙️</span><span>Inspector</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       3. MAIN WORKSPACE: 8-TAB LEFT RAIL + COLLAPSIBLE DRAWER + RULER/CANVAS/TIMELINE + PRECISION INSPECTOR
+       ========================================================================= -->
+  <div class="flex-1 flex overflow-hidden relative">
+
+    <!-- 3A. 8-TAB LEFT ICON RAIL (60px, Mapped 1-to-1 to Section 5 Toolkits) -->
+    <nav class="w-[62px] ui-panel border-r flex flex-col items-center py-2 gap-1 text-[9.5px] font-semibold z-30 shrink-0 overflow-y-auto">
+      <button onclick="openLeftTab('canvas')" id="rail-btn-canvas" class="rail-tab w-13 py-1.5 rounded-lg flex flex-col items-center gap-0.5 ui-accent-btn" title="5.1 Canvas, Artboard, Bleed, Safe Area, Grid & Design Styles">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+        <span>5.1 Canvas</span>
+      </button>
+      <button onclick="openLeftTab('domain')" id="rail-btn-domain" class="rail-tab w-13 py-1.5 rounded-lg flex flex-col items-center gap-0.5 ui-muted hover:opacity-100" title="Công cụ Chuyên ngành theo Domain (CV, Poster, Banner, Catalog, Web, Chart, Map)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Domain/DB</span>
+      </button>
+      <button onclick="openLeftTab('shapes')" id="rail-btn-shapes" class="rail-tab w-13 py-1.5 rounded-lg flex flex-col items-center gap-0.5 ui-muted hover:opacity-100" title="5.2 Shape & Vector Drawing (Pen, Bezier, Polygon, Boolean Ops, Node Editing)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><circle cx="11" cy="11" r="2"/></svg>
+        <span>5.2 Vector</span>
+      </button>
+      <button onclick="openLeftTab('typography')" id="rail-btn-typography" class="rail-tab w-13 py-1.5 rounded-lg flex flex-col items-center gap-0.5 ui-muted hover:opacity-100" title="5.5 Typography Pro (Styles, Columns, Text on Path, Variable Fonts, OpenType, Glyphs)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+        <span>5.5 Chữ</span>
+      </button>
+      <button onclick="openLeftTab('media')" id="rail-btn-media" class="rail-tab w-13 py-1.5 rounded-lg flex flex-col items-center gap-0.5 ui-muted hover:opacity-100" title="5.3 Image & Media (Crop, Mask/Clip, Remove BG, Duotone, Double Exposure, Texture)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2.18"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span>5.3 Media</span>
+      </button>
+      <button onclick="openLeftTab('assets')" id="rail-btn-assets" class="rail-tab w-13 py-1.5 rounded-lg flex flex-col items-center gap-0.5 ui-muted hover:opacity-100" title="5.10 Asset Library (14 loại Asset, Search/Filter, QR Code, Licensing Rights)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span>5.10 Asset</span>
+      </button>
+      <button onclick="openLeftTab('layers')" id="rail-btn-layers" class="rail-tab w-13 py-1.5 rounded-lg flex flex-col items-center gap-0.5 ui-muted hover:opacity-100" title="5.7 Layer & Object Tree (Cây phân cấp Parent-Child, Group, Mask, Lock, Z-order)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        <span>5.7 Tree</span>
+      </button>
+      <button onclick="openLeftTab('smart')" id="rail-btn-smart" class="rail-tab w-13 py-1.5 rounded-lg flex flex-col items-center gap-0.5 ui-muted hover:opacity-100" title="5.11 Smart Design & AI Intelligence (Contrast Checker, Font Pairing, 5-Layer QA, Operation API)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>
+        <span>5.11 AI/QA</span>
+      </button>
+    </nav>
+
+    <!-- 3B. COLLAPSIBLE LEFT TOOLKIT DRAWER (310px, with collapse chevron ‹ from v5) -->
+    <aside id="left-drawer" class="w-[310px] ui-panel border-r flex flex-col z-20 relative shrink-0">
+      <button onclick="toggleLeftDrawerCollapse()" title="Thu gọn / Mở rộng ngăn công cụ (Progressive Disclosure)" class="absolute -right-3.5 top-1/2 -translate-y-1/2 w-3.5 h-14 rounded-r-lg ui-panel border border-l-0 flex items-center justify-center text-[10px] font-bold shadow hover:opacity-80 z-30">‹</button>
+
+      <div class="flex-1 p-3.5 overflow-y-auto space-y-4">
+
+        <!-- ===============================================================
+             LEFT TAB 1: 5.1 CANVAS & DOCUMENT + DESIGN STYLES & PATTERNS
+             =============================================================== -->
+        <div id="ltab-canvas" class="space-y-4">
+          <div>
+            <h3 class="font-bold text-xs uppercase tracking-wider">5.1 Canvas & Document Setup</h3>
+            <p class="ui-muted text-[11px]">Kích thước, đơn vị, DPI, vùng in Bleed/Safe Area, Thước đo & Lưới bố cục</p>
+          </div>
+
+          <!-- Custom Dimensions & Color Profile -->
+          <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+            <div class="font-semibold text-[11px]">Kích thước Tùy chỉnh & Hệ màu</div>
+            <div class="grid grid-cols-3 gap-1.5">
+              <div class="prop-box"><span class="prop-lbl">W</span><input id="canvas-custom-w" type="number" value="595" onchange="applyCustomCanvasSize()" /></div>
+              <div class="prop-box"><span class="prop-lbl">H</span><input id="canvas-custom-h" type="number" value="842" onchange="applyCustomCanvasSize()" /></div>
+              <div class="prop-box">
+                <select id="canvas-color-profile" onchange="showToast('✓ Đổi Color Profile: '+this.value)">
+                  <option value="sRGB">sRGB</option>
+                  <option value="CMYK">CMYK</option>
+                  <option value="P3">P3</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <span class="ui-muted text-[11px]">Màu nền Artboard</span>
+              <div class="flex items-center gap-1.5">
+                <input type="color" id="canvas-bg-picker" value="#FAF6F0" oninput="setArtboardBackground(this.value)" class="w-5 h-5 border-0 bg-transparent cursor-pointer" />
+                <button onclick="setArtboardBackground('#FAF6F0')" class="px-1.5 py-0.5 rounded border ui-border text-[10px]">Kem</button>
+                <button onclick="setArtboardBackground('#FFFFFF')" class="px-1.5 py-0.5 rounded border ui-border text-[10px]">Trắng</button>
+                <button onclick="setArtboardBackground('#0F172A')" class="px-1.5 py-0.5 rounded border ui-border text-[10px]">Tối</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5.1 Visual Guides & Print Overlays -->
+          <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+            <div class="font-semibold text-[11px]">Hiển thị Kỹ thuật (5.1 & 5.6 Overlays)</div>
+            <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+              <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chk-rulers" checked onchange="toggleCanvasOverlay('rulers', this.checked)" class="accent-sky-600" /><span>Rulers (Thước đo)</span></label>
+              <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chk-bleed" onchange="toggleCanvasOverlay('bleed', this.checked)" class="accent-rose-600" /><span>Bleed 3mm & Crop</span></label>
+              <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chk-safe" onchange="toggleCanvasOverlay('safe', this.checked)" class="accent-emerald-600" /><span>Safe Area (An toàn)</span></label>
+              <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chk-margin" onchange="toggleCanvasOverlay('margin', this.checked)" class="accent-sky-600" /><span>Margin (Lề trang)</span></label>
+              <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chk-grid" onchange="toggleCanvasOverlay('grid', this.checked)" class="accent-rose-600" /><span>12-Col Modular Grid</span></label>
+              <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chk-baseline" onchange="toggleCanvasOverlay('baseline', this.checked)" class="accent-sky-600" /><span>Baseline Grid 24px</span></label>
+              <label class="flex items-center gap-1.5 cursor-pointer col-span-2"><input type="checkbox" id="chk-snap" checked onchange="showToast('✓ Smart Snap: '+(this.checked?'BẬT':'TẮT'))" class="accent-sky-600" /><span>Smart Guides & Pixel Snap khi kéo thả</span></label>
+            </div>
+          </div>
+
+          <!-- Mục 4.2 Design Styles & 4.3 Composition Patterns -->
+          <div class="space-y-2">
+            <div class="font-bold text-[11px] uppercase tracking-wider">4.2 Design Styles (Ngôn ngữ Thẩm mỹ)</div>
+            <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+              <button onclick="applyDesignStylePreset('editorial')" class="p-2 rounded-lg border ui-border hover:border-sky-500 text-left">
+                <div class="font-bold">1. Editorial Vogue</div>
+                <div class="text-[10px] ui-muted">Serif cao cấp • Nền trong suốt</div>
+              </button>
+              <button onclick="applyDesignStylePreset('swiss')" class="p-2 rounded-lg border ui-border hover:border-sky-500 text-left">
+                <div class="font-bold">2. Swiss International</div>
+                <div class="text-[10px] ui-muted">Lưới chặt • Typography mạnh</div>
+              </button>
+              <button onclick="applyDesignStylePreset('bauhaus')" class="p-2 rounded-lg border ui-border hover:border-sky-500 text-left">
+                <div class="font-bold">3. Bauhaus Geometric</div>
+                <div class="text-[10px] ui-muted">Hình học cơ bản • Tương phản</div>
+              </button>
+              <button onclick="applyDesignStylePreset('brutalism')" class="p-2 rounded-lg border ui-border hover:border-sky-500 text-left">
+                <div class="font-bold">4. Neo-Brutalism</div>
+                <div class="text-[10px] ui-muted">Viền đậm 2px • Bóng cứng</div>
+              </button>
+              <button onclick="applyDesignStylePreset('luxury')" class="p-2 rounded-lg border ui-border hover:border-sky-500 text-left">
+                <div class="font-bold">5. Dark Luxury</div>
+                <div class="text-[10px] ui-muted">Nền tối sâu • Chữ vàng kim</div>
+              </button>
+              <button onclick="applyDesignStylePreset('minimal')" class="p-2 rounded-lg border ui-border hover:border-sky-500 text-left">
+                <div class="font-bold">6. Clean Minimalism</div>
+                <div class="text-[10px] ui-muted">Negative space rộng rãi</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- 5.6 Composition Patterns -->
+          <div class="space-y-1.5">
+            <div class="font-bold text-[11px] uppercase tracking-wider">4.3 & 5.6 Composition Patterns</div>
+            <div class="grid grid-cols-3 gap-1 text-[10px]">
+              <button onclick="applyCompositionPattern('asymmetric')" class="p-1.5 rounded border ui-border hover:border-sky-500 font-semibold">Asymmetric</button>
+              <button onclick="applyCompositionPattern('symmetric')" class="p-1.5 rounded border ui-border hover:border-sky-500 font-semibold">Symmetric</button>
+              <button onclick="applyCompositionPattern('modular')" class="p-1.5 rounded border ui-border hover:border-sky-500 font-semibold">Modular Bento</button>
+              <button onclick="applyCompositionPattern('split')" class="p-1.5 rounded border ui-border hover:border-sky-500 font-semibold">Split Screen</button>
+              <button onclick="applyCompositionPattern('fullbleed')" class="p-1.5 rounded border ui-border hover:border-sky-500 font-semibold">Full Bleed</button>
+              <button onclick="applyCompositionPattern('typo')" class="p-1.5 rounded border ui-border hover:border-sky-500 font-semibold">Typo Dominant</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===============================================================
+             LEFT TAB 2: DOMAIN-SPECIFIC TOOLKITS & HOST DB SECTIONS (Mục 3)
+             =============================================================== -->
+        <div id="ltab-domain" class="hidden space-y-3">
+          <div>
+            <h3 id="domain-panel-title" class="font-bold text-xs uppercase tracking-wider">Công cụ Chuyên ngành & Host DB</h3>
+            <p id="domain-panel-desc" class="ui-muted text-[11px]">Thay đổi linh hoạt theo loại ấn phẩm đang mở (CV, Poster, Banner, Catalog, Web, Chart, Map)</p>
+          </div>
+
+          <!-- Dynamic Domain Specific Controls rendered by JS -->
+          <div id="domain-specific-controls" class="space-y-3"></div>
+
+          <!-- Shared Host DB Section Variants (CV / Portfolio / Catalog) -->
+          <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-sky-600">⚡ Section Kỹ năng (`skills[]`)</span>
+              <span class="text-[10px] ui-muted">4 biến thể</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1 text-[11px]">
+              <button onclick="setSkillsVariant('tags')" class="p-1.5 rounded border ui-border ui-panel font-medium">1. Nhãn Tag Pills</button>
+              <button onclick="setSkillsVariant('grid')" class="p-1.5 rounded border ui-border ui-panel font-medium">2. Lưới 2 Cột (Grid)</button>
+              <button onclick="setSkillsVariant('bars')" class="p-1.5 rounded border ui-border ui-panel font-medium">3. Thanh % (Bars)</button>
+              <button onclick="setSkillsVariant('list')" class="p-1.5 rounded border ui-border ui-panel font-medium">4. Danh sách (List)</button>
+            </div>
+          </div>
+
+          <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-sky-600">💼 Section Kinh nghiệm (`experiences[]`)</span>
+              <span class="text-[10px] ui-muted">3 biến thể</span>
+            </div>
+            <div class="grid grid-cols-3 gap-1 text-[11px]">
+              <button onclick="setExpVariant('timeline')" class="p-1.5 rounded border ui-border ui-panel font-medium">Timeline</button>
+              <button onclick="setExpVariant('cards')" class="p-1.5 rounded border ui-border ui-panel font-medium">Card 2 Cột</button>
+              <button onclick="setExpVariant('minimal')" class="p-1.5 rounded border ui-border ui-panel font-medium">Tối giản</button>
+            </div>
+          </div>
+
+          <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+            <div class="font-bold">Thêm Dữ liệu trực tiếp vào Host DB</div>
+            <div class="flex gap-1">
+              <input id="inp-new-skill" placeholder="Thêm kỹ năng / tag mới..." class="flex-1 px-2 py-1 rounded border ui-border bg-transparent" />
+              <button onclick="addSkillToDb()" class="px-2.5 py-1 rounded ui-accent-btn font-semibold">+ Thêm</button>
+            </div>
+            <button onclick="addExperienceItemToDb()" class="w-full py-1.5 rounded border ui-border hover:border-sky-500 font-semibold">+ Thêm 1 Bản ghi Kinh nghiệm / Sản phẩm</button>
+          </div>
+        </div>
+
+        <!-- ===============================================================
+             LEFT TAB 3: 5.2 SHAPE & VECTOR DRAWING TOOLKIT
+             =============================================================== -->
+        <div id="ltab-shapes" class="hidden space-y-3.5">
+          <div>
+            <h3 class="font-bold text-xs uppercase tracking-wider">5.2 Shape & Vector Drawing</h3>
+            <p class="ui-muted text-[11px]">Hình học cơ bản, Pen Bezier, Pencil, Path, Boolean Operations & Node Editing</p>
+          </div>
+
+          <!-- Geometric Primitives -->
+          <div class="space-y-1.5">
+            <div class="font-semibold text-[11px]">Hình học & Khối cơ bản (Primitives)</div>
+            <div class="grid grid-cols-3 gap-1.5 text-[11px]">
+              <button onclick="addVectorShape('rect')" class="p-2 rounded-lg border ui-border hover:border-sky-500 flex flex-col items-center gap-1"><span>▭</span><span>Rectangle</span></button>
+              <button onclick="addVectorShape('circle')" class="p-2 rounded-lg border ui-border hover:border-sky-500 flex flex-col items-center gap-1"><span>◯</span><span>Circle</span></button>
+              <button onclick="addVectorShape('ellipse')" class="p-2 rounded-lg border ui-border hover:border-sky-500 flex flex-col items-center gap-1"><span>⬭</span><span>Ellipse</span></button>
+              <button onclick="addVectorShape('line')" class="p-2 rounded-lg border ui-border hover:border-sky-500 flex flex-col items-center gap-1"><span>╱</span><span>Line</span></button>
+              <button onclick="addVectorShape('polygon')" class="p-2 rounded-lg border ui-border hover:border-sky-500 flex flex-col items-center gap-1"><span>⬡</span><span>Polygon</span></button>
+              <button onclick="addVectorShape('star')" class="p-2 rounded-lg border ui-border hover:border-sky-500 flex flex-col items-center gap-1"><span>★</span><span>Star</span></button>
+              <button onclick="addVectorShape('arrow')" class="p-2 rounded-lg border ui-border hover:border-sky-500 flex flex-col items-center gap-1"><span>➔</span><span>Arrow</span></button>
+              <button onclick="addVectorShape('bubble')" class="p-2 rounded-lg border ui-border hover:border-sky-500 flex flex-col items-center gap-1"><span>💬</span><span>Bubble</span></button>
+              <button onclick="addVectorShape('ornament')" class="p-2 rounded-lg border ui-border hover:border-sky-500 flex flex-col items-center gap-1"><span>✦</span><span>Ornament</span></button>
+            </div>
+          </div>
+
+          <!-- Vector Drawing Tools: Pen, Pencil, Bezier, Path, Node Editing -->
+          <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+            <div class="font-semibold text-[11px]">Công cụ Vẽ Vector & Đường dẫn (Paths)</div>
+            <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+              <button onclick="addVectorShape('bezier')" class="p-2 rounded border ui-border ui-panel hover:border-sky-500 text-left font-semibold">✒️ Pen / Bezier Path</button>
+              <button onclick="addVectorShape('pencil')" class="p-2 rounded border ui-border ui-panel hover:border-sky-500 text-left font-semibold">✏️ Pencil Freehand</button>
+              <button onclick="addVectorShape('pattern')" class="p-2 rounded border ui-border ui-panel hover:border-sky-500 text-left font-semibold">❖ Geometric Pattern</button>
+              <button onclick="toggleNodeEditMode()" class="p-2 rounded border border-purple-500/40 bg-purple-500/10 text-purple-600 text-left font-bold">⬡ Node Editing (A)</button>
+            </div>
+          </div>
+
+          <!-- Boolean Operations (Union, Subtract, Intersect, Exclude) -->
+          <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+            <div class="font-semibold text-[11px]">Boolean Operations (Phép toán Tập hợp)</div>
+            <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+              <button onclick="applyBooleanOp('union')" class="p-1.5 rounded border ui-border ui-panel hover:border-sky-500 font-semibold">⊞ Union (Hợp)</button>
+              <button onclick="applyBooleanOp('subtract')" class="p-1.5 rounded border ui-border ui-panel hover:border-sky-500 font-semibold">⊟ Subtract (Trừ)</button>
+              <button onclick="applyBooleanOp('intersect')" class="p-1.5 rounded border ui-border ui-panel hover:border-sky-500 font-semibold">⊠ Intersect (Giao)</button>
+              <button onclick="applyBooleanOp('exclude')" class="p-1.5 rounded border ui-border ui-panel hover:border-sky-500 font-semibold">⧇ Exclude (Loại trừ)</button>
+            </div>
+          </div>
+
+          <!-- Raw SVG Import -->
+          <div class="p-2.5 rounded-lg ui-subpanel border space-y-1.5">
+            <div class="font-semibold text-[11px]">📥 Dán mã `<svg>` Vector tùy chỉnh</div>
+            <textarea id="inp-svg" rows="2" class="w-full p-1.5 rounded border ui-border bg-transparent font-mono text-[10px]"><svg viewBox="0 0 100 100" width="80" height="80"><circle cx="50" cy="50" r="40" fill="none" stroke="#0d99ff" stroke-width="8" stroke-dasharray="10 6"/></svg></textarea>
+            <button onclick="insertCustomSvg()" class="w-full py-1.5 rounded ui-accent-btn font-semibold">+ Chèn Vector SVG</button>
+          </div>
+        </div>
+
+        <!-- ===============================================================
+             LEFT TAB 4: 5.5 TYPOGRAPHY PRO TOOLKIT
+             =============================================================== -->
+        <div id="ltab-typography" class="hidden space-y-3.5">
+          <div>
+            <h3 class="font-bold text-xs uppercase tracking-wider">5.5 Typography System</h3>
+            <p class="ui-muted text-[11px]">Paragraph Styles, Columns, Text on Path, Variable Fonts, OpenType & Glyphs</p>
+          </div>
+
+          <!-- Paragraph & Character Styles -->
+          <div class="space-y-1.5">
+            <div class="font-semibold text-[11px]">Paragraph Styles (Cấp độ Văn bản)</div>
+            <button onclick="addFreeTextBlock('display')" class="w-full p-2 rounded-lg border ui-border hover:border-sky-500 text-left font-serif font-extrabold text-base">+ Display Hero Title (36pt)</button>
+            <button onclick="addFreeTextBlock('heading')" class="w-full p-2 rounded-lg border ui-border hover:border-sky-500 text-left font-bold text-sm">+ Heading H1 / Section (22pt)</button>
+            <button onclick="addFreeTextBlock('body')" class="w-full p-2 rounded-lg border ui-border hover:border-sky-500 text-left text-xs">+ Body Editorial Paragraph (13pt)</button>
+            <button onclick="addTextOnPathBlock()" class="w-full p-2 rounded-lg border border-sky-500/40 bg-sky-500/10 text-sky-600 text-left font-bold text-xs">〰 + Text on Path (Chữ uốn theo đường cong SVG)</button>
+          </div>
+
+          <!-- Line Height, Letter Spacing, Word Spacing, Columns, Direction -->
+          <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+            <div class="font-semibold text-[11px]">Thông số Đoạn văn & Chia cột (5.5)</div>
+            <div class="grid grid-cols-3 gap-1.5">
+              <div class="prop-box" title="Line Height"><span class="prop-lbl">LH</span><input type="number" step="0.1" value="1.4" oninput="applyBlockStyle('lineHeight', this.value)" /></div>
+              <div class="prop-box" title="Letter Spacing (px)"><span class="prop-lbl">LS</span><input type="number" step="0.5" value="0" oninput="applyBlockStyle('letterSpacing', this.value+'px')" /></div>
+              <div class="prop-box" title="Word Spacing (px)"><span class="prop-lbl">WS</span><input type="number" step="1" value="0" oninput="applyBlockStyle('wordSpacing', this.value+'px')" /></div>
+            </div>
+            <div class="grid grid-cols-3 gap-1 text-[10px] pt-1">
+              <button onclick="applyBlockStyle('columnCount','1')" class="p-1 rounded border ui-border ui-panel font-semibold">1 Cột</button>
+              <button onclick="applyBlockStyle('columnCount','2'); applyBlockStyle('columnGap','12px')" class="p-1 rounded border ui-border ui-panel font-semibold">2 Cột</button>
+              <button onclick="applyBlockStyle('columnCount','3'); applyBlockStyle('columnGap','10px')" class="p-1 rounded border ui-border ui-panel font-semibold">3 Cột</button>
+            </div>
+            <div class="grid grid-cols-4 gap-1 text-[10px]">
+              <button onclick="applyBlockStyle('textTransform','none')" class="p-1 rounded border ui-border ui-panel">Aa</button>
+              <button onclick="applyBlockStyle('textTransform','uppercase')" class="p-1 rounded border ui-border ui-panel font-bold">AA</button>
+              <button onclick="applyBlockStyle('textTransform','lowercase')" class="p-1 rounded border ui-border ui-panel">aa</button>
+              <button onclick="toggleTextDirection()" class="p-1 rounded border ui-border ui-panel font-mono">LTR⇄RTL</button>
+            </div>
+          </div>
+
+          <!-- Advanced: OpenType, Ligatures, Kerning, Variable Font Axis, Auto-Fit -->
+          <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+            <div class="font-semibold text-[11px]">Nâng cao: OpenType, Variable Fonts & Glyphs</div>
+            <div class="grid grid-cols-2 gap-1 text-[10px]">
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" checked onchange="applyBlockStyle('fontVariantLigatures', this.checked?'common-ligatures':'none')" class="accent-sky-600" /><span>Ligatures (`fi, fl`)</span></label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" checked onchange="applyBlockStyle('fontKerning', this.checked?'normal':'none')" class="accent-sky-600" /><span>Optical Kerning</span></label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" onchange="applyBlockStyle('fontVariantCaps', this.checked?'small-caps':'normal')" class="accent-sky-600" /><span>Small Caps (`smcp`)</span></label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" onchange="autoFitSelectedText()" class="accent-sky-600" /><span>Text Auto-Fit Box</span></label>
+            </div>
+            <div>
+              <div class="flex justify-between text-[10px] ui-muted"><span>Variable Weight Axis (`wght`)</span><span id="lbl-var-wght" class="font-mono-num">600</span></div>
+              <input type="range" min="100" max="900" step="50" value="600" oninput="applyBlockStyle('fontWeight', this.value); document.getElementById('lbl-var-wght').textContent=this.value" class="w-full accent-sky-600" />
+            </div>
+            <!-- Glyphs Quick Bar -->
+            <div class="space-y-1">
+              <div class="text-[10px] ui-muted">Chèn nhanh Glyphs đặc biệt:</div>
+              <div class="grid grid-cols-8 gap-1 text-center font-serif text-xs">
+                <button onclick="insertGlyph('✦')" class="p-1 rounded border ui-border ui-panel hover:border-sky-500">✦</button>
+                <button onclick="insertGlyph('§')" class="p-1 rounded border ui-border ui-panel hover:border-sky-500">§</button>
+                <button onclick="insertGlyph('©')" class="p-1 rounded border ui-border ui-panel hover:border-sky-500">©</button>
+                <button onclick="insertGlyph('®')" class="p-1 rounded border ui-border ui-panel hover:border-sky-500">®</button>
+                <button onclick="insertGlyph('™')" class="p-1 rounded border ui-border ui-panel hover:border-sky-500">™</button>
+                <button onclick="insertGlyph('→')" class="p-1 rounded border ui-border ui-panel hover:border-sky-500">→</button>
+                <button onclick="insertGlyph('↗')" class="p-1 rounded border ui-border ui-panel hover:border-sky-500">↗</button>
+                <button onclick="insertGlyph('∞')" class="p-1 rounded border ui-border ui-panel hover:border-sky-500">∞</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Font Import & Canva Text Effects -->
+          <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+            <div class="font-semibold text-[11px]">📥 Import Google Font & Embed `.ttf/.woff2`</div>
+            <div class="flex gap-1">
+              <input id="inp-gfont" placeholder="VD: Lora, Syne, Oswald..." class="flex-1 px-2 py-1 rounded border ui-border bg-transparent" />
+              <button onclick="importCustomGoogleFont()" class="px-2.5 py-1 rounded ui-accent-btn font-semibold">+ Nạp</button>
+            </div>
+            <div class="grid grid-cols-3 gap-1 pt-1 text-[10px]">
+              <button onclick="setTextFx('none')" class="p-1.5 rounded border ui-border ui-panel">Chuẩn</button>
+              <button onclick="setTextFx('fx-hollow')" class="p-1.5 rounded border ui-border ui-panel font-bold">Hollow</button>
+              <button onclick="setTextFx('fx-splice')" class="p-1.5 rounded border ui-border ui-panel font-bold">Splice</button>
+              <button onclick="setTextFx('fx-neon')" class="p-1.5 rounded border ui-border ui-panel font-bold text-sky-500">Neon</button>
+              <button onclick="setTextFx('fx-gradient')" class="p-1.5 rounded border ui-border ui-panel font-bold">Gradient</button>
+              <button onclick="applyBlockStyle('textShadow','2px 3px 6px rgba(0,0,0,0.35)')" class="p-1.5 rounded border ui-border ui-panel">Shadow</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===============================================================
+             LEFT TAB 5: 5.3 IMAGE & MEDIA (NON-DESTRUCTIVE EDITING)
+             =============================================================== -->
+        <div id="ltab-media" class="hidden space-y-3.5">
+          <div>
+            <h3 class="font-bold text-xs uppercase tracking-wider">5.3 Image & Media Toolkit</h3>
+            <p class="ui-muted text-[11px]">Import PNG/JPG/SVG/WebP/MP4/3D, Non-destructive Crop, Mask, AI Remove BG, Duotone</p>
+          </div>
+
+          <div class="grid grid-cols-3 gap-1.5 text-[11px]">
+            <button onclick="addMediaBlock('image')" class="p-2 rounded-lg border ui-border hover:border-sky-500 font-semibold flex flex-col items-center gap-1"><span>🖼</span><span>Ảnh Raster</span></button>
+            <button onclick="addMediaBlock('video')" class="p-2 rounded-lg border ui-border hover:border-sky-500 font-semibold flex flex-col items-center gap-1"><span>🎬</span><span>Video MP4</span></button>
+            <button onclick="addMediaBlock('3d')" class="p-2 rounded-lg border ui-border hover:border-sky-500 font-semibold flex flex-col items-center gap-1"><span>🧊</span><span>Vật thể 3D</span></button>
+          </div>
+
+          <!-- Non-destructive Image Operations -->
+          <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+            <div class="font-semibold text-[11px]">Thao tác Không phá hủy (Non-Destructive)</div>
+            <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+              <button onclick="toggleCropMode()" class="p-1.5 rounded border ui-border ui-panel hover:border-sky-500 font-semibold">✂️ Crop (Cắt khung)</button>
+              <button onclick="simulateAiRemoveBg()" class="p-1.5 rounded border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 font-bold">🪄 AI Tách Nền</button>
+              <button onclick="flipSelectedBlock('h')" class="p-1.5 rounded border ui-border ui-panel hover:border-sky-500 font-semibold">⇄ Flip Ngang</button>
+              <button onclick="flipSelectedBlock('v')" class="p-1.5 rounded border ui-border ui-panel hover:border-sky-500 font-semibold">⇅ Flip Dọc</button>
+            </div>
+          </div>
+
+          <!-- Mask & Clipping Shapes -->
+          <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+            <div class="font-semibold text-[11px]">Mask & Clipping Group (5.3 & 5.7)</div>
+            <div class="grid grid-cols-4 gap-1 text-[10px]">
+              <button onclick="applyClipMask('none')" class="p-1.5 rounded border ui-border ui-panel">Gốc</button>
+              <button onclick="applyClipMask('clip-circle')" class="p-1.5 rounded border ui-border ui-panel">Tròn</button>
+              <button onclick="applyClipMask('clip-arch')" class="p-1.5 rounded border ui-border ui-panel">Vòm Arch</button>
+              <button onclick="applyClipMask('clip-hexagon')" class="p-1.5 rounded border ui-border ui-panel">Lục giác</button>
+            </div>
+          </div>
+
+          <!-- Duotone, Double Exposure & Texture Overlay -->
+          <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+            <div class="font-semibold text-[11px]">Duotone, Double Exposure & Texture</div>
+            <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+              <button onclick="applyCreativeMediaEffect('duotone')" class="p-1.5 rounded border ui-border ui-panel hover:border-sky-500 font-semibold">🎨 Duotone Tonal</button>
+              <button onclick="applyCreativeMediaEffect('double-exp')" class="p-1.5 rounded border ui-border ui-panel hover:border-sky-500 font-semibold">🌗 Double Exposure</button>
+              <button onclick="applyCreativeMediaEffect('grain')" class="p-1.5 rounded border ui-border ui-panel hover:border-sky-500 font-semibold">🎞 Paper / Film Grain</button>
+              <button onclick="applyCreativeMediaEffect('reset')" class="p-1.5 rounded border ui-border ui-panel hover:border-sky-500">↺ Khôi phục Gốc</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===============================================================
+             LEFT TAB 6: 5.10 ASSET LIBRARY (14 CATEGORIES + LICENSING + QR)
+             =============================================================== -->
+        <div id="ltab-assets" class="hidden space-y-3">
+          <div>
+            <h3 class="font-bold text-xs uppercase tracking-wider">5.10 Asset Library & Licensing</h3>
+            <p class="ui-muted text-[11px]">14 loại tài nguyên có kiểm soát bản quyền & trình tạo QR Code trực tiếp</p>
+          </div>
+
+          <!-- Search & License Filter -->
+          <div class="flex gap-1">
+            <input id="asset-search-inp" oninput="filterAssetLibrary()" placeholder="Tìm Icons, Photos, Stickers, Logos..." class="flex-1 px-2 py-1.5 rounded-lg border ui-border bg-transparent text-[11px]" />
+            <select id="asset-license-filter" onchange="filterAssetLibrary()" class="px-1.5 py-1 rounded-lg border ui-border ui-subpanel text-[10px] font-semibold">
+              <option value="all">Mọi bản quyền</option>
+              <option value="CC0">CC0 Public</option>
+              <option value="PRO">Commercial Pro</option>
+              <option value="BRAND">Brand Asset</option>
+            </select>
+          </div>
+
+          <!-- 14 Category Pills -->
+          <div class="flex flex-wrap gap-1 text-[10px]">
+            <button onclick="spawnAssetItem('photo')" class="px-2 py-1 rounded-md border ui-border ui-subpanel hover:border-sky-500 font-semibold">+ Stock Photo</button>
+            <button onclick="spawnAssetItem('illustration')" class="px-2 py-1 rounded-md border ui-border ui-subpanel hover:border-sky-500 font-semibold">+ Illustration</button>
+            <button onclick="spawnAssetItem('icon')" class="px-2 py-1 rounded-md border ui-border ui-subpanel hover:border-sky-500 font-semibold">+ SVG Icon</button>
+            <button onclick="spawnAssetItem('sticker')" class="px-2 py-1 rounded-md border ui-border ui-subpanel hover:border-sky-500 font-semibold">+ Sticker</button>
+            <button onclick="spawnAssetItem('logo')" class="px-2 py-1 rounded-md border ui-border ui-subpanel hover:border-sky-500 font-semibold">+ Brand Logo</button>
+            <button onclick="spawnAssetItem('frame')" class="px-2 py-1 rounded-md border ui-border ui-subpanel hover:border-sky-500 font-semibold">+ Mockup Frame</button>
+          </div>
+
+          <!-- Live QR Code Generator (5.10 QR Codes) -->
+          <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-[11px]">🏁 Tạo Mã QR Vector (5.10 QR Codes)</span>
+              <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 font-bold">CC0 FREE</span>
+            </div>
+            <div class="flex gap-1">
+              <input id="inp-qr-url" value="https://id.vuonganhvu.vn" class="flex-1 px-2 py-1 rounded border ui-border bg-transparent font-mono text-[10px]" />
+              <button onclick="spawnAssetItem('qr')" class="px-2.5 py-1 rounded ui-accent-btn font-semibold">+ Chèn QR</button>
+            </div>
+          </div>
+
+          <!-- Curated Asset List with Licensing Badges -->
+          <div id="asset-library-grid" class="space-y-1.5">
+            <div onclick="spawnAssetItem('logo')" class="p-2 rounded-lg border ui-border hover:border-sky-500 cursor-pointer flex items-center justify-between">
+              <div class="flex items-center gap-2"><span class="text-base">🏛️</span><div><div class="font-bold text-[11px]">VAV Corp Official Seal</div><div class="text-[10px] ui-muted">SVG Vector • Brand Identity</div></div></div>
+              <span class="text-[9px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-600 font-bold">BRAND</span>
+            </div>
+            <div onclick="spawnAssetItem('sticker')" class="p-2 rounded-lg border ui-border hover:border-sky-500 cursor-pointer flex items-center justify-between">
+              <div class="flex items-center gap-2"><span class="text-base">🏷️</span><div><div class="font-bold text-[11px]">Huy hiệu "HOT DEAL -40%"</div><div class="text-[10px] ui-muted">Banner CTA Sticker • Vector</div></div></div>
+              <span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 font-bold">PRO</span>
+            </div>
+            <div onclick="spawnAssetItem('photo')" class="p-2 rounded-lg border ui-border hover:border-sky-500 cursor-pointer flex items-center justify-between">
+              <div class="flex items-center gap-2"><span class="text-base">🌆</span><div><div class="font-bold text-[11px]">Editorial Studio Portrait</div><div class="text-[10px] ui-muted">300 DPI High-Res • WebP/PNG</div></div></div>
+              <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 font-bold">CC0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===============================================================
+             LEFT TAB 7: 5.7 HIERARCHICAL LAYER & OBJECT TREE
+             =============================================================== -->
+        <div id="ltab-layers" class="hidden space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-bold text-xs uppercase tracking-wider">5.7 Hierarchical Object Tree</h3>
+              <p class="ui-muted text-[10px]">Cây phân cấp Parent-Child, Group, Mask & Z-order</p>
+            </div>
+            <button onclick="groupSelectedBlocks()" class="px-2 py-1 rounded border ui-border hover:border-sky-500 font-semibold text-[10px]" title="Nhóm đối tượng đang chọn">+ Group</button>
+          </div>
+          <div id="layer-tree-list" class="space-y-1"></div>
+        </div>
+
+        <!-- ===============================================================
+             LEFT TAB 8: 5.11 SMART DESIGN, AI WORKFLOW & 5-LAYER QA ENGINE
+             =============================================================== -->
+        <div id="ltab-smart" class="hidden space-y-3.5">
+          <div>
+            <h3 class="font-bold text-xs uppercase tracking-wider">5.11 Smart Design & AI Engine</h3>
+            <p class="ui-muted text-[11px]">AI thao tác qua Operation API + Kiểm định 5 tầng QA (Mục 8, 9, 14)</p>
+          </div>
+
+          <!-- AI Brief to Operation API Runner -->
+          <div class="p-2.5 rounded-lg ui-subpanel border space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-sky-600">🤖 AI Art Direction & Tool API</span>
+              <span class="font-mono text-[9px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-600">MCP READY</span>
+            </div>
+            <textarea id="ai-prompt-input" rows="2" class="w-full p-1.5 rounded border ui-border bg-transparent text-[11px]" placeholder="Nhập yêu cầu: VD 'Tối ưu bố cục Swiss Grid, tăng tương phản CTA và căn chỉnh Smart Spacing'..."></textarea>
+            <button onclick="runAiDesignWorkflow()" class="w-full py-1.5 rounded ui-accent-btn font-bold">⚡ Thực thi qua Design Tool API</button>
+          </div>
+
+          <!-- Smart Design Utilities (5.11) -->
+          <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+            <button onclick="smartAutoAlignAll()" class="p-2 rounded border ui-border hover:border-sky-500 text-left font-semibold">📐 Smart Align & Spacing</button>
+            <button onclick="suggestFontPairing()" class="p-2 rounded border ui-border hover:border-sky-500 text-left font-semibold">🔤 Gợi ý Font Pairing</button>
+            <button onclick="suggestColorHarmony()" class="p-2 rounded border ui-border hover:border-sky-500 text-left font-semibold">🎨 Color Harmony</button>
+            <button onclick="runConsistencyCheck()" class="p-2 rounded border ui-border hover:border-sky-500 text-left font-semibold">🔍 Consistency Check</button>
+          </div>
+
+          <!-- Live WCAG Contrast Checker (5.11) -->
+          <div class="p-2.5 rounded-lg ui-subpanel border flex items-center justify-between">
+            <div>
+              <div class="font-bold text-[11px]">WCAG Contrast Checker</div>
+              <div id="wcag-detail-lbl" class="text-[10px] ui-muted">Text `#18181B` trên `#FFFFFF`</div>
+            </div>
+            <span id="wcag-badge" class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 font-mono-num font-bold text-[11px]">14.8:1 AAA</span>
+          </div>
+
+          <!-- 5-Layer Quality Inspection (Mục 9: Semantic, Design, Domain, Technical, Visual QA) -->
+          <div class="p-2.5 rounded-lg ui-subpanel border space-y-1.5">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-[11px]">Kiểm định 5 Lớp (Mục 9 QA Engine)</span>
+              <span id="qa-score-badge" class="font-mono-num font-bold text-emerald-600">98/100 PASS</span>
+            </div>
+            <div id="qa-checklist-box" class="space-y-1 text-[10px]">
+              <div class="flex justify-between"><span>✓ 9.1 Semantic QA (Thông điệp & CTA)</span><span class="text-emerald-600 font-bold">PASS</span></div>
+              <div class="flex justify-between"><span>✓ 9.2 Design QA (Hierarchy & Negative Space)</span><span class="text-emerald-600 font-bold">PASS</span></div>
+              <div class="flex justify-between"><span id="qa-domain-lbl">✓ 9.3 Domain QA (ATS Readability)</span><span class="text-emerald-600 font-bold">PASS</span></div>
+              <div class="flex justify-between"><span>✓ 9.4 Technical QA (300 DPI & Font Embed)</span><span class="text-emerald-600 font-bold">PASS</span></div>
+              <div class="flex justify-between"><span>✓ 9.5 Visual QA (Không tràn lề / Đè chữ)</span><span class="text-emerald-600 font-bold">PASS</span></div>
+            </div>
+          </div>
+
+          <!-- Operation API Trace Log (Mục 6.4 & 14.1) -->
+          <div class="p-2 rounded-lg ui-subpanel border space-y-1">
+            <div class="font-bold text-[10px] ui-muted uppercase">Operation API History Log (`doc_v6`)</div>
+            <pre id="op-api-log" class="font-mono text-[9.5px] leading-tight overflow-x-auto max-h-24 text-sky-600">{"op":"init_document","domain":"cv","dpi":300}</pre>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- =======================================================================
+         3C. CENTER WORKSPACE: RULERS (5.1) + ARTBOARD STAGE + MULTI-PAGE BAR + MOTION TIMELINE (5.9)
+         ======================================================================= -->
+    <div class="flex-1 flex flex-col overflow-hidden relative canvas-stage-bg">
+
+      <!-- TOP HORIZONTAL RULER ROW (5.1 Rulers & Guides) -->
+      <div id="ruler-top-row" class="flex shrink-0">
+        <div class="ruler-corner" id="ruler-unit-badge">px</div>
+        <div id="ruler-h-bar" onclick="addHorizontalGuideFromRuler(event)" class="ruler-h flex-1 flex items-end" title="Bấm vào thước ngang để thả đường Guide căn chỉnh ngang"></div>
+      </div>
+
+      <!-- MIDDLE CANVAS ROW: LEFT VERTICAL RULER + SCROLLABLE ARTBOARD VIEWPORT -->
+      <div class="flex-1 flex overflow-hidden relative">
+        <div id="ruler-v-bar" onclick="addVerticalGuideFromRuler(event)" class="ruler-v shrink-0 flex flex-col items-end" title="Bấm vào thước dọc để thả đường Guide căn chỉnh dọc"></div>
+
+        <!-- SCROLLABLE ARTBOARD VIEWPORT -->
+        <main id="canvas-viewport" onclick="deselectAllIfBackground(event)" class="flex-1 flex flex-col items-center justify-between p-6 overflow-auto relative">
+
+          <!-- Domain Context Banner (Responsive / Live Data Bar when in Web, Chart, Map, Banner modes) -->
+          <div id="domain-stage-bar" class="mb-3 ui-panel border rounded-full px-3.5 py-1 shadow-xs flex items-center gap-3 text-[11px] z-30">
+            <span id="domain-stage-label" class="font-bold text-sky-600">📄 Domain: CV Design (ATS + Editorial Hierarchy)</span>
+            <div class="tb-sep"></div>
+            <span class="ui-muted">Style: <strong id="active-style-lbl" class="text-current">Editorial Vogue</strong></span>
+            <div class="tb-sep"></div>
+            <button onclick="openLeftTab('smart')" class="text-emerald-600 font-bold hover:underline">✓ QA: 98/100</button>
+          </div>
+
+          <!-- THE MASTER ARTBOARD -->
+          <div id="page-artboard"
+               style="width: 595px; height: 842px; background-color: #FAF6F0;"
+               class="text-zinc-900 rounded-xs shadow-[0_24px_65px_rgba(0,0,0,0.18)] relative transition-all duration-200 origin-top shrink-0 my-auto">
+
+            <!-- 5.1 & 5.6 Technical Overlays (Bleed, Crop Marks, Safe Area, Margin, 12-Col Grid, Baseline Grid, Smart Guides) -->
+            <div id="ovl-bleed" class="overlay-bleed hidden">
+              <div class="crop-mark cm-tl"></div><div class="crop-mark cm-tr"></div>
+              <div class="crop-mark cm-bl"></div><div class="crop-mark cm-br"></div>
+            </div>
+            <div id="ovl-safe" class="overlay-safe hidden"></div>
+            <div id="ovl-margin" class="overlay-margin hidden"></div>
+            <div id="ovl-grid" class="overlay-grid-cols hidden">
+              <div></div><div></div><div></div><div></div><div></div><div></div>
+              <div></div><div></div><div></div><div></div><div></div><div></div>
+            </div>
+            <div id="ovl-baseline" class="overlay-baseline hidden"></div>
+            <div id="smart-guide-h" class="smart-guide-x"></div>
+            <div id="smart-guide-v" class="smart-guide-y"></div>
+            <div id="user-guides-container" class="absolute inset-0 pointer-events-none z-90"></div>
+
+            <!-- OBJECTS CONTAINER ON ARTBOARD -->
+            <div id="artboard-objects-root" class="w-full h-full relative overflow-hidden">
+
+              <!-- Ambient Blend Orb (z:2, Multiply) -->
+              <div id="blk-ambient-orb"
+                   data-block-type="shape"
+                   data-parent-group="grp-background"
+                   data-block-title="Orb Ánh sáng Hòa trộn (Multiply)"
+                   data-bg-hex="#fda4af"
+                   data-bg-alpha="45"
+                   style="left: 365px; top: -24px; width: 245px; height: 245px; z-index: 2; mix-blend-mode: multiply; background-color: rgba(253, 164, 175, 0.45); filter: blur(18px);"
+                   class="studio-block rounded-full">
+                <div class="block-badge">🥞 Shape: Orb Multiply (z:2)</div>
+              </div>
+
+              <!-- BLOCK 1: SECTION PERSONAL / HERO HEADER -->
+              <div id="blk-sec-personal"
+                   data-block-type="section"
+                   data-section-key="personal"
+                   data-parent-group="grp-header"
+                   data-block-title="Header: Thông tin & Định danh"
+                   data-bg-hex="#ffffff"
+                   data-bg-alpha="78"
+                   style="left: 32px; top: 28px; width: 531px; height: 128px; z-index: 10; background-color: rgba(255, 255, 255, 0.78); backdrop-filter: blur(8px);"
+                   class="studio-block p-5 rounded-2xl border border-stone-200/80 flex items-center justify-between gap-4">
+                <div class="block-badge">🧩 Frame: Header Identity</div>
+                <div class="space-y-1 flex-1">
+                  <div id="bind-eyebrow" contenteditable="true" class="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-800 outline-none">Architecture & AI Design Platform</div>
+                  <h1 id="bind-fullname" contenteditable="true" style="font-family: 'Playfair Display', serif; font-size: 28px;" class="font-bold tracking-tight outline-none">
+                    Vũ Anh Vương
+                  </h1>
+                  <p id="bind-headline" contenteditable="true" class="text-xs font-semibold text-sky-700 outline-none">
+                    Principal Platform & Distributed Systems Architect
+                  </p>
+                  <p id="bind-contact" contenteditable="true" class="text-[11px] opacity-75 outline-none">
+                    vuonganhvu@vuonganhvu.vn • Hà Nội, Việt Nam • id.vuonganhvu.vn
+                  </p>
+                </div>
+                <div id="hero-avatar-box" class="w-16 h-16 rounded-full bg-gradient-to-tr from-stone-900 to-amber-700 text-white flex items-center justify-center font-serif text-xl font-bold shrink-0 shadow">V</div>
+              </div>
+
+              <!-- BLOCK 2: SECTION EXPERIENCES / MAIN CONTENT -->
+              <div id="blk-sec-experiences"
+                   data-block-type="section"
+                   data-section-key="experiences"
+                   data-parent-group="grp-body"
+                   data-block-title="Section: Kinh nghiệm / Nội dung chính"
+                   data-bg-hex="#ffffff"
+                   data-bg-alpha="90"
+                   style="left: 32px; top: 172px; width: 336px; height: 295px; z-index: 12; background-color: rgba(255, 255, 255, 0.90);"
+                   class="studio-block p-5 rounded-2xl border border-stone-200/80 overflow-hidden">
+                <div class="block-badge">🧩 Section: Kinh nghiệm (`experiences[]`)</div>
+                <div class="flex items-center justify-between border-b border-current/10 pb-2 mb-3">
+                  <span id="lbl-sec-exp-title" class="text-[11px] font-extrabold uppercase tracking-wider">💼 Kinh nghiệm Chuyên môn</span>
+                  <span class="font-mono text-[9px] opacity-60">Auto-Layout ↓</span>
+                </div>
+                <div id="render-experiences" class="space-y-3 text-xs"></div>
+              </div>
+
+              <!-- BLOCK 3: SECTION PROJECTS / INTERACTIVE MODULE (Swaps to ECharts / Leaflet Map / Web Grid in Chart/Map/Web domains!) -->
+              <div id="blk-sec-projects"
+                   data-block-type="section"
+                   data-section-key="projects"
+                   data-parent-group="grp-body"
+                   data-block-title="Section: Dự án / Biểu đồ / Bản đồ"
+                   data-bg-hex="#ffffff"
+                   data-bg-alpha="90"
+                   style="left: 32px; top: 482px; width: 336px; height: 265px; z-index: 14; background-color: rgba(255, 255, 255, 0.90);"
+                   class="studio-block p-4 rounded-2xl border border-stone-200/80 overflow-hidden flex flex-col">
+                <div class="block-badge">🧩 Section: Dự án & Trực quan hóa</div>
+                <div class="flex items-center justify-between border-b border-current/10 pb-2 mb-2.5 shrink-0">
+                  <span id="lbl-sec-proj-title" class="text-[11px] font-extrabold uppercase tracking-wider">🚀 Dự án Trọng điểm</span>
+                  <span id="lbl-sec-proj-badge" class="font-mono text-[9px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-600 font-bold">DB BOUND</span>
+                </div>
+                <div id="render-projects" class="space-y-2.5 text-xs flex-1 overflow-hidden"></div>
+                <div id="live-chart-container" class="hidden w-full flex-1 min-h-[195px]"></div>
+                <div id="live-map-container" class="hidden w-full flex-1 min-h-[195px] rounded-xl overflow-hidden"></div>
+              </div>
+
+              <!-- BLOCK 4: SECTION SKILLS / METRICS / CTA -->
+              <div id="blk-sec-skills"
+                   data-block-type="section"
+                   data-section-key="skills"
+                   data-parent-group="grp-sidebar"
+                   data-block-title="Section: Kỹ năng / Chỉ số"
+                   data-bg-hex="#ffffff"
+                   data-bg-alpha="90"
+                   style="left: 382px; top: 172px; width: 181px; height: 295px; z-index: 16; background-color: rgba(255, 255, 255, 0.90);"
+                   class="studio-block is-selected p-4 rounded-2xl border border-stone-200/80 overflow-hidden">
+                <div class="block-badge">🧩 Section: Kỹ năng (4 Variants)</div>
+                <div id="lbl-sec-skills-title" class="text-[11px] font-extrabold uppercase tracking-wider border-b border-current/10 pb-2 mb-3">⚡ Kỹ năng Cốt lõi</div>
+                <div id="render-skills" class="text-[11px]"></div>
+              </div>
+
+              <!-- BLOCK 5: VECTOR / 3D / QR MEDIA BLOCK -->
+              <div id="blk-media-3d"
+                   data-block-type="media"
+                   data-parent-group="grp-sidebar"
+                   data-block-title="Khối Media 3D & Vector"
+                   data-bg-hex="#0f172a"
+                   data-bg-alpha="92"
+                   style="left: 382px; top: 482px; width: 181px; height: 155px; z-index: 18; background-color: rgba(15, 23, 42, 0.92);"
+                   class="studio-block p-3 rounded-2xl text-white shadow-lg flex flex-col items-center justify-between">
+                <div class="block-badge">🧊 Media: 3D & Vector Layer</div>
+                <div class="text-[10px] font-semibold text-sky-300 uppercase tracking-wider">3D / Motion Object</div>
+                <div class="cube-3d-scene my-auto">
+                  <div class="cube-3d">
+                    <div class="cube-face cf-front">v6</div><div class="cube-face cf-back">WEB</div>
+                    <div class="cube-face cf-right">SDK</div><div class="cube-face cf-left">AI</div>
+                    <div class="cube-face cf-top">TOP</div><div class="cube-face cf-bottom">PRO</div>
+                  </div>
+                </div>
+                <div class="text-[10px] text-zinc-300 font-mono-num">60 FPS • WebGL Ready</div>
+              </div>
+
+              <!-- BLOCK 6: TRANSPARENT FREEFORM TEXT / CTA BLOCK (Bg Alpha = 0% from v5) -->
+              <div id="blk-free-note"
+                   data-block-type="text"
+                   data-parent-group="grp-sidebar"
+                   data-block-title="Text Tự do (Bg Alpha 0%)"
+                   data-bg-hex="#ffffff"
+                   data-bg-alpha="0"
+                   style="left: 382px; top: 652px; width: 181px; height: 95px; z-index: 25; background-color: rgba(255, 255, 255, 0);"
+                   class="studio-block p-2 rounded-xl">
+                <div class="block-badge">🔤 Text: Bg Alpha 0% (Xuyên lớp)</div>
+                <div id="free-note-content" contenteditable="true" style="font-family: 'Cormorant Garamond', serif" class="text-sm italic font-bold text-amber-900 leading-snug outline-none">
+                  “Mọi đối tượng dùng chung Object Model & Capability System (Transform, Appearance, Layout, Layer, Animation).”
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- BOTTOM FLOATING MULTI-PAGE & ZOOM BAR (5.1 Page / Artboard / Zoom / Pan) -->
+          <div class="mt-4 ui-panel border rounded-full px-3.5 py-1 shadow-md flex items-center gap-2.5 text-[11px] z-30">
+            <!-- Multi-Page Switcher -->
+            <div class="flex items-center gap-1">
+              <button onclick="switchDocumentPage(1)" id="page-btn-1" class="px-2 py-0.5 rounded-full ui-accent-btn font-bold">Trang 1</button>
+              <button onclick="switchDocumentPage(2)" id="page-btn-2" class="px-2 py-0.5 rounded-full ui-subpanel border hover:border-sky-500 font-semibold">Trang 2</button>
+              <button onclick="addNewDocumentPage()" class="px-2 py-0.5 rounded-full border ui-border hover:border-sky-500 font-semibold" title="5.1 Thêm trang mới vào Document">+ Trang</button>
+            </div>
+            <div class="tb-sep"></div>
+            <span id="page-dim-readout" class="font-mono-num text-[11px] ui-muted">595 × 842 px (300 DPI)</span>
+            <div class="tb-sep"></div>
+            <button onclick="setCanvasZoom(currentZoom - 0.1)" class="w-5 h-5 rounded hover:bg-zinc-500/10 font-bold">−</button>
+            <input id="zoom-slider" type="range" min="0.4" max="1.5" step="0.05" value="1" oninput="setCanvasZoom(Number(this.value))" class="w-20 accent-sky-600" />
+            <span id="zoom-pct-lbl" class="font-mono-num text-[11px] w-10 text-center">100%</span>
+            <button onclick="setCanvasZoom(currentZoom + 0.1)" class="w-5 h-5 rounded hover:bg-zinc-500/10 font-bold">+</button>
+            <button onclick="setCanvasZoom(0.68)" class="px-2 py-0.5 rounded-full ui-subpanel border font-semibold hover:border-sky-500">Fit (68%)</button>
+            <button onclick="setCanvasZoom(1.0)" class="px-2 py-0.5 rounded-full ui-subpanel border font-semibold hover:border-sky-500">100%</button>
+          </div>
+
+        </main>
+      </div>
+
+      <!-- =====================================================================
+           3D. COLLAPSIBLE BOTTOM ANIMATION & MOTION TIMELINE (5.9 Toolkit)
+           ===================================================================== -->
+      <section id="motion-timeline-drawer" class="hidden h-48 ui-panel border-t flex flex-col z-30 shrink-0">
+        <!-- Timeline Header Controls -->
+        <div class="h-9 border-b ui-border px-3 flex items-center justify-between text-[11px] ui-subpanel">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-sky-600">🎬 5.9 Animation & Keyframe Timeline</span>
+            <button onclick="playAllBlocksAnimation()" class="px-2.5 py-0.5 rounded ui-accent-btn font-bold">▶ Play</button>
+            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="tl-loop-chk" onchange="toggleSelectedLoopAnim(this.checked)" class="accent-sky-600" /><span>Loop</span></label>
+            <div class="tb-sep"></div>
+            <span class="ui-muted">FPS:</span>
+            <select id="tl-fps" onchange="showToast('✓ Timeline FPS: '+this.value)" class="bg-transparent font-mono-num font-bold outline-none">
+              <option value="60">60 FPS</option>
+              <option value="30">30 FPS</option>
+              <option value="24">24 FPS</option>
+            </select>
+            <div class="tb-sep"></div>
+            <span class="ui-muted">Easing:</span>
+            <select id="tl-easing" onchange="updateAnimationTiming()" class="bg-transparent font-semibold outline-none">
+              <option value="cubic-bezier(0.16, 1, 0.3, 1)">Cubic-Bezier (Smooth Out)</option>
+              <option value="cubic-bezier(0.34, 1.56, 0.64, 1)">Spring Elastic</option>
+              <option value="ease-in-out">Ease-In-Out</option>
+              <option value="linear">Linear</option>
+            </select>
+            <div class="prop-box w-20"><span class="prop-lbl">Dur</span><input id="tl-duration" type="number" step="0.1" value="0.6" oninput="updateAnimationTiming()" /></div>
+            <div class="prop-box w-20"><span class="prop-lbl">Dly</span><input id="tl-delay" type="number" step="0.1" value="0.0" oninput="updateAnimationTiming()" /></div>
+          </div>
+
+          <!-- 10 Motion Patterns Quick Bar -->
+          <div class="flex items-center gap-1">
+            <button onclick="triggerBlockAnim('anim-fade')" class="px-1.5 py-0.5 rounded border ui-border hover:border-sky-500">Fade</button>
+            <button onclick="triggerBlockAnim('anim-slide')" class="px-1.5 py-0.5 rounded border ui-border hover:border-sky-500">Slide</button>
+            <button onclick="triggerBlockAnim('anim-zoom')" class="px-1.5 py-0.5 rounded border ui-border hover:border-sky-500">Zoom</button>
+            <button onclick="triggerBlockAnim('anim-rotate')" class="px-1.5 py-0.5 rounded border ui-border hover:border-sky-500">Rotate</button>
+            <button onclick="triggerBlockAnim('anim-bounce')" class="px-1.5 py-0.5 rounded border ui-border hover:border-sky-500">Bounce</button>
+            <button onclick="triggerBlockAnim('anim-reveal')" class="px-1.5 py-0.5 rounded border ui-border hover:border-sky-500">Reveal Mask</button>
+            <button onclick="triggerBlockAnim('anim-morph')" class="px-1.5 py-0.5 rounded border ui-border hover:border-sky-500">Morph</button>
+            <button onclick="triggerBlockAnim('anim-parallax')" class="px-1.5 py-0.5 rounded border ui-border hover:border-sky-500">Parallax</button>
+            <button onclick="runTypewriterAnim()" class="px-1.5 py-0.5 rounded border ui-border hover:border-sky-500">Typewriter</button>
+            <button onclick="toggleMotionTimeline()" class="tb-icon-btn ml-1">✕</button>
+          </div>
+        </div>
+
+        <!-- Keyframe Sequencer Tracks -->
+        <div class="flex-1 overflow-y-auto p-2.5 space-y-1.5 font-mono text-[10px]">
+          <div class="grid grid-cols-12 items-center text-zinc-400 border-b ui-border pb-1">
+            <div class="col-span-3 font-sans font-bold text-current">Track / Property</div>
+            <div class="col-span-9 flex justify-between px-2"><span>0.0s</span><span>0.5s</span><span>1.0s</span><span>1.5s</span><span>2.0s</span><span>2.5s</span><span>3.0s</span></div>
+          </div>
+          <div class="grid grid-cols-12 items-center py-1 hover:bg-zinc-500/5 rounded">
+            <div class="col-span-3 font-sans font-semibold">1. Header Identity (`Pos / Opacity`)</div>
+            <div class="col-span-9 h-4 ui-subpanel rounded relative flex items-center">
+              <div class="absolute left-[2%] w-[28%] h-2.5 rounded bg-sky-500/30 border border-sky-500 flex items-center justify-between px-1 text-[9px] text-sky-600"><span>◆</span><span>FadeRise</span><span>◆</span></div>
+            </div>
+          </div>
+          <div class="grid grid-cols-12 items-center py-1 hover:bg-zinc-500/5 rounded">
+            <div class="col-span-3 font-sans font-semibold">2. Section Kinh nghiệm (`Scale / Mask`)</div>
+            <div class="col-span-9 h-4 ui-subpanel rounded relative flex items-center">
+              <div class="absolute left-[14%] w-[35%] h-2.5 rounded bg-emerald-500/30 border border-emerald-500 flex items-center justify-between px-1 text-[9px] text-emerald-600"><span>◆</span><span>Reveal</span><span>◆</span></div>
+            </div>
+          </div>
+          <div class="grid grid-cols-12 items-center py-1 hover:bg-zinc-500/5 rounded">
+            <div class="col-span-3 font-sans font-semibold">3. Section Kỹ năng (`Bounce / Color`)</div>
+            <div class="col-span-9 h-4 ui-subpanel rounded relative flex items-center">
+              <div class="absolute left-[25%] w-[32%] h-2.5 rounded bg-amber-500/30 border border-amber-500 flex items-center justify-between px-1 text-[9px] text-amber-600"><span>◆</span><span>Spring</span><span>◆</span></div>
+            </div>
+          </div>
+          <div class="grid grid-cols-12 items-center py-1 hover:bg-zinc-500/5 rounded">
+            <div class="col-span-3 font-sans font-semibold">4. Media 3D Cube (`Rotation 360° Loop`)</div>
+            <div class="col-span-9 h-4 ui-subpanel rounded relative flex items-center">
+              <div class="absolute left-[0%] w-[96%] h-2.5 rounded bg-purple-500/30 border border-purple-500 flex items-center justify-between px-1 text-[9px] text-purple-600"><span>◆</span><span>Continuous 60fps Sync</span><span>◆</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- =======================================================================
+         3E. PRECISION RIGHT INSPECTOR (305px — 5.8 Transform, 5.6 Layout/Constraints, 5.4 Color/Fill/Stroke/Effects, 5.3 Adjustments)
+         ======================================================================= -->
+    <aside id="right-inspector" class="w-[305px] ui-panel border-l flex flex-col z-30 shrink-0">
+      <div class="h-9 px-3 border-b ui-border flex items-center justify-between">
+        <div class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+          <h3 id="insp-title" class="font-bold text-[11px] uppercase tracking-wider truncate">Inspector: Section Kỹ năng</h3>
+        </div>
+        <button onclick="toggleRightInspector()" class="tb-icon-btn" title="Đóng Inspector">✕</button>
+      </div>
+
+      <div class="flex-1 p-3 overflow-y-auto space-y-3.5 text-[11px]">
+
+        <!-- SECTION 1: 5.8 TRANSFORM & PRECISION (X, Y, W, H, Ratio Lock, Rotate, Skew, Perspective, 9-Anchor Pivot) -->
+        <div class="space-y-2 pb-3 border-b ui-border">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-[10px] uppercase tracking-wider ui-muted">5.8 Transform & Precision</span>
+            <button onclick="toggleAspectRatioLock()" id="btn-aspect-lock" class="px-1.5 py-0.5 rounded border ui-border font-mono text-[10px]" title="Khóa tỷ lệ khung hình (Aspect Ratio Lock)">🔗 Lock Ratio</button>
+          </div>
+
+          <div class="flex gap-2 items-center">
+            <!-- 2x2 Grid X, Y, W, H + Rotation & Skew -->
+            <div class="grid grid-cols-2 gap-1.5 flex-1">
+              <div class="prop-box"><span class="prop-lbl">X</span><input id="insp-x" type="number" value="382" oninput="applyPrecisionTransform()" /></div>
+              <div class="prop-box"><span class="prop-lbl">Y</span><input id="insp-y" type="number" value="172" oninput="applyPrecisionTransform()" /></div>
+              <div class="prop-box"><span class="prop-lbl">W</span><input id="insp-w" type="number" value="181" oninput="applyPrecisionTransform()" /></div>
+              <div class="prop-box"><span class="prop-lbl">H</span><input id="insp-h" type="number" value="295" oninput="applyPrecisionTransform()" /></div>
+              <div class="prop-box"><span class="prop-lbl">R°</span><input id="insp-rot" type="number" value="0" oninput="applyPrecisionTransform()" /></div>
+              <div class="prop-box"><span class="prop-lbl">Sk°</span><input id="insp-skew" type="number" value="0" oninput="applyPrecisionTransform()" /></div>
+            </div>
+
+            <!-- 9-Point Anchor / Pivot Matrix (5.8) -->
+            <div class="p-1.5 rounded border ui-border ui-subpanel grid grid-cols-3 gap-1.5" title="5.8 Tâm biến đổi 9 điểm (Anchor / Pivot Point)">
+              <div onclick="setTransformPivot('top left', this)" class="anchor-dot"></div>
+              <div onclick="setTransformPivot('top center', this)" class="anchor-dot"></div>
+              <div onclick="setTransformPivot('top right', this)" class="anchor-dot"></div>
+              <div onclick="setTransformPivot('center left', this)" class="anchor-dot"></div>
+              <div onclick="setTransformPivot('center center', this)" class="anchor-dot active"></div>
+              <div onclick="setTransformPivot('center right', this)" class="anchor-dot"></div>
+              <div onclick="setTransformPivot('bottom left', this)" class="anchor-dot"></div>
+              <div onclick="setTransformPivot('bottom center', this)" class="anchor-dot"></div>
+              <div onclick="setTransformPivot('bottom right', this)" class="anchor-dot"></div>
+            </div>
+          </div>
+
+          <!-- Corner Radius (Uniform + 4 Corners) & Perspective -->
+          <div class="grid grid-cols-3 gap-1.5">
+            <div class="prop-box" title="Corner Radius (Bo góc)"><span class="prop-lbl">◜</span><input id="insp-radius" type="number" value="16" oninput="applyBlockStyle('borderRadius', this.value+'px')" /></div>
+            <div class="prop-box" title="3D Perspective"><span class="prop-lbl">3D</span><input id="insp-persp" type="number" value="0" oninput="applyPrecisionTransform()" /></div>
+            <div class="prop-box" title="Padding trong khối"><span class="prop-lbl">Pd</span><input id="insp-pad" type="number" value="16" oninput="applyBlockStyle('padding', this.value+'px')" /></div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: 5.6 AUTO LAYOUT & CONSTRAINTS -->
+        <div class="space-y-2 pb-3 border-b ui-border">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-[10px] uppercase tracking-wider ui-muted">5.6 Auto Layout & Constraints</span>
+            <span class="font-mono text-[9.5px] text-sky-600">Flex / Pin</span>
+          </div>
+          <div class="grid grid-cols-4 gap-1 text-[10px]">
+            <button onclick="setBlockAutoLayout('free')" class="p-1 rounded border ui-border ui-subpanel font-semibold">Free</button>
+            <button onclick="setBlockAutoLayout('row')" class="p-1 rounded border ui-border ui-subpanel font-semibold">→ Row</button>
+            <button onclick="setBlockAutoLayout('col')" class="p-1 rounded border ui-border ui-subpanel font-semibold">↓ Col</button>
+            <button onclick="setBlockAutoLayout('grid')" class="p-1 rounded border ui-border ui-subpanel font-semibold">⊞ Grid</button>
+          </div>
+          <div class="grid grid-cols-2 gap-1.5">
+            <div class="prop-box"><span class="prop-lbl">↔ Pin</span>
+              <select onchange="showToast('✓ Constraint Ngang: '+this.value)">
+                <option>Left</option><option>Right</option><option>Left + Right</option><option>Center</option><option>Scale</option>
+              </select>
+            </div>
+            <div class="prop-box"><span class="prop-lbl">↕ Pin</span>
+              <select onchange="showToast('✓ Constraint Dọc: '+this.value)">
+                <option>Top</option><option>Bottom</option><option>Top + Bottom</option><option>Center</option><option>Scale</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: 5.4 COLOR, FILL & STROKE (HEX/RGB/HSL/CMYK + Gradient + Stroke Cap/Join/Dash) -->
+        <div class="space-y-2 pb-3 border-b ui-border">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-[10px] uppercase tracking-wider ui-muted">5.4 Color, Fill & Stroke</span>
+            <div class="flex items-center gap-1">
+              <button onclick="pickScreenColor()" class="px-1.5 py-0.5 rounded border ui-border text-[10px]" title="5.4 Bút hút màu màn hình (Eyedropper)">💧 Hút màu</button>
+              <select id="color-space-select" onchange="switchColorSpaceView(this.value)" class="bg-transparent font-mono font-bold text-[10px] outline-none">
+                <option value="HEX">HEX</option>
+                <option value="RGB">RGBA</option>
+                <option value="HSL">HSLA</option>
+                <option value="CMYK">CMYK</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Color Space Readout & Fill Mode Tabs -->
+          <div id="color-space-readout" class="p-1.5 rounded ui-subpanel border font-mono-num text-[10px] flex justify-between">
+            <span>HEX: #FFFFFF</span><span>Alpha: 90%</span><span>C:0 M:0 Y:0 K:0</span>
+          </div>
+
+          <div class="grid grid-cols-4 gap-1 text-[10px]">
+            <button onclick="setBlockFillType('solid')" class="p-1 rounded border ui-border ui-subpanel font-semibold">Solid</button>
+            <button onclick="setBlockFillType('linear')" class="p-1 rounded border ui-border ui-subpanel font-semibold">Linear</button>
+            <button onclick="setBlockFillType('radial')" class="p-1 rounded border ui-border ui-subpanel font-semibold">Radial</button>
+            <button onclick="setBlockFillType('pattern')" class="p-1 rounded border ui-border ui-subpanel font-semibold">Pattern</button>
+          </div>
+
+          <!-- Gradient 360 Controls -->
+          <div class="flex items-center gap-1.5">
+            <input id="g-c1" type="color" value="#ffecd2" oninput="applyGrad()" class="w-6 h-6 rounded border-0 bg-transparent cursor-pointer" />
+            <input id="g-c2" type="color" value="#fcb69f" oninput="applyGrad()" class="w-6 h-6 rounded border-0 bg-transparent cursor-pointer" />
+            <input id="g-ang" type="range" min="0" max="360" value="135" oninput="applyGrad()" class="flex-1 accent-sky-600" title="Góc Gradient 0°..360°" />
+            <span id="g-ang-lbl" class="font-mono-num text-[10px] w-8 text-right">135°</span>
+          </div>
+
+          <!-- Brand Palette Swatches -->
+          <div class="flex items-center justify-between pt-0.5">
+            <span class="text-[10px] ui-muted">Brand Palette:</span>
+            <div class="flex gap-1">
+              <button onclick="applyBrandSwatch('#18181b')" class="w-4 h-4 rounded-full bg-zinc-900 border border-white/30"></button>
+              <button onclick="applyBrandSwatch('#0d99ff')" class="w-4 h-4 rounded-full bg-[#0d99ff]"></button>
+              <button onclick="applyBrandSwatch('#10b981')" class="w-4 h-4 rounded-full bg-emerald-500"></button>
+              <button onclick="applyBrandSwatch('#f59e0b')" class="w-4 h-4 rounded-full bg-amber-500"></button>
+              <button onclick="applyBrandSwatch('#e11d48')" class="w-4 h-4 rounded-full bg-rose-600"></button>
+              <button onclick="applyBrandSwatch('#FAF6F0')" class="w-4 h-4 rounded-full bg-[#FAF6F0] border border-zinc-400"></button>
+            </div>
+          </div>
+
+          <!-- Stroke (Color, Width, Style, Dash, Cap, Join, Align) -->
+          <div class="pt-1.5 space-y-1.5">
+            <div class="text-[10px] font-semibold">Stroke (Đường viền — Width / Style / Cap / Join)</div>
+            <div class="grid grid-cols-3 gap-1.5">
+              <div class="prop-box">
+                <input id="stroke-color" type="color" value="#d6d3d1" oninput="applyStrokeProps()" class="w-4 h-4 border-0" />
+                <input id="stroke-width" type="number" min="0" max="16" value="1" oninput="applyStrokeProps()" />
+              </div>
+              <div class="prop-box">
+                <select id="stroke-style" onchange="applyStrokeProps()">
+                  <option value="solid">Solid</option>
+                  <option value="dashed">Dashed</option>
+                  <option value="dotted">Dotted</option>
+                  <option value="double">Double</option>
+                </select>
+              </div>
+              <div class="prop-box">
+                <select id="stroke-align" onchange="showToast('✓ Stroke Align: '+this.value)">
+                  <option value="inside">Inside</option>
+                  <option value="center">Center</option>
+                  <option value="outside">Outside</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 4: 5.4 EFFECTS STACK (Strictly Separated from Blend Mode!) & 5.3 IMAGE ADJUSTMENTS -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-[10px] uppercase tracking-wider ui-muted">5.4 Effects Stack & 5.3 Filters</span>
+            <span class="font-mono text-[9.5px] text-purple-500">Non-Destructive</span>
+          </div>
+
+          <!-- Layer Opacity (Whole Object) -->
+          <div>
+            <div class="flex justify-between text-[10px] mb-0.5"><span>Layer Opacity (Độ đục toàn khối)</span><span id="lbl-layer-op" class="font-mono-num">100%</span></div>
+            <input type="range" min="10" max="100" value="100" oninput="applyBlockStyle('opacity', this.value/100); document.getElementById('lbl-layer-op').textContent=this.value+'%'" class="w-full accent-sky-600" />
+          </div>
+
+          <!-- Background Blur (Glassmorphism) -->
+          <div>
+            <div class="flex justify-between text-[10px] mb-0.5"><span>Background Blur (Kính mờ xuyên lớp)</span><span id="lbl-blur-glass" class="font-mono-num">8px</span></div>
+            <input type="range" min="0" max="28" value="8" oninput="applyBlockStyle('backdropFilter','blur('+this.value+'px)'); document.getElementById('lbl-blur-glass').textContent=this.value+'px'" class="w-full accent-sky-600" />
+          </div>
+
+          <!-- 8 Toggleable Effects (Drop Shadow, Inner Shadow, Glow, Bevel, Noise/Grain, Outline) -->
+          <div class="grid grid-cols-2 gap-1 text-[10px]">
+            <button onclick="applyBlockStyle('boxShadow','0 14px 32px rgba(0,0,0,0.14)')" class="p-1.5 rounded border ui-border ui-subpanel hover:border-sky-500 text-left">Drop Shadow</button>
+            <button onclick="toggleBlockClass('ps-fx-innershadow')" class="p-1.5 rounded border ui-border ui-subpanel hover:border-sky-500 text-left">Inner Shadow</button>
+            <button onclick="toggleBlockClass('ps-fx-outerglow')" class="p-1.5 rounded border ui-border ui-subpanel hover:border-sky-500 text-left">Outer / Neon Glow</button>
+            <button onclick="toggleBlockClass('ps-fx-bevel')" class="p-1.5 rounded border ui-border ui-subpanel hover:border-sky-500 text-left">Bevel & Emboss</button>
+            <button onclick="toggleBlockClass('ps-fx-grain')" class="p-1.5 rounded border ui-border ui-subpanel hover:border-sky-500 text-left">Noise / Grain</button>
+            <button onclick="toggleBlockClass('ps-fx-outline')" class="p-1.5 rounded border ui-border ui-subpanel hover:border-sky-500 text-left">Outline Stroke</button>
+          </div>
+
+          <!-- 5.3 Image & Filter Sliders: Brightness, Contrast, Saturation, Hue, Blur -->
+          <div class="p-2 rounded-lg ui-subpanel border space-y-1.5">
+            <div class="font-semibold text-[10px]">5.3 Adjustments (Brightness / Contrast / Sat / Hue / Blur)</div>
+            <div class="flex items-center gap-2 text-[10px]"><span class="w-14 ui-muted">Bright</span><input id="flt-b" type="range" min="50" max="150" value="100" oninput="applyFilters()" class="flex-1 accent-sky-600" /></div>
+            <div class="flex items-center gap-2 text-[10px]"><span class="w-14 ui-muted">Contrast</span><input id="flt-c" type="range" min="50" max="160" value="100" oninput="applyFilters()" class="flex-1 accent-sky-600" /></div>
+            <div class="flex items-center gap-2 text-[10px]"><span class="w-14 ui-muted">Saturate</span><input id="flt-s" type="range" min="0" max="200" value="100" oninput="applyFilters()" class="flex-1 accent-sky-600" /></div>
+            <div class="flex items-center gap-2 text-[10px]"><span class="w-14 ui-muted">Hue°</span><input id="flt-h" type="range" min="0" max="360" value="0" oninput="applyFilters()" class="flex-1 accent-sky-600" /></div>
+            <div class="flex items-center gap-2 text-[10px]"><span class="w-14 ui-muted">Blur px</span><input id="flt-blur" type="range" min="0" max="16" value="0" oninput="applyFilters()" class="flex-1 accent-sky-600" /></div>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- =========================================================================
+       4. EXPORT & TECHNICAL PREFLIGHT MODAL (5.12 Toolkit & Section 9.4 QA)
+       ========================================================================= -->
+  <div id="export-preflight-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+    <div class="ui-panel border rounded-2xl max-w-xl w-full p-5 space-y-4 shadow-2xl text-xs">
+      <div class="flex justify-between items-center border-b ui-border pb-3">
+        <div>
+          <h3 class="font-bold text-sm">5.12 Export, Publishing & Automated Preflight QA</h3>
+          <p class="ui-muted text-[11px]">Quy trình xuất bản thích ứng theo loại Document & Medium (Print, Web, Social, Video)</p>
+        </div>
+        <button onclick="closeExportPreflightModal()" class="tb-icon-btn">✕</button>
+      </div>
+
+      <!-- 8 Export Formats -->
+      <div>
+        <div class="font-bold mb-1.5">1. Định dạng Xuất bản (Format)</div>
+        <div class="grid grid-cols-4 gap-1.5 text-[11px]">
+          <button onclick="selectExportFormat('PDF/X')" class="exp-fmt-btn p-2 rounded-lg border-2 border-sky-500 bg-sky-500/10 font-bold text-left"><div>📄 PDF / PDF-X</div><div class="text-[9.5px] ui-muted">In ấn CMYK & ATS</div></button>
+          <button onclick="selectExportFormat('PNG')" class="exp-fmt-btn p-2 rounded-lg border ui-border text-left"><div>🖼 PNG / WebP</div><div class="text-[9.5px] ui-muted">Lossless + Alpha</div></button>
+          <button onclick="selectExportFormat('SVG')" class="exp-fmt-btn p-2 rounded-lg border ui-border text-left"><div>✒️ SVG / JPG</div><div class="text-[9.5px] ui-muted">Vector / Web</div></button>
+          <button onclick="selectExportFormat('MP4')" class="exp-fmt-btn p-2 rounded-lg border ui-border text-left"><div>🎬 MP4 / GIF</div><div class="text-[9.5px] ui-muted">60fps Motion</div></button>
+        </div>
+      </div>
+
+      <!-- Technical Export Settings -->
+      <div class="grid grid-cols-3 gap-2 p-3 rounded-xl ui-subpanel border">
+        <div>
+          <div class="text-[10px] ui-muted mb-1">Resolution & Scale</div>
+          <select class="w-full p-1.5 rounded border ui-border ui-panel font-mono-num font-semibold">
+            <option>300 DPI (2x Print)</option>
+            <option>150 DPI (1.5x)</option>
+            <option>72 PPI (1x Web)</option>
+          </select>
+        </div>
+        <div>
+          <div class="text-[10px] ui-muted mb-1">Color Profile</div>
+          <select class="w-full p-1.5 rounded border ui-border ui-panel font-semibold">
+            <option>sRGB IEC61966-2.1</option>
+            <option>CMYK Coated FOGRA39</option>
+            <option>Display P3</option>
+          </select>
+        </div>
+        <div>
+          <div class="text-[10px] ui-muted mb-1">Page Range & Batch</div>
+          <select class="w-full p-1.5 rounded border ui-border ui-panel font-semibold">
+            <option>Tất cả trang (1–2)</option>
+            <option>Trang hiện tại (1)</option>
+            <option>Batch Export Multi-Size</option>
+          </select>
+        </div>
+        <label class="flex items-center gap-1.5 cursor-pointer pt-1"><input type="checkbox" checked class="accent-sky-600" /><span>Include 3mm Bleed</span></label>
+        <label class="flex items-center gap-1.5 cursor-pointer pt-1"><input type="checkbox" checked class="accent-sky-600" /><span>Print Crop Marks</span></label>
+        <label class="flex items-center gap-1.5 cursor-pointer pt-1"><input type="checkbox" checked class="accent-sky-600" /><span>Embed Subset Fonts</span></label>
+      </div>
+
+      <!-- Automated Preflight Checks -->
+      <div class="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-1.5">
+        <div class="flex justify-between items-center">
+          <span class="font-bold text-emerald-600">✓ Preflight Technical & Domain Check (5/5 Passed)</span>
+          <span class="font-mono-num text-[10px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 font-bold">READY TO PUBLISH</span>
+        </div>
+        <div class="grid grid-cols-2 gap-1 text-[11px]">
+          <div>• Fonts: Plus Jakarta Sans, Playfair (Embedded)</div>
+          <div>• Asset DPI: Effective ≥ 300 PPI (No pixelation)</div>
+          <div>• Safe Area & Bleed: Không có chữ bị cắt lề</div>
+          <div>• Accessibility: WCAG Contrast 14.8:1 (AAA)</div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-1">
+        <button onclick="closeExportPreflightModal()" class="px-4 py-2 rounded-lg border ui-border font-semibold">Đóng</button>
+        <button onclick="executeExportPublish()" class="px-5 py-2 rounded-lg ui-accent-btn font-bold">↓ Xuất bản & Lưu Snapshot S3</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="studio-toast" class="hidden fixed bottom-5 right-5 bg-zinc-900 text-white px-4 py-2.5 rounded-xl shadow-2xl border border-zinc-700 text-xs font-semibold z-50"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

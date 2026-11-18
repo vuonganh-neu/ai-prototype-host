@@ -1,12 +1,12 @@
 {
-  "updated_at": "2026-11-18T11:28:40+07:00",
+  "updated_at": "2026-11-18T12:10:55+07:00",
   "projects": [
     {
       "slug": "editor-platform",
       "features": [
         {
           "slug": "01-universal-studio",
-          "title": "Universal Block-Layer Studio (CV & Document)",
+          "title": "Universal Master Design & Editor Studio (All Domains + 12 Toolkits)",
           "domain": "04-creative-editor",
           "persona": "creator-builder",
           "approved_version": "",
@@ -51,6 +51,11 @@
               "version": "v5-icon-clean-studio",
               "created_at": "2026-11-18T11:26:44+07:00",
               "notes": "v5.0 — Thanh công cụ Icon 32x32px, Đổi kiểu từng Section, Bg Alpha & 4 Mẫu bố cục"
+            },
+            {
+              "version": "v6-master-toolkit-studio",
+              "created_at": "2026-11-18T11:48:08+07:00",
+              "notes": "v6.0 — Đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12): Đa miền (CV, Poster, Banner, Catalog, Web, Chart, Map, Motion), Rulers/Bleed/SafeArea, Vector Pen & Boolean, Hierarchical Layer Tree, Precision Inspector (X/Y/W/H/CMYK/Stroke/Effects), Motion Timeline & Export Preflight QA"
             }
           ]
         },
@@ -71,7 +76,7 @@
         },
         {
           "slug": "03-chart-studio",
-          "title": "P05: Chart & Data Visualization Studio",
+          "title": "P05: Chart & Data Visualization Studio (v6 Master Toolkit)",
           "domain": "04-creative-editor",
           "persona": "creator-builder",
           "approved_version": "",
@@ -81,12 +86,17 @@
               "version": "v1-12-chart-types",
               "created_at": "2026-11-18T11:26:44+07:00",
               "notes": "v1.0 — 12 mẫu biểu đồ thống kê (Treemap, Funnel, Waterfall, Boxplot, Heatmap, Gauge) & DB"
+            },
+            {
+              "version": "v6-master-toolkit-chart",
+              "created_at": "2026-11-18T12:10:54+07:00",
+              "notes": "v6.0 — Bổ sung đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12), Rulers/Guides, Hierarchical Layer Tree, Precision Inspector, Motion Timeline & Export Preflight QA cho Chart Studio"
             }
           ]
         },
         {
           "slug": "04-website-studio",
-          "title": "P06: Website & Landing Page Studio",
+          "title": "P06: Website & Landing Page Studio (v6 Master Toolkit)",
           "domain": "04-creative-editor",
           "persona": "creator-builder",
           "approved_version": "",
@@ -96,12 +106,17 @@
               "version": "v1-responsive-cms",
               "created_at": "2026-11-18T11:26:44+07:00",
               "notes": "v1.0 — 14+ Khối Web, Responsive Desktop/Tablet/Mobile & CMS DB"
+            },
+            {
+              "version": "v6-master-toolkit-web",
+              "created_at": "2026-11-18T12:10:55+07:00",
+              "notes": "v6.0 — Bổ sung đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12), Responsive Breakpoints, Auto-Layout/Constraints, Hierarchical Layer Tree, Precision Inspector & Export QA cho Website Studio"
             }
           ]
         },
         {
           "slug": "05-map-studio",
-          "title": "P07: Map Vệ tinh & Live GPS Studio",
+          "title": "P07: Map Vệ tinh & Geo Visualization Studio (v6 Master Toolkit)",
           "domain": "04-creative-editor",
           "persona": "creator-builder",
           "approved_version": "",
@@ -111,12 +126,17 @@
               "version": "v1-satellite-gps",
               "created_at": "2026-11-18T11:26:44+07:00",
               "notes": "v1.0 — Bản đồ Vệ tinh Esri, Google/Apple/Bing & Tàu di chuyển GPS sống"
+            },
+            {
+              "version": "v6-master-toolkit-map",
+              "created_at": "2026-11-18T12:10:55+07:00",
+              "notes": "v6.0 — Bổ sung đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12), Spatial Layers, Satellite/Street Tiles, Rulers/Guides, Hierarchical Layer Tree, Precision Inspector & Export QA cho Map Studio"
             }
           ]
         },
         {
           "slug": "06-poster-catalog-studio",
-          "title": "P08: Catalog 3D, Thiệp, Email & Poster Studio",
+          "title": "P08: Poster, Banner, Catalog 3D & Brochure Studio (v6 Master Toolkit)",
           "domain": "04-creative-editor",
           "persona": "creator-builder",
           "approved_version": "",
@@ -126,6 +146,11 @@
               "version": "v1-3d-flipbook",
               "created_at": "2026-11-18T11:26:44+07:00",
               "notes": "v1.0 — 5 định dạng ấn phẩm + Lật trang sách 3D & Mở phong bì"
+            },
+            {
+              "version": "v6-master-toolkit-poster",
+              "created_at": "2026-11-18T12:10:55+07:00",
+              "notes": "v6.0 — Bổ sung đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12), Print Bleed 3mm & Crop Marks, Safe Area, CMYK Profile, Text on Path, Pen/Boolean Vector, Multi-page Flip & Export PDF/X QA"
             }
           ]
         }

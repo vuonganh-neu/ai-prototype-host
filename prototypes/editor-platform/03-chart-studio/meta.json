@@ -1,7 +1,7 @@
 {
   "project": "editor-platform",
   "slug": "03-chart-studio",
-  "title": "P05: Chart & Data Visualization Studio",
+  "title": "P05: Chart & Data Visualization Studio (v6 Master Toolkit)",
   "domain": "04-creative-editor",
   "persona": "creator-builder",
   "approved_version": "",
@@ -10,6 +10,11 @@
       "version": "v1-12-chart-types",
       "created_at": "2026-11-18T11:26:44+07:00",
       "notes": "v1.0 — 12 mẫu biểu đồ thống kê (Treemap, Funnel, Waterfall, Boxplot, Heatmap, Gauge) & DB"
+    },
+    {
+      "version": "v6-master-toolkit-chart",
+      "created_at": "2026-11-18T12:10:54+07:00",
+      "notes": "v6.0 — Bổ sung đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12), Rulers/Guides, Hierarchical Layer Tree, Precision Inspector, Motion Timeline & Export Preflight QA cho Chart Studio"
     }
   ]
 }

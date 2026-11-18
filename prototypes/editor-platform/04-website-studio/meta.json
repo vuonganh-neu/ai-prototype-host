@@ -1,7 +1,7 @@
 {
   "project": "editor-platform",
   "slug": "04-website-studio",
-  "title": "P06: Website & Landing Page Studio",
+  "title": "P06: Website & Landing Page Studio (v6 Master Toolkit)",
   "domain": "04-creative-editor",
   "persona": "creator-builder",
   "approved_version": "",
@@ -10,6 +10,11 @@
       "version": "v1-responsive-cms",
       "created_at": "2026-11-18T11:26:44+07:00",
       "notes": "v1.0 — 14+ Khối Web, Responsive Desktop/Tablet/Mobile & CMS DB"
+    },
+    {
+      "version": "v6-master-toolkit-web",
+      "created_at": "2026-11-18T12:10:55+07:00",
+      "notes": "v6.0 — Bổ sung đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12), Responsive Breakpoints, Auto-Layout/Constraints, Hierarchical Layer Tree, Precision Inspector & Export QA cho Website Studio"
     }
   ]
 }
