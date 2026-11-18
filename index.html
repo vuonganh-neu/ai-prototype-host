@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prototype Hub — Hệ thống Quản lý & Review Thiết kế</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-canvas: #F7F7F5;
+      --bg-surface: #FFFFFF;
+      --bg-subtle: #F1F1EE;
+      --bg-elevated: #18181B;
+      --text-primary: #141413;
+      --text-secondary: #52524E;
+      --text-muted: #8A8A84;
+      --border-subtle: #E5E5E0;
+      --border-strong: #CECEC6;
+      --accent-primary: #0F172A;
+      --accent-blue: #0284C7;
+      --status-approved-bg: #DCFCE7;
+      --status-approved-text: #166534;
+      --status-approved-border: #BBF7D0;
+      --status-draft-bg: #F4F4F5;
+      --status-draft-text: #3F3F46;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius-sm: 5px;
+      --radius-md: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Header */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(247, 247, 245, 0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      width: 26px;
+      height: 26px;
+      background: var(--text-primary);
+      color: #fff;
+      border-radius: var(--radius-sm);
+      display: grid;
+      place-items: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .brand-title {
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-sub {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      padding-left: 10px;
+      border-left: 1px solid var(--border-subtle);
+    }
+
+    .topbar-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Container */
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 28px 24px 64px;
+    }
+
+    /* Filter Bar */
+    .controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .filter-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .filter-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-right: 4px;
+    }
+
+    .pill-btn {
+      appearance: none;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill-btn:hover {
+      border-color: var(--border-strong);
+      color: var(--text-primary);
+    }
+
+    .pill-btn.active {
+      background: var(--text-primary);
+      color: #fff;
+      border-color: var(--text-primary);
+    }
+
+    .pill-count {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      opacity: 0.75;
+    }
+
+    .search-input {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+      font-size: 13px;
+      color: var(--text-primary);
+      min-width: 240px;
+      outline: none;
+    }
+
+    .search-input:focus {
+      border-color: var(--text-primary);
+    }
+
+    /* Project Section */
+    .project-block {
+      margin-bottom: 36px;
+    }
+
+    .project-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .project-title {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .domain-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* Feature Grid */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 16px;
+    }
+
+    .feature-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: border-color 0.15s ease;
+    }
+
+    .feature-card:hover {
+      border-color: var(--border-strong);
+    }
+
+    .card-top {
+      margin-bottom: 16px;
+    }
+
+    .card-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .feature-slug {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .persona-badge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: #F0F9FF;
+      color: #0369A1;
+      border: 1px solid #BAE6FD;
+    }
+
+    .feature-name {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-primary);
+    }
+
+    .feature-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* Versions Table inside Card */
+    .version-list {
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .version-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+    }
+
+    .version-item.is-approved {
+      background: #F0FDF4;
+      border-color: var(--status-approved-border);
+    }
+
+    .version-info {
+      display: flex;
+       flex-direction: column;
+      gap: 2px;
+    }
+
+    .version-id-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .version-id {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .badge-approved {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 3px;
+      background: var(--status-approved-bg);
+      color: var(--status-approved-text);
+    }
+
+    .version-note {
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .version-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .btn-link {
+      text-decoration: none;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 5px 9px;
+      border-radius: 4px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      transition: all 0.12s ease;
+    }
+
+    .btn-link:hover {
+      border-color: var(--text-primary);
+    }
+
+    .btn-link.primary {
+      background: var(--text-primary);
+      color: #fff;
+      border-color: var(--text-primary);
+    }
+
+    /* Knowledge Matrix Panel */
+    .matrix-section {
+      margin-top: 48px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .matrix-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .matrix-sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .matrix-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+    }
+
+    .matrix-card h4 {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .matrix-card code {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .matrix-card p {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+
+    .empty-state {
+      background: var(--bg-surface);
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius-md);
+      padding: 48px 24px;
+      text-align: center;
+    }
+
+    .empty-state h3 {
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+
+    .empty-state p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      max-width: 520px;
+      margin: 0 auto 16px;
+    }
+
+    .cmd-box {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: var(--bg-subtle);
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+    }
+
+    @media (max-width: 640px) {
+      .topbar {
+        padding: 0 16px;
+      }
+      .brand-sub {
+        display: none;
+      }
+      .container {
+        padding: 20px 16px 48px;
+      }
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+      .search-input {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">P</div>
+      <span class="brand-title">Prototype Preview Hub</span>
+      <span class="brand-sub">Domain × Persona UI System</span>
+    </div>
+    <div class="topbar-meta" id="hubStats">
+      <span>Đang tải danh mục...</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="controls-row">
+      <div class="filter-group" id="projectFilters">
+        <span class="filter-label">Dự án:</span>
+        <button class="pill-btn active" data-project="all">Tất cả</button>
+      </div>
+      <div class="filter-group">
+        <input
+          type="search"
+          id="searchInput"
+          class="search-input"
+          placeholder="Tìm theo màn hình, persona, phiên bản..."
+        />
+      </div>
+    </section>
+
+    <div id="galleryRoot"></div>
+
+    <section class="matrix-section">
+      <div class="matrix-title">Hệ thống Tri thức Thiết kế (4 Lĩnh vực × 4 Đối tượng sử dụng)</div>
+      <div class="matrix-sub">
+        Mỗi mockup được định hình từ sự kết hợp giữa <strong>Lĩnh vực dự án (Domain)</strong> và <strong>Người dùng trực tiếp (Persona)</strong> để loại bỏ thiết kế rập khuôn của AI.
+      </div>
+      <div class="matrix-grid">
+        <div class="matrix-card">
+          <h4>01. Giáo dục (EdTech) <code>01-education</code></h4>
+          <p>Phân tách rõ: <strong>Học viên</strong> (Focus mode, lộ trình trực quan), <strong>Giảng viên</strong> (Soạn bài, cây giáo trình) & <strong>Quản trị LMS</strong>.</p>
+        </div>
+        <div class="matrix-card">
+          <h4>02. Ứng dụng Quản lý <code>02-management-saas</code></h4>
+          <p>Phân tách rõ: <strong>Nhân viên tác nghiệp</strong> (Bảng mật độ cao, phím tắt, Drawer) & <strong>Cấp quản lý</strong> (Duyệt 1 chạm, KPI có ngữ cảnh).</p>
+        </div>
+        <div class="matrix-card">
+          <h4>03. Trang giới thiệu & Blog <code>03-editorial-showcase</code></h4>
+          <p>Phân tách rõ: <strong>Độc giả</strong> (Typography báo chí `65ch`, nhịp điệu thoáng) & <strong>Người đăng bài</strong> (CMS tốc độ cao, trạng thái xuất bản).</p>
+        </div>
+        <div class="matrix-card">
+          <h4>04. Trình quản lý thiết kế <code>04-creative-editor</code></h4>
+          <p>Phân tách rõ: <strong>Creator trên Canvas</strong> (Neutral Chrome, Inspector `1px` sắc nét), <strong>Asset Manager</strong> & <strong>Reviewer</strong>.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      manifest: null,
+      selectedProject: 'all',
+      query: ''
+    };
+
+    async function loadManifest() {
+      try {
+        const res = await fetch('./prototypes.json?t=' + Date.now());
+        if (!res.ok) throw new Error('Không tìm thấy prototypes.json');
+        state.manifest = await res.json();
+      } catch (err) {
+        state.manifest = { updated_at: null, projects: [] };
+      }
+      renderFilters();
+      renderGallery();
+    }
+
+    function renderFilters() {
+      const projects = (state.manifest && state.manifest.projects) || [];
+      const totalFeatures = projects.reduce((acc, p) => acc + (p.features ? p.features.length : 0), 0);
+      const totalVersions = projects.reduce(
+        (acc, p) => acc + (p.features || []).reduce((fa, f) => fa + (f.versions ? f.versions.length : 0), 0),
+        0
+      );
+
+      document.getElementById('hubStats').innerHTML =
+        `<span>${projects.length} dự án</span> · <span>${totalFeatures} màn hình</span> · <span>${totalVersions} phiên bản</span>`;
+
+      const container = document.getElementById('projectFilters');
+      container.innerHTML = `<span class="filter-label">Dự án:</span>`;
+
+      const allBtn = document.createElement('button');
+      allBtn.className = 'pill-btn' + (state.selectedProject === 'all' ? ' active' : '');
+      allBtn.innerHTML = `Tất cả <span class="pill-count">${totalFeatures}</span>`;
+      allBtn.onclick = () => {
+        state.selectedProject = 'all';
+        renderFilters();
+        renderGallery();
+      };
+      container.appendChild(allBtn);
+
+      projects.forEach((proj) => {
+        const btn = document.createElement('button');
+        btn.className = 'pill-btn' + (state.selectedProject === proj.slug ? ' active' : '');
+        btn.innerHTML = `${proj.slug} <span class="pill-count">${(proj.features || []).length}</span>`;
+        btn.onclick = () => {
+          state.selectedProject = proj.slug;
+          renderFilters();
+          renderGallery();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function renderGallery() {
+      const root = document.getElementById('galleryRoot');
+      const projects = (state.manifest && state.manifest.projects) || [];
+      const q = state.query.trim().toLowerCase();
+
+      const filteredProjects = projects
+        .filter((p) => state.selectedProject === 'all' || p.slug === state.selectedProject)
+        .map((p) => {
+          const features = (p.features || []).filter((f) => {
+            if (!q) return true;
+            const haystack = [
+              p.slug,
+              f.slug,
+              f.title || '',
+              f.domain || '',
+              f.persona || '',
+              ...(f.versions || []).map((v) => `${v.version} ${v.notes || ''}`)
+            ]
+              .join(' ')
+              .toLowerCase();
+            return haystack.includes(q);
+          });
+          return { ...p, features };
+        })
+        .filter((p) => p.features.length > 0);
+
+      if (filteredProjects.length === 0) {
+        root.innerHTML = `
+          <div class="empty-state">
+            <h3>Chưa có prototype nào khớp bộ lọc</h3>
+            <p>Khởi tạo nhanh một phiên bản prototype mới từ bất kỳ dự án nào bằng công cụ CLI:</p>
+            <div class="cmd-box">./bin/proto new editor-platform 01-canvas-toolbar v1-floating --domain 04-creative-editor --persona creator-builder</div>
+          </div>
+        `;
+        return;
+      }
+
+      root.innerHTML = filteredProjects
+        .map((proj) => {
+          const cardsHtml = proj.features
+            .map((feat) => {
+              const versions = feat.versions || [];
+              const latestVer = versions.length ? versions[versions.length - 1].version : '';
+              const approvedVer = feat.approved_version || '';
+
+              const versionRows = versions
+                .map((v) => {
+                  const isApproved = approvedVer === v.version;
+                  const viewerUrl = `./viewer.html?project=${encodeURIComponent(proj.slug)}&feature=${encodeURIComponent(feat.slug)}&version=${encodeURIComponent(v.version)}`;
+                  const rawUrl = `./prototypes/${encodeURIComponent(proj.slug)}/${encodeURIComponent(feat.slug)}/${encodeURIComponent(v.version)}/index.html`;
+
+                  return `
+                    <div class="version-item ${isApproved ? 'is-approved' : ''}">
+                      <div class="version-info">
+                        <div class="version-id-row">
+                          <span class="version-id">${v.version}</span>
+                          ${isApproved ? '<span class="badge-approved">BẢN CHỐT</span>' : ''}
+                        </div>
+                        ${v.notes ? `<div class="version-note">${v.notes}</div>` : ''}
+                      </div>
+                      <div class="version-actions">
+                        <a class="btn-link" href="${rawUrl}" target="_blank" title="Mở trực tiếp toàn màn hình">Trực tiếp ↗</a>
+                        <a class="btn-link primary" href="${viewerUrl}">So sánh & Review</a>
+                      </div>
+                    </div>
+                  `;
+                })
+                .join('');
+
+              return `
+                <article class="feature-card">
+                  <div class="card-top">
+                    <div class="card-meta-row">
+                      <span class="feature-slug">${proj.slug} / ${feat.slug}</span>
+                      ${feat.persona ? `<span class="persona-badge">${feat.persona}</span>` : ''}
+                    </div>
+                    <h3 class="feature-name">${feat.title || feat.slug}</h3>
+                    ${feat.domain ? `<div class="feature-desc">Lĩnh vực: <code>${feat.domain}</code></div>` : ''}
+                  </div>
+                  <div class="version-list">
+                    ${versionRows}
+                  </div>
+                </article>
+              `;
+            })
+            .join('');
+
+          return `
+            <section class="project-block">
+              <div class="project-header">
+                <h2 class="project-title">
+                  <span>${proj.slug}</span>
+                  <span class="domain-tag">${proj.features.length} màn hình</span>
+                </h2>
+              </div>
+              <div class="feature-grid">
+                ${cardsHtml}
+              </div>
+            </section>
+          `;
+        })
+        .join('');
+    }
+
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      state.query = e.target.value || '';
+      renderGallery();
+    });
+
+    loadManifest();
+  </script>
+</body>
+</html>

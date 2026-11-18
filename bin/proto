@@ -1,0 +1,501 @@
+#!/usr/bin/env python3
+"""
+proto — CLI quản lý vòng đời Mockup & Prototype tập trung
+Vị trí: /Users/vuonganhvu/Desktop/workspace/mockup/bin/proto
+"""
+
+import argparse
+import datetime
+import json
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+PROTOTYPES_DIR = ROOT_DIR / "prototypes"
+TEMPLATES_DIR = ROOT_DIR / "templates"
+KNOWLEDGE_DIR = ROOT_DIR / "knowledge"
+MANIFEST_FILE = ROOT_DIR / "prototypes.json"
+
+
+def now_iso() -> str:
+    return datetime.datetime.now(datetime.timezone.utc).astimezone().isoformat(timespec="seconds")
+
+
+def today_str() -> str:
+    return datetime.datetime.now().strftime("%Y-%m-%d")
+
+
+def run_cmd(cmd: list[str], cwd: Path = ROOT_DIR, check: bool = True) -> subprocess.CompletedProcess:
+    return subprocess.run(cmd, cwd=str(cwd), text=True, capture_output=True, check=check)
+
+
+def get_pages_base_url() -> str:
+    """Lấy URL GitHub Pages từ git remote origin nếu có."""
+    try:
+        res = run_cmd(["git", "remote", "get-url", "origin"], check=False)
+        url = res.stdout.strip()
+        if not url:
+            return ""
+        # Hỗ trợ cả HTTPS và SSH: git@github.com:user/repo.git hoặc https://github.com/user/repo.git
+        if "github.com" in url:
+            part = url.split("github.com")[-1].lstrip(":/").removesuffix(".git")
+            pieces = part.split("/")
+            if len(pieces) >= 2:
+                owner, repo = pieces[0], pieces[1]
+                return f"https://{owner}.github.io/{repo}"
+    except Exception:
+        pass
+    return ""
+
+
+def build_manifest() -> dict:
+    PROTOTYPES_DIR.mkdir(parents=True, exist_ok=True)
+    projects_list = []
+
+    for proj_dir in sorted(PROTOTYPES_DIR.iterdir()):
+        if not proj_dir.is_dir() or proj_dir.name.startswith("."):
+            continue
+
+        features_list = []
+        for feat_dir in sorted(proj_dir.iterdir()):
+            if not feat_dir.is_dir() or feat_dir.name.startswith("."):
+                continue
+
+            meta_path = feat_dir / "meta.json"
+            meta = {}
+            if meta_path.is_file():
+                try:
+                    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+                except Exception:
+                    meta = {}
+
+            # Quét các thư mục phiên bản thực tế trên đĩa
+            recorded_versions = {v.get("version"): v for v in meta.get("versions", []) if isinstance(v, dict)}
+            versions = []
+            for ver_dir in sorted(feat_dir.iterdir()):
+                if not ver_dir.is_dir() or ver_dir.name.startswith("."):
+                    continue
+                if not (ver_dir / "index.html").is_file():
+                    continue
+                v_slug = ver_dir.name
+                v_info = recorded_versions.get(v_slug, {})
+                versions.append({
+                    "version": v_slug,
+                    "created_at": v_info.get("created_at", today_str()),
+                    "notes": v_info.get("notes", ""),
+                })
+
+            if not versions and not meta:
+                continue
+
+            feat_entry = {
+                "slug": feat_dir.name,
+                "title": meta.get("title", feat_dir.name),
+                "domain": meta.get("domain", ""),
+                "persona": meta.get("persona", ""),
+                "approved_version": meta.get("approved_version", ""),
+                "promoted_to": meta.get("promoted_to", ""),
+                "versions": versions,
+            }
+            features_list.append(feat_entry)
+
+        if features_list:
+            projects_list.append({
+                "slug": proj_dir.name,
+                "features": features_list,
+            })
+
+    manifest = {
+        "updated_at": now_iso(),
+        "projects": projects_list,
+    }
+    MANIFEST_FILE.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return manifest
+
+
+def cmd_build(_args: argparse.Namespace) -> None:
+    manifest = build_manifest()
+    proj_count = len(manifest["projects"])
+    feat_count = sum(len(p["features"]) for p in manifest["projects"])
+    print(f"[OK] Đã cập nhật {MANIFEST_FILE.name}: {proj_count} dự án, {feat_count} màn hình.")
+
+
+def cmd_new(args: argparse.Namespace) -> None:
+    proj_slug = args.project.strip()
+    feat_slug = args.feature.strip()
+    ver_slug = args.version.strip()
+
+    feat_dir = PROTOTYPES_DIR / proj_slug / feat_slug
+    ver_dir = feat_dir / ver_slug
+
+    if ver_dir.exists() and not args.force:
+        print(
+            f"[CHẶN GHI ĐÈ] Phiên bản '{proj_slug}/{feat_slug}/{ver_slug}' đã tồn tại!\n"
+            f"Theo quy tắc Immutable Iterations (Không ghi đè lịch sử), hãy tạo phiên bản mới "
+            f"(ví dụ: v2, v3, v2-refined) để giữ lại bản cũ phục vụ so sánh.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    ver_dir.mkdir(parents=True, exist_ok=True)
+    meta_path = feat_dir / "meta.json"
+    meta = {
+        "project": proj_slug,
+        "slug": feat_slug,
+        "title": args.title or feat_slug,
+        "domain": args.domain or "",
+        "persona": args.persona or "",
+        "approved_version": "",
+        "versions": [],
+    }
+    if meta_path.is_file():
+        try:
+            loaded = json.loads(meta_path.read_text(encoding="utf-8"))
+            meta.update(loaded)
+        except Exception:
+            pass
+
+    if args.title:
+        meta["title"] = args.title
+    if args.domain:
+        meta["domain"] = args.domain
+    if args.persona:
+        meta["persona"] = args.persona
+
+    versions = [v for v in meta.get("versions", []) if v.get("version") != ver_slug]
+    versions.append({
+        "version": ver_slug,
+        "created_at": now_iso(),
+        "notes": args.notes or "",
+    })
+    meta["versions"] = versions
+    meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    index_file = ver_dir / "index.html"
+    if not index_file.exists():
+        index_file.write_text(
+            f"""<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{meta['title']} — {ver_slug}</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main style="padding: 32px; font-family: sans-serif;">
+    <h1>{meta['title']} ({ver_slug})</h1>
+    <p>Khung khởi tạo cho {proj_slug} / {feat_slug} / {ver_slug}</p>
+  </main>
+  <script src="./app.js"></script>
+</body>
+</html>
+""",
+            encoding="utf-8",
+        )
+
+    build_manifest()
+    print(f"[OK] Đã khởi tạo phiên bản mới tại: {ver_dir}")
+
+
+def cmd_promote(args: argparse.Namespace) -> None:
+    proj_slug = args.project.strip()
+    feat_slug = args.feature.strip()
+    ver_slug = args.version.strip()
+    target_project_dir = Path(args.to).expanduser().resolve()
+
+    feat_dir = PROTOTYPES_DIR / proj_slug / feat_slug
+    ver_dir = feat_dir / ver_slug
+
+    if not ver_dir.is_dir() or not (ver_dir / "index.html").is_file():
+        print(f"[LỖI] Không tìm thấy phiên bản '{proj_slug}/{feat_slug}/{ver_slug}' trong kho mockup.", file=sys.stderr)
+        sys.exit(1)
+
+    meta_path = feat_dir / "meta.json"
+    meta = {}
+    if meta_path.is_file():
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+
+    meta["approved_version"] = ver_slug
+    meta["promoted_at"] = now_iso()
+    meta["promoted_to"] = str(target_project_dir)
+    meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    build_manifest()
+
+    # Copy sang <project>/docs/02-mockups/<feature-slug>/
+    dest_mockups_root = target_project_dir / "docs" / "02-mockups"
+    dest_feat_dir = dest_mockups_root / feat_slug
+    if dest_feat_dir.exists():
+        shutil.rmtree(dest_feat_dir)
+    shutil.copytree(ver_dir, dest_feat_dir)
+
+    # Tạo SPEC-NOTES.md
+    spec_tpl_path = TEMPLATES_DIR / "SPEC-NOTES.template.md"
+    spec_tpl = spec_tpl_path.read_text(encoding="utf-8") if spec_tpl_path.is_file() else ""
+
+    base_url = get_pages_base_url()
+    history_lines = []
+    for v in meta.get("versions", []):
+        v_id = v.get("version", "")
+        v_note = v.get("notes", "")
+        marker = "✅ **[BẢN CHỐT]**" if v_id == ver_slug else "▫️ Bản nháp"
+        link_str = f"([Xem trên Hub]({base_url}/viewer.html?project={proj_slug}&feature={feat_slug}&version={v_id}))" if base_url else ""
+        history_lines.append(f"  - `{v_id}` — {marker}: {v_note} {link_str}".strip())
+
+    ver_notes = args.notes or next((v.get("notes", "") for v in meta.get("versions", []) if v.get("version") == ver_slug), "Đã duyệt giao diện và tương tác.")
+
+    spec_content = (
+        spec_tpl.replace("{{FEATURE_TITLE}}", meta.get("title", feat_slug))
+        .replace("{{FEATURE_SLUG}}", feat_slug)
+        .replace("{{PROJECT_SLUG}}", proj_slug)
+        .replace("{{APPROVED_VERSION}}", ver_slug)
+        .replace("{{PROMOTED_AT}}", today_str())
+        .replace("{{PERSONA}}", meta.get("persona", "N/A"))
+        .replace("{{DOMAIN}}", meta.get("domain", "N/A"))
+        .replace("{{VERSION_HISTORY_LIST}}", "\n".join(history_lines) if history_lines else f"  - `{ver_slug}`")
+        .replace("{{NOTES}}", ver_notes)
+    )
+    (dest_feat_dir / "SPEC-NOTES.md").write_text(spec_content, encoding="utf-8")
+
+    # Cập nhật README.md tại <project>/docs/02-mockups/README.md
+    update_project_mockups_readme(dest_mockups_root, proj_slug, base_url)
+
+    print(f"[OK] Đã chốt phiên bản '{ver_slug}' và chép sạch sẽ về: {dest_feat_dir}")
+
+
+def update_project_mockups_readme(mockups_root: Path, proj_slug: str, base_url: str) -> None:
+    rows = []
+    for d in sorted(mockups_root.iterdir()):
+        if not d.is_dir() or d.name.startswith("."):
+            continue
+        if not (d / "index.html").is_file():
+            continue
+        spec_file = d / "SPEC-NOTES.md"
+        approved_ver = "N/A"
+        persona = "N/A"
+        if spec_file.is_file():
+            for line in spec_file.read_text(encoding="utf-8").splitlines():
+                if "Phiên bản được chốt" in line and "`" in line:
+                    approved_ver = line.split("`")[1]
+                elif "Đối tượng sử dụng" in line and "`" in line:
+                    persona = line.split("`")[1]
+        hub_link = f"[So sánh các bản nháp]({base_url}/viewer.html?project={proj_slug}&feature={d.name})" if base_url else "Trong kho `/Users/vuonganhvu/Desktop/workspace/mockup`"
+        rows.append(f"| `{d.name}` | `{persona}` | `{approved_ver}` | [index.html](./{d.name}/index.html) · [SPEC-NOTES.md](./{d.name}/SPEC-NOTES.md) | {hub_link} |")
+
+    table_body = "\n".join(rows) if rows else "| *(Chưa có mockup nào được chốt)* | - | - | - | - |"
+    readme_content = f"""# Danh mục Mockup Đã Chốt — `{proj_slug}`
+
+> Thư mục này **chỉ lưu trữ các phiên bản thiết kế đã được duyệt (Approved)** để làm căn cứ triển khai code thực tế.
+> Toàn bộ các phương án thử nghiệm (`v1`, `v2`, `v3`...) được lưu trữ tách biệt tại kho `/Users/vuonganhvu/Desktop/workspace/mockup`.
+
+- **Định hướng thiết kế dự án**: Xem [DESIGN-CONTEXT.md](./DESIGN-CONTEXT.md)
+
+## Danh sách Màn hình Đã Duyệt
+
+| Mã tính năng (Feature) | Đối tượng (Persona) | Bản chốt từ | File tại dự án | Lịch sử & So sánh |
+| :--- | :--- | :--- | :--- | :--- |
+{table_body}
+"""
+    (mockups_root / "README.md").write_text(readme_content, encoding="utf-8")
+
+
+def cmd_init_project(args: argparse.Namespace) -> None:
+    target_dir = Path(args.project_path).expanduser().resolve()
+    proj_slug = args.slug or target_dir.name
+    domain_id = args.domain or "04-creative-editor"
+
+    mockups_root = target_dir / "docs" / "02-mockups"
+    mockups_root.mkdir(parents=True, exist_ok=True)
+
+    ctx_file = mockups_root / "DESIGN-CONTEXT.md"
+    if not ctx_file.exists() or args.force:
+        tpl = (TEMPLATES_DIR / "DESIGN-CONTEXT.template.md").read_text(encoding="utf-8")
+        content = (
+            tpl.replace("{{PROJECT_NAME}}", proj_slug)
+            .replace("{{PROJECT_SLUG}}", proj_slug)
+            .replace("{{DOMAIN_ID}}", domain_id)
+        )
+        ctx_file.write_text(content, encoding="utf-8")
+        print(f"[OK] Đã tạo {ctx_file}")
+    else:
+        print(f"[INFO] Đã tồn tại {ctx_file} (dùng --force nếu muốn tạo lại)")
+
+    readme_file = mockups_root / "README.md"
+    if not readme_file.exists():
+        update_project_mockups_readme(mockups_root, proj_slug, get_pages_base_url())
+        print(f"[OK] Đã tạo {readme_file}")
+
+
+def cmd_learn(args: argparse.Namespace) -> None:
+    stamp = today_str()
+    rule_line = f"- **[{stamp}]** {args.rule.strip()}\n"
+
+    if args.domain:
+        domain_file = KNOWLEDGE_DIR / "domains" / f"{args.domain.removesuffix('.md')}.md"
+        if not domain_file.is_file():
+            print(f"[LỖI] Không tìm thấy file domain: {domain_file}", file=sys.stderr)
+            sys.exit(1)
+        with domain_file.open("a", encoding="utf-8") as f:
+            f.write(rule_line)
+        print(f"[OK] Đã tích luỹ bài học mới vào Lĩnh vực: {domain_file.name}")
+
+    if args.persona:
+        persona_file = KNOWLEDGE_DIR / "personas" / f"{args.persona.removesuffix('.md')}.md"
+        if not persona_file.is_file():
+            print(f"[LỖI] Không tìm thấy file persona: {persona_file}", file=sys.stderr)
+            sys.exit(1)
+        with persona_file.open("a", encoding="utf-8") as f:
+            f.write(f"\n{rule_line}")
+        print(f"[OK] Đã tích luỹ bài học mới vào Đối tượng: {persona_file.name}")
+
+
+def cmd_publish(args: argparse.Namespace) -> None:
+    manifest = build_manifest()
+    msg = args.message or f"chore(prototypes): update preview hub ({today_str()})"
+
+    run_cmd(["git", "add", "."])
+    status = run_cmd(["git", "status", "--porcelain"]).stdout.strip()
+    if status:
+        run_cmd(["git", "commit", "-m", msg])
+        print(f"[OK] Đã commit: {msg}")
+    else:
+        print("[INFO] Không có thay đổi mới cần commit.")
+
+    origin_check = run_cmd(["git", "remote", "get-url", "origin"], check=False)
+    if origin_check.returncode != 0 or not origin_check.stdout.strip():
+        print("[CẢNH BÁO] Chưa cấu hình git remote 'origin'. Chạy './bin/proto init-repo' để tạo repo GitHub & bật GitHub Pages.")
+        return
+
+    push_res = run_cmd(["git", "push", "-u", "origin", "main"], check=False)
+    if push_res.returncode != 0:
+        print(f"[LỖI PUSH] {push_res.stderr}", file=sys.stderr)
+        sys.exit(1)
+
+    base_url = get_pages_base_url()
+    print("[OK] Đã đẩy lên GitHub thành công!")
+    if base_url:
+        print(f"  → Trang chủ Gallery: {base_url}/")
+        for p in manifest.get("projects", []):
+            for f in p.get("features", []):
+                if f.get("versions"):
+                    latest = f["versions"][-1]["version"]
+                    print(
+                        f"  → [{p['slug']}/{f['slug']}] So sánh & Review: "
+                        f"{base_url}/viewer.html?project={p['slug']}&feature={f['slug']}&version={latest}"
+                    )
+
+
+def cmd_init_repo(args: argparse.Namespace) -> None:
+    if not (ROOT_DIR / ".git").is_dir():
+        run_cmd(["git", "init", "-b", "main"])
+        print("[OK] Đã khởi tạo Git repository (nhánh main).")
+
+    build_manifest()
+    run_cmd(["git", "add", "."])
+    status = run_cmd(["git", "status", "--porcelain"]).stdout.strip()
+    if status:
+        run_cmd(["git", "commit", "-m", "feat: initialize prototype preview hub & domain-persona matrix"])
+
+    origin_check = run_cmd(["git", "remote", "get-url", "origin"], check=False)
+    if origin_check.returncode != 0 or not origin_check.stdout.strip():
+        visibility = "--public" if args.public else "--private"
+        repo_name = args.repo or "ai-prototype-host"
+        print(f"[INFO] Đang tạo GitHub repository '{repo_name}' ({visibility})...")
+        create_res = run_cmd(["gh", "repo", "create", repo_name, visibility, "--source=.", "--remote=origin", "--push"], check=False)
+        if create_res.returncode != 0:
+            print(f"[LỖI GH] {create_res.stderr}", file=sys.stderr)
+            sys.exit(1)
+        print("[OK] Đã tạo repo và push code lên GitHub.")
+
+    # Kích hoạt GitHub Pages dùng GitHub Actions workflow
+    remote_url = run_cmd(["git", "remote", "get-url", "origin"], check=False).stdout.strip()
+    if "github.com" in remote_url:
+        part = remote_url.split("github.com")[-1].lstrip(":/").removesuffix(".git")
+        run_cmd(
+            ["gh", "api", "-X", "POST", f"repos/{part}/pages", "-f", "build_type=workflow"],
+            check=False,
+        )
+        run_cmd(
+            ["gh", "api", "-X", "PUT", f"repos/{part}/pages", "-f", "build_type=workflow"],
+            check=False,
+        )
+        print(f"[OK] Đã cấu hình GitHub Pages (build_type=workflow) cho {part}.")
+        print(f"  → URL Preview Hub: {get_pages_base_url()}/")
+
+
+def cmd_install_skill(_args: argparse.Namespace) -> None:
+    thin_src = ROOT_DIR / "skill" / "THIN-SKILL.md"
+    if not thin_src.is_file():
+        print(f"[LỖI] Không tìm thấy {thin_src}", file=sys.stderr)
+        sys.exit(1)
+
+    targets = [
+        Path.home() / ".gemini" / "antigravity" / "skills" / "mockup-studio" / "SKILL.md",
+        Path.home() / ".gemini" / "config" / "skills" / "mockup-studio" / "SKILL.md",
+    ]
+    for dest in targets:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(thin_src, dest)
+        print(f"[OK] Đã cài đặt Global Skill mỏng tại: {dest}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="CLI quản lý Prototype Preview Hub")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    p_build = sub.add_parser("build", help="Quét thư mục prototypes/ và cập nhật prototypes.json")
+    p_build.set_defaults(func=cmd_build)
+
+    p_new = sub.add_parser("new", help="Khởi tạo phiên bản prototype mới (chặn ghi đè bản cũ)")
+    p_new.add_argument("project", help="Slug dự án (vd: editor-platform)")
+    p_new.add_argument("feature", help="Slug tính năng/màn hình (vd: 01-canvas-toolbar)")
+    p_new.add_argument("version", help="Slug phiên bản (vd: v1-floating, v2-docked)")
+    p_new.add_argument("--title", help="Tên hiển thị của màn hình")
+    p_new.add_argument("--domain", help="Mã lĩnh vực (vd: 04-creative-editor)")
+    p_new.add_argument("--persona", help="Mã đối tượng sử dụng (vd: creator-builder)")
+    p_new.add_argument("--notes", help="Ghi chú điểm chính của phiên bản này")
+    p_new.add_argument("--force", action="store_true", help="Cho phép ghi đè nếu thực sự cần")
+    p_new.set_defaults(func=cmd_new)
+
+    p_promote = sub.add_parser("promote", help="Chốt phiên bản và chép sạch sẽ về thư mục dự án")
+    p_promote.add_argument("project", help="Slug dự án")
+    p_promote.add_argument("feature", help="Slug tính năng/màn hình")
+    p_promote.add_argument("version", help="Phiên bản được duyệt")
+    p_promote.add_argument("--to", required=True, help="Đường dẫn tới thư mục gốc của dự án thực tế")
+    p_promote.add_argument("--notes", help="Ghi chú lý do chọn & lưu ý khi code")
+    p_promote.set_defaults(func=cmd_promote)
+
+    p_init_proj = sub.add_parser("init-project", help="Khởi tạo DESIGN-CONTEXT.md và README.md trong dự án")
+    p_init_proj.add_argument("project_path", help="Đường dẫn tới dự án (vd: /Users/vuonganhvu/Desktop/workspace/editor-platform)")
+    p_init_proj.add_argument("--slug", help="Slug dự án")
+    p_init_proj.add_argument("--domain", help="Mã lĩnh vực mặc định (vd: 04-creative-editor)")
+    p_init_proj.add_argument("--force", action="store_true", help="Ghi đè DESIGN-CONTEXT.md nếu đã có")
+    p_init_proj.set_defaults(func=cmd_init_project)
+
+    p_learn = sub.add_parser("learn", help="Tích luỹ bài học UI/UX mới vào Ma trận Tri thức")
+    p_learn.add_argument("--domain", help="Mã domain (vd: 04-creative-editor)")
+    p_learn.add_argument("--persona", help="Mã persona (vd: creator-builder)")
+    p_learn.add_argument("--rule", required=True, help="Nội dung bài học/quy tắc thiết kế cần ghi nhớ")
+    p_learn.set_defaults(func=cmd_learn)
+
+    p_pub = sub.add_parser("publish", help="Build manifest, commit và đẩy lên GitHub Pages")
+    p_pub.add_argument("-m", "--message", help="Commit message")
+    p_pub.set_defaults(func=cmd_publish)
+
+    p_repo = sub.add_parser("init-repo", help="Khởi tạo Git + tạo repo GitHub + bật GitHub Pages tự động")
+    p_repo.add_argument("--repo", default="ai-prototype-host", help="Tên GitHub repository")
+    p_repo.add_argument("--public", action="store_true", default=True, help="Tạo public repo (mặc định để dùng GitHub Pages Free)")
+    p_repo.set_defaults(func=cmd_init_repo)
+
+    p_skill = sub.add_parser("install-skill", help="Cài đặt Global Skill mỏng vào ~/.gemini/antigravity/skills/ và ~/.gemini/config/skills/")
+    p_skill.set_defaults(func=cmd_install_skill)
+
+    args = parser.parse_args()
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,90 @@
+---
+name: mockup-studio
+description: >-
+  Hệ thống thiết kế UI/UX Mockup & Prototype chuyên nghiệp theo Ma trận Lĩnh vực (Domain) ×
+  Đối tượng sử dụng (Persona), lưu trữ lịch sử phiên bản bất biến tại kho /Users/vuonganhvu/Desktop/workspace/mockup,
+  xuất bản tự động lên GitHub Pages để review đa thiết bị, và chỉ chép bản chốt sạch sẽ về thư mục dự án.
+---
+
+# Mockup Studio — Quy trình Thiết kế & Quản lý Prototype Tập trung
+
+Hệ thống này được đặt tại `/Users/vuonganhvu/Desktop/workspace/mockup` và đóng vai trò là **Engine thiết kế giao diện chuẩn mực** cho mọi dự án cá nhân.
+
+---
+
+## 1. Nguyên tắc Vận hành Cốt lõi
+
+1. **Làm việc tại Workspace Dự án, Nháp tại Kho Mockup**:
+   - Bạn đọc tài liệu đặc tả (`docs/`) trực tiếp tại workspace dự án đang mở (ví dụ: `editor-platform`).
+   - Nếu dự án chưa có file `docs/02-mockups/DESIGN-CONTEXT.md`, hãy khởi tạo nó bằng lệnh:
+     ```bash
+     /Users/vuonganhvu/Desktop/workspace/mockup/bin/proto init-project "<đường-dẫn-dự-án>" --domain "<mã-domain>"
+     ```
+   - **KHÔNG** tạo các bản nháp `v1`, `v2` trực tiếp trong thư mục dự án. Mọi bản nháp phải được tạo trong `/Users/vuonganhvu/Desktop/workspace/mockup/prototypes/<project-slug>/<feature-slug>/<version-slug>/`.
+2. **Bất biến & Không ghi đè (Immutable Versions)**:
+   - Mỗi lần tạo mới hoặc chỉnh sửa theo phản hồi của người dùng, luôn tạo một phiên bản mới (`v1-minimal`, `v2-dense`, `v3-refined`...) để giữ nguyên các bản cũ phục vụ so sánh trực tiếp trên trình duyệt.
+3. **Chỉ Bản Chốt mới đưa về Dự án (Clean Handoff)**:
+   - Chỉ khi người dùng xác nhận duyệt một phiên bản, mới chạy lệnh `proto promote` để chép bản đó về `<project>/docs/02-mockups/<feature-slug>/`.
+
+---
+
+## 2. Quy trình 5 Bước Khi Thiết kế Mockup Mới
+
+### Bước 1: Đọc Ngữ cảnh Dự án & Phân loại Ma trận (Domain × Persona)
+1. Đọc tài liệu đặc tả của dự án và file `<project>/docs/02-mockups/DESIGN-CONTEXT.md`.
+2. Xác định rõ màn hình đang thiết kế thuộc **Lĩnh vực (Domain)** nào và phục vụ **Đối tượng sử dụng (Persona)** nào (Lưu ý: Cùng 1 dự án nhưng màn hình cho Người đọc và màn hình cho Quản trị viên phải dùng 2 Persona khác nhau!):
+   - **Luật bắt buộc chung**: Đọc [core-anti-ai-slop.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/core-anti-ai-slop.md)
+   - **Chiều Đối tượng sử dụng (Personas)**:
+     - Độc giả / Học viên / Khách truy cập: [consumer-reader.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/personas/consumer-reader.md)
+     - Quản trị / Người đăng bài / Nhân viên vận hành: [operator-admin.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/personas/operator-admin.md)
+     - Người sáng tạo / Thiết kế trên Studio/Canvas: [creator-builder.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/personas/creator-builder.md)
+     - Cấp quản lý / Phê duyệt / Xem báo cáo: [executive-manager.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/personas/executive-manager.md)
+   - **Chiều Lĩnh vực (Domains)**:
+     - Giáo dục (EdTech / LMS): [01-education.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/domains/01-education.md)
+     - Ứng dụng Quản lý / SaaS / Tài chính: [02-management-saas.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/domains/02-management-saas.md)
+     - Trang giới thiệu / Blog / Chia sẻ / Tin tức: [03-editorial-showcase.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/domains/03-editorial-showcase.md)
+     - Trình quản lý thiết kế / Studio (Editor): [04-creative-editor.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/domains/04-creative-editor.md)
+
+### Bước 2: Tham khảo Thực tế (Mobbin / Real-world Reference)
+- Nếu có công cụ Mobbin MCP, hãy đọc skill `search` của Mobbin và tìm kiếm 2–3 màn hình thực tế theo từ khoá gợi ý trong file Domain/Persona trước khi lên bố cục.
+
+### Bước 3: Khởi tạo Phiên bản trong Kho Mockup
+- Chạy CLI `proto new` để tạo khung phiên bản mới (không bao giờ ghi đè phiên bản cũ):
+  ```bash
+  /Users/vuonganhvu/Desktop/workspace/mockup/bin/proto new \
+    "<project-slug>" "<feature-slug>" "<version-slug>" \
+    --title "<Tên màn hình>" \
+    --domain "<domain-id>" \
+    --persona "<persona-id>" \
+    --notes "<Tóm tắt hướng tiếp cận của phiên bản này>"
+  ```
+- Ở vòng đầu tiên của một tính năng quan trọng, khuyến khích tạo 2 phương án có cá tính rõ rệt (ví dụ `v1-floating` và `v2-docked`) hoặc tách theo đối tượng sử dụng (`01-reader-home/v1` và `02-publisher-cms/v1`).
+
+### Bước 4: Xây dựng Giao diện HTML/CSS/JS Tương tác Cao & Publish
+- Viết code vào `/Users/vuonganhvu/Desktop/workspace/mockup/prototypes/<project>/<feature>/<version>/index.html` (cùng `styles.css`, `app.js` với **đường dẫn tương đối `./`**).
+- Sau khi hoàn thiện, xuất bản lên GitHub Pages bằng 1 lệnh:
+  ```bash
+  /Users/vuonganhvu/Desktop/workspace/mockup/bin/proto publish -m "feat(<project>): add <feature> <version>"
+  ```
+- Gửi cho người dùng:
+  1. **Link Xem & So sánh các phiên bản (Comparison Viewer URL)**
+  2. **Link Trực tiếp (Raw URL)**
+  3. Điểm khác biệt chính giữa các phương án để người dùng đánh giá nhanh.
+
+### Bước 5: Chốt Phương án (Promote) & Tích luỹ Tri thức (Learn)
+1. **Khi người dùng duyệt bản chốt**:
+   ```bash
+   /Users/vuonganhvu/Desktop/workspace/mockup/bin/proto promote \
+     "<project-slug>" "<feature-slug>" "<version-slug>" \
+     --to "<đường-dẫn-tuyệt-đối-tới-dự-án>" \
+     --notes "<Ghi chú lý do chọn và lưu ý khi code thật>"
+   ```
+   Lệnh này sẽ đánh dấu `approved` trên Hub và chép bản sạch sẽ vào `<project>/docs/02-mockups/<feature-slug>/`.
+2. **Khi rút ra bài học UI/UX mới từ phản hồi của người dùng**:
+   Lưu lại ngay vào kho tri thức để các dự án sau không lặp lại lỗi cũ:
+   ```bash
+   /Users/vuonganhvu/Desktop/workspace/mockup/bin/proto learn \
+     --domain "<domain-id>" \
+     --persona "<persona-id>" \
+     --rule "<Bài học UI/UX cụ thể cần ghi nhớ>"
+   ```
