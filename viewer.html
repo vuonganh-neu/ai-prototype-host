@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <style>
     :root {
       --bar-bg: #141416;
@@ -342,6 +343,52 @@
       gap: 6px;
     }
 
+    /* QR Popover Modal */
+    .qr-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 300;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .qr-backdrop.open {
+      display: flex;
+    }
+
+    .qr-card {
+      background: #1E1E22;
+      border: 1px solid var(--bar-border);
+      border-radius: 12px;
+      padding: 18px;
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+
+    .qr-box {
+      width: 200px;
+      height: 200px;
+      margin: 12px auto;
+      padding: 10px;
+      background: #fff;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qr-box svg, .qr-box img {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
     @media (max-width: 768px) {
       .hide-mobile {
         display: none !important;
@@ -373,6 +420,9 @@
           <button class="tool-btn" data-vp="tablet">iPad 768</button>
           <button class="tool-btn" data-vp="mobile">iPhone 390</button>
         </div>
+        <button class="action-btn" id="openQrBtn" title="Hiện mã QR để quét mở trên điện thoại/tablet (Phím Q)">
+          📱 QR
+        </button>
         <button class="action-btn" id="copyPromoteBtn" title="Copy lệnh chốt phiên bản này về thư mục dự án">
           ✓ Lệnh Chốt
         </button>
@@ -388,7 +438,7 @@
     <div class="note-strip" id="noteStrip">
       <span id="versionNoteText">Đang tải thông tin phiên bản...</span>
       <span style="font-family: var(--font-mono); font-size: 11px; color: var(--bar-muted);">
-        Phím tắt: [1-9] Chuyển bản · [S] So sánh đôi · [H] Ẩn/Hiện thanh
+        Phím tắt: [1-9] Chuyển bản · [S] So sánh đôi · [Q] Mã QR · [H] Ẩn/Hiện thanh
       </span>
     </div>
 
@@ -397,6 +447,24 @@
     <button class="expand-pill" id="expandBarBtn">
       <span>▲ Hiện thanh chuyển phiên bản</span>
     </button>
+  </div>
+
+  <!-- QR Modal -->
+  <div class="qr-backdrop" id="qrBackdrop">
+    <div class="qr-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; text-align:left;">
+        <div>
+          <div style="font-size:13px; font-weight:600;" id="qrTitle">Quét mở trên Điện thoại</div>
+          <div style="font-family:var(--font-mono); font-size:11px; color:var(--bar-muted);" id="qrSub"></div>
+        </div>
+        <button class="action-btn" id="closeQrBtn">✕</button>
+      </div>
+      <div class="qr-box" id="qrBox"></div>
+      <div style="font-size:11px; color:var(--bar-muted); margin-bottom:10px;">
+        Đưa camera iPhone / iPad vào mã QR để test trực tiếp phiên bản này.
+      </div>
+      <div style="font-family:var(--font-mono); font-size:10px; color:#A1A1AA; word-break:break-all; background:#141416; padding:6px 8px; border-radius:4px;" id="qrUrlText"></div>
+    </div>
   </div>
 
   <script>
@@ -413,6 +481,23 @@
 
     function getProtoUrl(ver) {
       return `./prototypes/${encodeURIComponent(state.project)}/${encodeURIComponent(state.feature)}/${encodeURIComponent(ver)}/index.html`;
+    }
+
+    function showQrModal() {
+      const fullUrl = window.location.href;
+      document.getElementById('qrTitle').textContent = state.featureData ? (state.featureData.title || state.feature) : state.feature;
+      document.getElementById('qrSub').textContent = `${state.project} / ${state.version}`;
+      document.getElementById('qrUrlText').textContent = fullUrl;
+      const box = document.getElementById('qrBox');
+      if (typeof window.qrcode === 'function') {
+        const qr = window.qrcode(0, 'M');
+        qr.addData(fullUrl);
+        qr.make();
+        box.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+      } else {
+        box.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(fullUrl)}" alt="QR" />`;
+      }
+      document.getElementById('qrBackdrop').classList.add('open');
     }
 
     async function init() {
@@ -438,6 +523,7 @@
           state.compareVersion = other ? other.version : state.version;
         }
 
+        updateUrl();
         renderHeader();
         renderStage();
       } catch (e) {
@@ -574,6 +660,12 @@
       };
     });
 
+    document.getElementById('openQrBtn').onclick = showQrModal;
+    document.getElementById('closeQrBtn').onclick = () => document.getElementById('qrBackdrop').classList.remove('open');
+    document.getElementById('qrBackdrop').onclick = (e) => {
+      if (e.target.id === 'qrBackdrop') document.getElementById('qrBackdrop').classList.remove('open');
+    };
+
     document.getElementById('copyPromoteBtn').onclick = async () => {
       const cmd = `/Users/vuonganhvu/Desktop/workspace/mockup/bin/proto promote ${state.project} ${state.feature} ${state.version} --to /Users/vuonganhvu/Desktop/workspace/${state.project}`;
       try {
@@ -597,7 +689,13 @@
 
     window.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-      if (e.key.toLowerCase() === 'h') {
+      if (e.key === 'Escape') {
+        document.getElementById('qrBackdrop').classList.remove('open');
+      } else if (e.key.toLowerCase() === 'q') {
+        document.getElementById('qrBackdrop').classList.contains('open')
+          ? document.getElementById('qrBackdrop').classList.remove('open')
+          : showQrModal();
+      } else if (e.key.toLowerCase() === 'h') {
         document.getElementById('appShell').classList.toggle('bar-collapsed');
       } else if (e.key.toLowerCase() === 's') {
         state.splitMode = !state.splitMode;

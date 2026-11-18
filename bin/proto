@@ -369,6 +369,7 @@ def cmd_publish(args: argparse.Namespace) -> None:
         print("[CẢNH BÁO] Chưa cấu hình git remote 'origin'. Chạy './bin/proto init-repo' để tạo repo GitHub & bật GitHub Pages.")
         return
 
+    run_cmd(["git", "pull", "--rebase", "origin", "main"], check=False)
     push_res = run_cmd(["git", "push", "-u", "origin", "main"], check=False)
     if push_res.returncode != 0:
         print(f"[LỖI PUSH] {push_res.stderr}", file=sys.stderr)

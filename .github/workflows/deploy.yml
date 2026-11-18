@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -35,3 +37,84 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Send Telegram Notification
+        if: always() && steps.deployment.outcome == 'success'
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || vars.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || vars.TELEGRAM_CHAT_ID }}
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+          COMMIT_MSG: ${{ github.event.head_commit.message || 'Manual workflow dispatch' }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "TELEGRAM_BOT_TOKEN hoặc TELEGRAM_CHAT_ID chưa được cấu hình. Bỏ qua gửi thông báo Telegram."
+            exit 0
+          fi
+
+          python3 - << 'EOF'
+          import json
+          import os
+          import subprocess
+          import urllib.request
+          import urllib.parse
+
+          token = os.environ["TELEGRAM_BOT_TOKEN"].strip()
+          chat_id = os.environ["TELEGRAM_CHAT_ID"].strip()
+          page_url = os.environ.get("PAGE_URL", "").rstrip("/")
+          commit_msg = os.environ.get("COMMIT_MSG", "").strip().splitlines()[0]
+
+          # Tìm các phiên bản prototype vừa thay đổi trong commit mới nhất
+          changed_versions = []
+          try:
+              out = subprocess.check_output(
+                  ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD"],
+                  text=True
+              )
+              seen = set()
+              for line in out.splitlines():
+                  parts = line.strip().split("/")
+                  # Định dạng: prototypes/<project>/<feature>/<version>/...
+                  if len(parts) >= 5 and parts[0] == "prototypes":
+                      proj, feat, ver = parts[1], parts[2], parts[3]
+                      key = (proj, feat, ver)
+                      if key not in seen and ver != "meta.json":
+                          seen.add(key)
+                          changed_versions.append(key)
+          except Exception:
+              pass
+
+          lines = [
+              "✅ <b>Prototype Hub đã deploy xong!</b>",
+              f"📝 <b>Cập nhật:</b> {commit_msg}",
+              f"🌐 <b>Gallery Hub:</b> <a href=\"{page_url}/\">{page_url}/</a>",
+          ]
+
+          if changed_versions:
+              lines.append("")
+              lines.append("🎯 <b>Phiên bản vừa xuất bản:</b>")
+              for proj, feat, ver in changed_versions[:6]:
+                  viewer_link = f"{page_url}/viewer.html?project={urllib.parse.quote(proj)}&feature={urllib.parse.quote(feat)}&version={urllib.parse.quote(ver)}"
+                  raw_link = f"{page_url}/prototypes/{urllib.parse.quote(proj)}/{urllib.parse.quote(feat)}/{urllib.parse.quote(ver)}/index.html"
+                  lines.append(
+                      f"• <code>{proj}/{feat}</code> (<b>{ver}</b>)\n"
+                      f"  👉 <a href=\"{viewer_link}\">Mở Khung So sánh</a> | <a href=\"{raw_link}\">Mở Trực tiếp</a>"
+                  )
+
+          text = "\n".join(lines)
+          payload = json.dumps({
+              "chat_id": chat_id,
+              "text": text,
+              "parse_mode": "HTML",
+              "disable_web_page_preview": True,
+          }).encode("utf-8")
+
+          req = urllib.request.Request(
+              f"https://api.telegram.org/bot{token}/sendMessage",
+              data=payload,
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+          with urllib.request.urlopen(req, timeout=15) as resp:
+              print("Đã gửi thông báo Telegram:", resp.status)
+          EOF
