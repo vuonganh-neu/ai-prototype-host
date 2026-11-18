@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>P03 Mockup — SDK Host Container & Document Lifecycle</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .contract-badge { display: none; }
+    body.show-contracts .contract-badge { display: inline-flex; }
+    body.show-contracts [data-contract] { outline: 2px dashed #38bdf8; outline-offset: 2px; position: relative; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans">
+
+  <!-- Top Simulation Control Bar (For Human Gate 1 Review) -->
+  <div class="bg-indigo-950 border-b border-indigo-800 px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-xs">
+    <div class="flex items-center gap-3">
+      <a href="../../../../index.html" class="text-indigo-300 hover:text-white font-medium">← Quay lại Gallery</a>
+      <span class="text-indigo-400">|</span>
+      <span class="font-mono text-indigo-200 font-semibold">SIMULATOR TRẠNG THÁI (P03 SDK SHELL):</span>
+      <button onclick="setState('clean')" id="btn-clean" class="px-2.5 py-1 rounded bg-indigo-600 text-white font-medium">1. Đã lưu (Clean v15)</button>
+      <button onclick="setState('dirty')" id="btn-dirty" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200">2. Đang sửa (Dirty)</button>
+      <button onclick="setState('invalid')" id="btn-invalid" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200">3. Lỗi Validation</button>
+      <button onclick="toggleDrawer(true)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200">4. Mở Version History</button>
+      <button onclick="showModal('restore')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200">5. Modal Restore</button>
+      <button onclick="showModal('conflict')" class="px-2.5 py-1 rounded bg-rose-900/80 hover:bg-rose-800 text-rose-100">6. Lỗi 409 Conflict</button>
+    </div>
+    <label class="flex items-center gap-2 cursor-pointer bg-slate-900 border border-sky-700 px-3 py-1 rounded text-sky-300">
+      <input type="checkbox" onchange="document.body.classList.toggle('show-contracts', this.checked)" class="rounded" />
+      <span>Hiển thị SDK Contract Overlay</span>
+    </label>
+  </div>
+
+  <!-- Host Application Header -->
+  <header class="bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center justify-between" data-contract="HostShellHeader">
+    <div class="flex items-center gap-4">
+      <div class="h-8 w-8 rounded-lg bg-sky-600 flex items-center justify-center font-bold text-sm">H</div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="font-semibold text-sm text-white">Senior_Backend_Architect_CV_2026</h1>
+          <span class="text-xs font-mono bg-slate-800 text-slate-300 px-2 py-0.5 rounded">docId: 9b1deb4d...</span>
+          <span class="contract-badge text-[10px] font-mono bg-sky-950 text-sky-300 border border-sky-700 px-1.5 py-0.5 rounded">Host-Owned Record: cv-9981</span>
+        </div>
+        <div class="text-xs text-slate-400 flex items-center gap-3 mt-0.5">
+          <span>Framework Adapter: <strong class="text-sky-400">@vuonganhvu/editor-react</strong></span>
+          <span>•</span>
+          <span id="version-indicator">Snapshot hiện tại: <strong class="text-emerald-400">v15</strong> (sourceRev: <code class="text-slate-300">cv-rev-15</code>)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Toolbar -->
+    <div class="flex items-center gap-2.5">
+      <!-- Status Pill -->
+      <div id="status-pill" class="px-3 py-1 rounded-full text-xs font-medium bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center gap-1.5" data-contract="EditorEngine.isDirty()">
+        <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+        <span>Đã đồng bộ Host & Snapshot v15</span>
+      </div>
+      <span class="contract-badge text-[10px] font-mono bg-sky-950 text-sky-300 border border-sky-700 px-1.5 py-0.5 rounded">onChange / isDirty()</span>
+
+      <button onclick="toggleDrawer(true)" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium border border-slate-700" data-contract="DocumentClient.listVersions()">
+        🕓 Lịch sử Version (15)
+      </button>
+
+      <button onclick="setState('clean')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium border border-slate-700" data-contract="HostContentAdapter.saveBusinessContent({createSnapshot:false})">
+        Lưu nháp (Host DB)
+      </button>
+
+      <button onclick="setState('clean')" class="px-4 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold shadow" data-contract="HostContentAdapter.saveBusinessContent({createSnapshot:true}) -> POST /api/v1/documents/{id}/snapshots">
+        Lưu & Tạo Snapshot (v16)
+      </button>
+    </div>
+  </header>
+
+  <!-- Validation Error Banner (Hidden by default) -->
+  <div id="validation-banner" class="hidden bg-amber-950/90 border-b border-amber-700 px-6 py-2.5 flex items-center justify-between text-xs text-amber-200" data-contract="EditorEngine.validate()">
+    <div class="flex items-center gap-2">
+      <span class="font-bold text-amber-400">⚠ Validation Failed (2 lỗi):</span>
+      <span>[personalInfo.email] Email không đúng định dạng • [experiences[0].startDate] Ngày bắt đầu không được để trống</span>
+    </div>
+    <span class="font-mono text-[11px] bg-amber-900/60 px-2 py-0.5 rounded">Chặn tạo Snapshot cho đến khi hợp lệ</span>
+  </div>
+
+  <!-- Main Workspace Area -->
+  <div class="flex-1 flex relative overflow-hidden">
+    <!-- Embedded Editor Mount Container -->
+    <div class="flex-1 p-6 flex flex-col items-center justify-center bg-slate-950" data-contract="EditorEngine.mount(container)">
+      <div class="max-w-2xl w-full bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <span class="text-xs font-mono text-sky-400">Mounted Domain Module Slot</span>
+            <h2 class="text-base font-bold">Khung nhúng Editor Engine (Framework-Neutral Mount Point)</h2>
+          </div>
+          <span class="contract-badge text-[10px] font-mono bg-sky-950 text-sky-300 border border-sky-700 px-2 py-1 rounded">EditorEngine&lt;TContent&gt;</span>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Vùng này thuộc toàn quyền điều khiển của Domain Module (ví dụ: <code>@vuonganhvu/editor-cv</code>, <code>@vuonganhvu/editor-chart</code>).
+          Host Application chỉ giao tiếp qua 3 cổng chuẩn: <code>load(content)</code>, <code>serialize()</code>, và sự kiện <code>onChange</code>.
+        </p>
+        <div class="grid grid-cols-3 gap-3 text-xs font-mono">
+          <div class="bg-slate-950 border border-slate-800 p-3 rounded-lg">
+            <div class="text-slate-500">1. Host DB (Source of Truth)</div>
+            <div class="text-emerald-400 mt-1">cv_contents (rev-15)</div>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 p-3 rounded-lg">
+            <div class="text-slate-500">2. Engine Metadata (Postgres)</div>
+            <div class="text-sky-400 mt-1">document_versions (v15)</div>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 p-3 rounded-lg">
+            <div class="text-slate-500">3. SeaweedFS S3 (Opaque Blob)</div>
+            <div class="text-indigo-400 mt-1">sha256:8f9c2a...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right-hand Version History Drawer -->
+    <aside id="version-drawer" class="w-96 bg-slate-900 border-l border-slate-800 flex flex-col" data-contract="GET /api/v1/documents/{id}/versions">
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div>
+          <h3 class="font-semibold text-sm">Lịch sử Phiên bản (Immutable Snapshots)</h3>
+          <p class="text-[11px] text-slate-400">Lưu trữ Opaque JSON trên SeaweedFS</p>
+        </div>
+        <button onclick="toggleDrawer(false)" class="text-slate-400 hover:text-white text-xs px-2 py-1 rounded bg-slate-800">Đóng ✕</button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4 space-y-3 text-xs">
+        <div class="p-3 rounded-lg bg-sky-950/40 border border-sky-700/70">
+          <div class="flex items-center justify-between font-semibold text-sky-300">
+            <span>Version #15 (Hiện tại)</span>
+            <span class="text-[10px] font-mono bg-sky-900 px-1.5 py-0.5 rounded">COMMITTED</span>
+          </div>
+          <div class="text-slate-300 mt-1">Cập nhật kinh nghiệm làm việc tại Google Cloud</div>
+          <div class="text-[11px] text-slate-400 font-mono mt-2 flex justify-between">
+            <span>rev: cv-rev-15</span>
+            <span>10 phút trước • 14.2 KB</span>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
+          <div class="flex items-center justify-between font-semibold text-slate-200">
+            <span>Version #14</span>
+            <span class="text-[10px] font-mono bg-emerald-950 text-emerald-300 border border-emerald-800 px-1.5 py-0.5 rounded">RESTORED</span>
+          </div>
+          <div class="text-slate-400 mt-1">Khôi phục từ Version #12</div>
+          <div class="text-[11px] text-slate-500 font-mono mt-2 flex justify-between items-center">
+            <span>rev: cv-rev-14</span>
+            <button onclick="showModal('restore')" class="text-sky-400 hover:underline">Khôi phục bản này</button>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
+          <div class="flex items-center justify-between font-semibold text-slate-200">
+            <span>Version #13</span>
+            <span class="text-[10px] font-mono bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">COMMITTED</span>
+          </div>
+          <div class="text-slate-400 mt-1">Thêm chứng chỉ AWS Solutions Architect</div>
+          <div class="text-[11px] text-slate-500 font-mono mt-2 flex justify-between items-center">
+            <span>rev: cv-rev-13</span>
+            <button onclick="showModal('restore')" class="text-sky-400 hover:underline">Khôi phục bản này</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Restore Confirmation Modal -->
+  <div id="modal-restore" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-md w-full p-6 space-y-4" data-contract="POST /api/v1/documents/{id}/restore">
+      <h3 class="text-base font-bold text-white">Xác nhận Khôi phục Phiên bản #13 (Non-Destructive Restore)</h3>
+      <p class="text-xs text-slate-300 leading-relaxed">
+        Theo quy tắc kiến trúc <strong>Source of Truth</strong>:
+      </p>
+      <ol class="text-xs text-slate-400 list-decimal list-inside space-y-1.5">
+        <li>Host tải Opaque Snapshot <code>v13</code> từ SeaweedFS về kiểm tra schema.</li>
+        <li>Host cập nhật bảng nghiệp vụ <code>cv_contents</code> thành <code>cv-rev-16</code>.</li>
+        <li>Document Engine tạo <strong>Version #16 (status = RESTORED)</strong> — tuyệt đối không xóa lịch sử v14, v15.</li>
+      </ol>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="hideModals()" class="px-3 py-1.5 rounded bg-slate-800 text-xs">Hủy</button>
+        <button onclick="hideModals()" class="px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold">Xác nhận Restore → Tạo v16</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 409 Conflict Modal -->
+  <div id="modal-conflict" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-900 border border-rose-700 rounded-xl max-w-md w-full p-6 space-y-4" data-contract="HTTP 409 VERSION_CONFLICT">
+      <div class="text-xs font-mono text-rose-400 uppercase">HTTP 409 • VERSION_CONFLICT</div>
+      <h3 class="text-base font-bold text-white">Phát hiện xung đột phiên bản (Optimistic Concurrency)</h3>
+      <p class="text-xs text-slate-300 leading-relaxed">
+        Phiên làm việc của bạn đang dựa trên <code>expectedCurrentVersion = 15</code>, nhưng trên máy chủ đã có <strong>Version #16</strong> do một phiên khác vừa lưu.
+      </p>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="hideModals()" class="px-3 py-1.5 rounded bg-slate-800 text-xs">Tải lại Version #16 mới nhất</button>
+        <button onclick="hideModals()" class="px-4 py-1.5 rounded bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold">Ghi đè thành Version #17</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function setState(mode) {
+      const pill = document.getElementById('status-pill');
+      const banner = document.getElementById('validation-banner');
+      banner.classList.add('hidden');
+      if (mode === 'clean') {
+        pill.className = 'px-3 py-1 rounded-full text-xs font-medium bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center gap-1.5';
+        pill.innerHTML = '<span class="h-2 w-2 rounded-full bg-emerald-400"></span><span>Đã đồng bộ Host & Snapshot v15</span>';
+      } else if (mode === 'dirty') {
+        pill.className = 'px-3 py-1 rounded-full text-xs font-medium bg-amber-950 text-amber-300 border border-amber-800 flex items-center gap-1.5';
+        pill.innerHTML = '<span class="h-2 w-2 rounded-full bg-amber-400 animate-pulse"></span><span>Có thay đổi chưa lưu (Dirty State)</span>';
+      } else if (mode === 'invalid') {
+        banner.classList.remove('hidden');
+        pill.className = 'px-3 py-1 rounded-full text-xs font-medium bg-rose-950 text-rose-300 border border-rose-800 flex items-center gap-1.5';
+        pill.innerHTML = '<span class="h-2 w-2 rounded-full bg-rose-400"></span><span>2 lỗi Validation cần sửa</span>';
+      }
+    }
+    function toggleDrawer(show) {
+      document.getElementById('version-drawer').style.display = show ? 'flex' : 'none';
+    }
+    function showModal(type) {
+      hideModals();
+      document.getElementById('modal-' + type).classList.remove('hidden');
+    }
+    function hideModals() {
+      document.getElementById('modal-restore').classList.add('hidden');
+      document.getElementById('modal-conflict').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>

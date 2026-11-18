@@ -1,0 +1,50 @@
+{
+  "project": "editor-platform",
+  "slug": "01-universal-studio",
+  "title": "Universal Block-Layer Studio (CV & Document)",
+  "domain": "04-creative-editor",
+  "persona": "creator-builder",
+  "approved_version": "",
+  "versions": [
+    {
+      "version": "v1-cv-baseline",
+      "created_at": "2026-11-18T11:26:43+07:00",
+      "notes": "v1.0 — Bản Baseline P04B CV Editor Module ban đầu"
+    },
+    {
+      "version": "v2a-canva-hybrid",
+      "created_at": "2026-11-18T11:26:43+07:00",
+      "notes": "v2.0 Style A — Canva Studio + 4 nút đổi Theme ứng dụng chủ + Kho Template"
+    },
+    {
+      "version": "v2b-direct-canvas",
+      "created_at": "2026-11-18T11:26:43+07:00",
+      "notes": "v2.0 Style B — Direct Canvas tương tác trực tiếp với thanh công cụ nổi"
+    },
+    {
+      "version": "v2.5-figma-graphite",
+      "created_at": "2026-11-18T11:26:43+07:00",
+      "notes": "v2.5 Mẫu 2 — Giao diện Graphite thuần kiểu Figma/Framer"
+    },
+    {
+      "version": "v2.5-warm-atelier",
+      "created_at": "2026-11-18T11:26:44+07:00",
+      "notes": "v2.5 Mẫu 3 — Bản giấy kem nghệ thuật với thanh Floating Dock bên dưới"
+    },
+    {
+      "version": "v3-crafted-light",
+      "created_at": "2026-11-18T11:26:44+07:00",
+      "notes": "v3.0 — Mẫu 1 & 2 Hợp Nhất: 7 tab công cụ + 16 PS Blend Modes + Import Font/SVG"
+    },
+    {
+      "version": "v4-commercial-full-ux",
+      "created_at": "2026-11-18T11:26:44+07:00",
+      "notes": "v4.0 — Kéo thả & Co giãn 8 hướng mọi Block, Section DB, Khổ giấy A4/A5/Slide & Zoom"
+    },
+    {
+      "version": "v5-icon-clean-studio",
+      "created_at": "2026-11-18T11:26:44+07:00",
+      "notes": "v5.0 — Thanh công cụ Icon 32x32px, Đổi kiểu từng Section, Bg Alpha & 4 Mẫu bố cục"
+    }
+  ]
+}

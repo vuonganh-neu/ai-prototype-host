@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>P05 Statistical & BI Chart Studio (Unified Canva Daylight + Figma Inspector + 12 Chart Types)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@400;500;700&family=Instrument+Serif:ital@0;1&family=Playfair+Display:ital,wght@0,600;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap">
+  <style>
+    :root {
+      --ui-bg: #ebecef;
+      --ui-panel: #ffffff;
+      --ui-subpanel: #f8f9fa;
+      --ui-border: #e4e4e7;
+      --ui-text: #18181b;
+      --ui-muted: #71717a;
+      --ui-accent: #18181b;
+      --ui-accent-fg: #ffffff;
+    }
+    body.mode-graphite {
+      --ui-bg: #141414;
+      --ui-panel: #202020;
+      --ui-subpanel: #2a2a2a;
+      --ui-border: #333333;
+      --ui-text: #f4f4f5;
+      --ui-muted: #a1a1aa;
+      --ui-accent: #0d99ff;
+      --ui-accent-fg: #ffffff;
+    }
+    body { font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; background-color: var(--ui-bg); color: var(--ui-text); }
+    .ui-panel { background-color: var(--ui-panel); border-color: var(--ui-border); color: var(--ui-text); }
+    .ui-subpanel { background-color: var(--ui-subpanel); border-color: var(--ui-border); color: var(--ui-text); }
+    .ui-border { border-color: var(--ui-border); }
+    .ui-muted { color: var(--ui-muted); }
+    .ui-accent-btn { background-color: var(--ui-accent); color: var(--ui-accent-fg); }
+
+    .canvas-layer { transition: box-shadow 0.15s ease; user-select: none; }
+    .canvas-layer.is-selected { outline: 2px solid #0d99ff !important; outline-offset: 2px; }
+    .chart-btn.active { border-color: #4f46e5; background-color: rgba(79,70,229,0.1); font-weight: 700; }
+
+    .fx-hollow { color: transparent !important; -webkit-text-stroke: 2px #18181b; }
+    .fx-splice { text-shadow: 4px 4px 0px rgba(244, 63, 94, 0.5), -2px -2px 0px rgba(56, 189, 248, 0.5); }
+    .fx-gradient { background: linear-gradient(90deg, #4f46e5, #ec4899, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .ps-fx-bevel { box-shadow: inset 2px 2px 4px rgba(255,255,255,0.85), inset -3px -3px 6px rgba(0,0,0,0.25), 0 10px 25px rgba(0,0,0,0.12) !important; }
+    .ps-fx-outerglow { box-shadow: 0 0 28px 6px rgba(99, 102, 241, 0.45) !important; }
+
+    @keyframes kfFadeRise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: translateY(0); } }
+    .anim-fade-rise { animation: kfFadeRise 0.65s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-thumb { background: #a1a1aa; border-radius: 99px; }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden select-none">
+
+  <!-- 1. TOP UNIFIED STUDIO HEADER (Identical Shell to CV, Web & Poster!) -->
+  <header class="h-13 ui-panel border-b px-4 py-2 flex items-center justify-between z-30 gap-2 text-xs">
+    <div class="flex items-center gap-2.5">
+      <a href="../../../../index.html" class="px-2.5 py-1 rounded-lg border ui-border hover:opacity-80 font-semibold">← Bộ 5 Studio</a>
+      <span class="font-bold text-sm">P05 — Statistical & BI Chart Studio</span>
+    </div>
+
+    <!-- Live Host Database Dataset Switcher -->
+    <div class="flex items-center gap-1.5 ui-subpanel border px-2.5 py-1 rounded-xl">
+      <span class="font-semibold text-indigo-600">🔌 Nguồn DB Thống kê:</span>
+      <button onclick="loadDbDataset('revenue')" class="px-2 py-0.5 rounded bg-indigo-600 text-white font-semibold">DB #1: Doanh thu Vùng</button>
+      <button onclick="loadDbDataset('funnel')" class="px-2 py-0.5 rounded hover:bg-indigo-500/10 font-medium">DB #2: Phễu Chuyển đổi</button>
+      <button onclick="loadDbDataset('budget')" class="px-2 py-0.5 rounded hover:bg-indigo-500/10 font-medium">DB #3: Ngân sách</button>
+    </div>
+
+    <!-- Switcher: Mẫu 1 (Canva Daylight) vs Mẫu 2 (Figma Graphite) -->
+    <div class="flex items-center gap-2 font-semibold">
+      <div class="ui-subpanel border p-0.5 rounded-xl flex items-center">
+        <button onclick="setStudioTheme('daylight')" class="px-2.5 py-1 rounded-lg bg-zinc-900 text-white">☀ Mẫu 1 (Canva)</button>
+        <button onclick="setStudioTheme('graphite')" class="px-2.5 py-1 rounded-lg ui-muted">☾ Mẫu 2 (Figma)</button>
+      </div>
+      <button onclick="renderChart()" class="px-3 py-1.5 rounded-lg bg-amber-500/15 text-amber-600 border border-amber-500/30">▶ Chạy Animation</button>
+      <button onclick="document.getElementById('embed-modal').classList.remove('hidden')" class="px-3.5 py-1.5 rounded-lg ui-accent-btn">&lt;/&gt; Thẻ Nhúng / Xuất Ảnh</button>
+    </div>
+  </header>
+
+  <!-- 2. SHARED CONTEXTUAL FORMATTING RIBBON (100% Shared with CV/Web/Poster) -->
+  <div class="h-11 ui-panel border-b px-4 flex items-center justify-between text-xs z-20 gap-2 overflow-x-auto">
+    <div class="flex items-center gap-2">
+      <span id="active-layer-badge" class="px-2.5 py-1 rounded-md ui-subpanel border font-semibold">Đang chọn: Tiêu đề Báo cáo Thống kê</span>
+
+      <select id="top-font-select" onchange="applySelectedFont(this.value)" class="px-2 py-1 rounded-md border ui-border ui-subpanel font-medium outline-none">
+        <option value="'Playfair Display', serif">Playfair Display (Editorial)</option>
+        <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans (Modern)</option>
+        <option value="'Instrument Serif', serif">Instrument Serif (Luxury)</option>
+        <option value="'Space Grotesk', sans-serif">Space Grotesk (Tech)</option>
+      </select>
+
+      <label class="flex items-center gap-1 px-2 py-1 rounded-md border ui-border ui-subpanel cursor-pointer">
+        <span>Màu:</span>
+        <input type="color" value="#18181b" oninput="applySelectedColor(this.value)" class="w-5 h-5 bg-transparent border-0" />
+      </label>
+
+      <!-- All 16 Photoshop Blend Modes -->
+      <div class="flex items-center gap-1 px-2 py-1 rounded-md border ui-border ui-subpanel">
+        <span class="ui-muted">Hòa trộn (16 PS):</span>
+        <select onchange="applyBlendMode(this.value)" class="bg-transparent font-semibold outline-none">
+          <option value="normal">Normal</option>
+          <option value="multiply">Multiply (Hòa mực)</option>
+          <option value="screen">Screen (Hòa sáng)</option>
+          <option value="overlay">Overlay (Tương phản)</option>
+          <option value="difference">Difference (Đảo màu)</option>
+          <option value="color-dodge">Color Dodge</option>
+          <option value="luminosity">Luminosity</option>
+        </select>
+      </div>
+
+      <!-- Opacity -->
+      <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md border ui-border ui-subpanel">
+        <span class="ui-muted">Opacity:</span>
+        <input type="range" min="10" max="100" value="100" oninput="applyLayerOpacity(this.value)" class="w-16 accent-sky-500" />
+        <span id="top-opacity-val" class="font-mono text-[11px]">100%</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-1.5 shrink-0">
+      <button onclick="spawnChartCallout()" class="px-2.5 py-1 rounded border ui-border hover:bg-zinc-500/10 font-semibold">+ Nhãn Chú thích Nổi</button>
+      <button onclick="duplicateSelectedLayer()" class="px-2 py-1 rounded border ui-border hover:bg-zinc-500/10">⧉ Nhân bản</button>
+    </div>
+  </div>
+
+  <!-- 3. MAIN WORKSPACE: 8-TAB LEFT RAIL (Tab 1: 12 Chart Types + 7 Core Tabs!) + ARTBOARD + FIGMA INSPECTOR -->
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- 3A. LEFT ICON RAIL (8 TABS) -->
+    <nav class="w-[72px] ui-panel border-r flex flex-col items-center py-2.5 gap-1 text-[10px] font-semibold z-20 overflow-y-auto">
+      <button onclick="switchLeftTab('charts')" id="lbtn-charts" class="w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-accent-btn">
+        <span class="text-base">📊</span><span>Biểu đồ</span>
+      </button>
+      <button onclick="switchLeftTab('motion')" id="lbtn-motion" class="w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-muted hover:opacity-100">
+        <span class="text-base">🎬</span><span>Animation</span>
+      </button>
+      <button onclick="switchLeftTab('layers')" id="lbtn-layers" class="w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-muted hover:opacity-100">
+        <span class="text-base">🥞</span><span>Lớp PS & FX</span>
+      </button>
+      <button onclick="switchLeftTab('databinds')" id="lbtn-databinds" class="w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-muted hover:opacity-100">
+        <span class="text-base">🔌</span><span>DB & Tĩnh</span>
+      </button>
+      <button onclick="switchLeftTab('fonts')" id="lbtn-fonts" class="w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-muted hover:opacity-100">
+        <span class="text-base">🔤</span><span>Font & Chữ</span>
+      </button>
+      <button onclick="switchLeftTab('colors')" id="lbtn-colors" class="w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-muted hover:opacity-100">
+        <span class="text-base">🎨</span><span>Bảng màu</span>
+      </button>
+      <button onclick="switchLeftTab('shapes')" id="lbtn-shapes" class="w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-muted hover:opacity-100">
+        <span class="text-base">❖</span><span>Hình khối</span>
+      </button>
+      <button onclick="switchLeftTab('effects')" id="lbtn-effects" class="w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-muted hover:opacity-100">
+        <span class="text-base">✨</span><span>Bộ lọc</span>
+      </button>
+    </nav>
+
+    <!-- 3B. LEFT EXPANDABLE STUDIO DRAWER (345px) -->
+    <aside class="w-[345px] ui-panel border-r p-4 overflow-y-auto space-y-4 text-xs z-10">
+
+      <!-- TAB 1 (DOMAIN): 12 STATISTICAL CHART TEMPLATES + AGGREGATIONS + LIVE DATA GRID -->
+      <div id="ltab-charts" class="space-y-4">
+        <div>
+          <h3 class="font-bold text-sm">1. Kho 12 Mẫu Biểu Đồ Thống Kê & Phân Tích</h3>
+          <p class="ui-muted text-[11px]">Kết hợp biểu đồ thống kê với toàn bộ công cụ thiết kế khung báo cáo</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-1.5">
+          <button onclick="selectChart('bar', this)" class="chart-btn active p-2 rounded-xl border ui-border text-left">📊 1. Cột So Sánh</button>
+          <button onclick="selectChart('stacked', this)" class="chart-btn p-2 rounded-xl border ui-border text-left">🧱 2. Cột Chồng Tỷ Trọng</button>
+          <button onclick="selectChart('hbar', this)" class="chart-btn p-2 rounded-xl border ui-border text-left">🏆 3. Xếp Hạng Ngang</button>
+          <button onclick="selectChart('combo', this)" class="chart-btn p-2 rounded-xl border ui-border text-left">⚡ 4. Cột + Đường 2 Trục</button>
+          <button onclick="selectChart('area', this)" class="chart-btn p-2 rounded-xl border ui-border text-left">📈 5. Miền Thời Gian</button>
+          <button onclick="selectChart('rose', this)" class="chart-btn p-2 rounded-xl border ui-border text-left">🌹 6. Nightingale Rose</button>
+          <button onclick="selectChart('treemap', this)" class="chart-btn p-2 rounded-xl border ui-border text-left">🌲 7. Bản Đồ Cây Ngân Sách</button>
+          <button onclick="selectChart('funnel', this)" class="chart-btn p-2 rounded-xl border ui-border text-left">🔻 8. Phễu Chuyển Đổi</button>
+          <button onclick="selectChart('waterfall', this)" class="chart-btn p-2 rounded-xl border ui-border text-left">🌊 9. Thác Nước Tài Chính</button>
+          <button onclick="selectChart('boxplot', this)" class="chart-btn p-2 rounded-xl border ui-border text-left">📦 10. Boxplot Phân Phối</button>
+          <button onclick="selectChart('heatmap', this)" class="chart-btn p-2 rounded-xl border ui-border text-left">🔥 11. Ma Trận Nhiệt</button>
+          <button onclick="selectChart('gauge', this)" class="chart-btn p-2 rounded-xl border ui-border text-left">🎯 12. Đồng Hồ Đo KPI</button>
+        </div>
+
+        <div class="p-3 rounded-xl ui-subpanel border space-y-2">
+          <div class="font-semibold">📐 Đường Chuẩn Thống Kê</div>
+          <label class="flex justify-between"><span>Đường Trung bình (Mean MarkLine)</span><input id="chk-mean" type="checkbox" checked onchange="renderChart()" /></label>
+          <label class="flex justify-between"><span>Đánh dấu Max / Min</span><input id="chk-minmax" type="checkbox" checked onchange="renderChart()" /></label>
+          <label class="flex justify-between"><span>Hiện Nhãn Số Liệu</span><input id="chk-labels" type="checkbox" checked onchange="renderChart()" /></label>
+        </div>
+
+        <div class="border ui-border rounded-xl overflow-hidden">
+          <table class="w-full text-left text-xs">
+            <thead class="ui-subpanel border-b ui-border"><tr><th class="p-1.5">Vùng/Kỳ</th><th class="p-1.5">Chỉ số A</th><th class="p-1.5">Chỉ số B</th></tr></thead>
+            <tbody class="divide-y ui-border">
+              <tr><td class="p-1"><input id="lbl-0" value="Miền Bắc" oninput="syncTable()" class="w-20 px-1 rounded border bg-transparent" /></td><td class="p-1"><input id="v1-0" type="number" value="480" oninput="syncTable()" class="w-16 px-1 rounded border bg-transparent" /></td><td class="p-1"><input id="v2-0" type="number" value="210" oninput="syncTable()" class="w-16 px-1 rounded border bg-transparent" /></td></tr>
+              <tr><td class="p-1"><input id="lbl-1" value="Miền Trung" oninput="syncTable()" class="w-20 px-1 rounded border bg-transparent" /></td><td class="p-1"><input id="v1-1" type="number" value="620" oninput="syncTable()" class="w-16 px-1 rounded border bg-transparent" /></td><td class="p-1"><input id="v2-1" type="number" value="340" oninput="syncTable()" class="w-16 px-1 rounded border bg-transparent" /></td></tr>
+              <tr><td class="p-1"><input id="lbl-2" value="Miền Nam" oninput="syncTable()" class="w-20 px-1 rounded border bg-transparent" /></td><td class="p-1"><input id="v1-2" type="number" value="890" oninput="syncTable()" class="w-16 px-1 rounded border bg-transparent" /></td><td class="p-1"><input id="v2-2" type="number" value="510" oninput="syncTable()" class="w-16 px-1 rounded border bg-transparent" /></td></tr>
+              <tr><td class="p-1"><input id="lbl-3" value="Quốc Tế" oninput="syncTable()" class="w-20 px-1 rounded border bg-transparent" /></td><td class="p-1"><input id="v1-3" type="number" value="1120" oninput="syncTable()" class="w-16 px-1 rounded border bg-transparent" /></td><td class="p-1"><input id="v2-3" type="number" value="740" oninput="syncTable()" class="w-16 px-1 rounded border bg-transparent" /></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 2..8: SHARED CORE TOOLS -->
+      <div id="ltab-motion" class="hidden space-y-3">
+        <h3 class="font-bold text-sm">2. Studio Chuyển động Báo cáo & Biểu đồ</h3>
+        <button onclick="renderChart()" class="w-full py-2 rounded-xl ui-accent-btn font-semibold">▶ Chạy lại Hiệu ứng Vẽ Biểu đồ</button>
+        <button onclick="if(selectedEl){selectedEl.classList.remove('anim-fade-rise');void selectedEl.offsetWidth;selectedEl.classList.add('anim-fade-rise');}" class="w-full py-2 rounded-xl border ui-border font-semibold">↑ Fade Rise Khối Đang Chọn</button>
+      </div>
+
+      <div id="ltab-layers" class="hidden space-y-3">
+        <h3 class="font-bold text-sm">3. Lớp Photoshop (`fx`) & 16 Blend Modes</h3>
+        <button onclick="spawnChartCallout()" class="w-full py-2 rounded-xl bg-indigo-600 text-white font-semibold">+ Thêm Nhãn Chú Thích Nổi Đè Lên Biểu Đồ</button>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button onclick="if(selectedEl) selectedEl.classList.toggle('ps-fx-bevel')" class="p-2 rounded-xl border ui-border">✨ Bevel 3D</button>
+          <button onclick="if(selectedEl) selectedEl.classList.toggle('ps-fx-outerglow')" class="p-2 rounded-xl border ui-border">🌟 Outer Glow</button>
+        </div>
+      </div>
+
+      <div id="ltab-databinds" class="hidden space-y-3">
+        <h3 class="font-bold text-sm">4. Liên kết Dữ liệu DB & Khối Tĩnh</h3>
+        <div class="p-3 rounded-xl ui-subpanel border text-[11px] font-mono space-y-1">
+          <div class="font-sans font-bold text-indigo-600">🔌 Dataset Động từ Host DB:</div>
+          <div>• datasetId: "sales_regional_2026"</div>
+          <div>• metrics: ["SUM(revenue)", "AVG(margin)"]</div>
+        </div>
+      </div>
+
+      <div id="ltab-fonts" class="hidden space-y-3">
+        <h3 class="font-bold text-sm">5. Import Font Chữ & Hiệu ứng Chữ Canva</h3>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button onclick="if(selectedEl) selectedEl.classList.remove('fx-hollow','fx-splice','fx-gradient')" class="p-2 rounded-xl border ui-border">Solid Chuẩn</button>
+          <button onclick="if(selectedEl) selectedEl.classList.add('fx-gradient')" class="p-2 rounded-xl border ui-border font-bold">Chữ Gradient</button>
+          <button onclick="if(selectedEl) selectedEl.classList.add('fx-hollow')" class="p-2 rounded-xl border ui-border font-bold">Chữ Rỗng</button>
+          <button onclick="if(selectedEl) selectedEl.classList.add('fx-splice')" class="p-2 rounded-xl border ui-border font-bold">Tách Bóng</button>
+        </div>
+      </div>
+
+      <div id="ltab-colors" class="hidden space-y-3">
+        <h3 class="font-bold text-sm">6. Bảng màu Biểu đồ & Gradient 360°</h3>
+        <div class="grid grid-cols-1 gap-1.5">
+          <button onclick="setPalette(['#4f46e5','#06b6d4','#10b981','#f59e0b'])" class="p-2.5 rounded-xl border ui-border text-left font-semibold">1. Indigo & Emerald Studio</button>
+          <button onclick="setPalette(['#e11d48','#fb7185','#f59e0b','#1e293b'])" class="p-2.5 rounded-xl border ui-border text-left font-semibold">2. Editorial Sunset</button>
+          <button onclick="setPalette(['#0f766e','#14b8a6','#5eead4','#115e59'])" class="p-2.5 rounded-xl border ui-border text-left font-semibold">3. Nordic Teal Monochrome</button>
+        </div>
+      </div>
+
+      <div id="ltab-shapes" class="hidden space-y-3">
+        <h3 class="font-bold text-sm">7. Hình Khối & Nhãn Chú Thích</h3>
+        <button onclick="spawnChartCallout()" class="w-full py-2 rounded-xl border ui-border font-semibold">+ Chèn Thẻ Chú Thích Kéo Thả Tự Do</button>
+      </div>
+
+      <div id="ltab-effects" class="hidden space-y-3">
+        <h3 class="font-bold text-sm">8. Bộ Lọc Chỉnh Màu</h3>
+        <div class="p-3 rounded-xl ui-subpanel border space-y-2">
+          <div><span>Contrast</span><input type="range" min="70" max="150" value="100" oninput="document.getElementById('chart-artboard').style.filter='contrast('+this.value+'%)'" class="w-full" /></div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- 3C. CENTER REPORT ARTBOARD (Warm Daylight Editorial Default — Identical Aesthetic to CV!) -->
+    <main class="flex-1 flex items-center justify-center p-6 overflow-y-auto relative">
+      <div id="chart-artboard" onclick="selectLayer(this, 'Khung Báo cáo Thống kê')" class="canvas-layer w-full max-w-3xl bg-[#FAF8F5] text-zinc-900 rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.14)] border border-stone-200/90 p-8 space-y-4 relative cursor-pointer">
+
+        <!-- STATIC TEMPLATE HEADER -->
+        <div class="flex items-center justify-between border-b border-stone-200 pb-2.5 text-[11px] text-stone-500">
+          <span contenteditable="true" class="font-bold uppercase tracking-widest text-amber-800 outline-none">📌 KHỐI LOGO MẪU TĨNH • ENTERPRISE BI REPORT</span>
+          <span class="font-mono px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-semibold">🔌 Bound: `{{db.sales_view}}`</span>
+        </div>
+
+        <!-- Title & KPI Cards -->
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h1 id="chart-title"
+                onclick="event.stopPropagation(); selectLayer(this, 'Tiêu đề Báo cáo Thống kê')"
+                contenteditable="true"
+                style="font-family: 'Playfair Display', serif; font-size: 28px;"
+                class="canvas-layer is-selected font-bold tracking-tight outline-none">
+              Thống kê Sản lượng & Phân bổ Tăng trưởng Đa Vùng
+            </h1>
+            <p contenteditable="true" class="text-xs text-stone-500 mt-0.5 outline-none">
+              Kết hợp biểu đồ thống kê động từ Database với bố cục, nghệ thuật chữ và lớp trang trí của Canva Studio
+            </p>
+          </div>
+          <div class="flex gap-2 shrink-0 text-right">
+            <div class="px-3 py-1.5 rounded-xl bg-white border border-stone-200 shadow-2xs">
+              <div class="text-[10px] text-stone-400">Tổng (SUM)</div>
+              <div id="kpi-sum" class="font-extrabold text-sm text-zinc-900">3,110</div>
+            </div>
+            <div class="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200">
+              <div class="text-[10px] text-emerald-700">Trung bình (AVG)</div>
+              <div id="kpi-avg" class="font-extrabold text-sm text-emerald-900">777.5</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live ECharts Container -->
+        <div class="bg-white rounded-xl border border-stone-200/80 p-4 shadow-2xs">
+          <div id="echarts-container" class="w-full h-[350px]"></div>
+        </div>
+
+        <!-- STATIC TEMPLATE FOOTER -->
+        <div class="pt-2 border-t border-stone-200 flex items-center justify-between text-[11px] text-stone-500">
+          <span contenteditable="true" class="outline-none">📌 Chân trang Mẫu cố định (Static Footer): Số liệu đã kiểm toán • Đơn vị: Triệu VNĐ</span>
+          <span class="font-mono text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-900">STATIC BLOCK</span>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- 3D. RIGHT SIDEBAR: FIGMA PRECISION INSPECTOR -->
+    <aside class="w-[255px] ui-panel border-l p-4 overflow-y-auto space-y-4 text-xs z-10">
+      <div class="font-bold text-sm border-b ui-border pb-2">Thuộc tính Lớp (Figma Inspector)</div>
+      <div class="grid grid-cols-2 gap-2">
+        <div class="ui-subpanel border px-2.5 py-1.5 rounded-lg flex justify-between">
+          <span class="ui-muted">Bo góc px</span>
+          <input type="number" value="16" oninput="if(selectedEl) selectedEl.style.borderRadius=this.value+'px'" class="w-12 bg-transparent text-right font-mono outline-none" />
+        </div>
+        <div class="ui-subpanel border px-2.5 py-1.5 rounded-lg flex justify-between">
+          <span class="ui-muted">Xoay °</span>
+          <input type="number" value="0" oninput="if(selectedEl) selectedEl.style.transform='rotate('+this.value+'deg)'" class="w-12 bg-transparent text-right font-mono outline-none" />
+        </div>
+      </div>
+
+      <div class="space-y-1.5 pt-2 border-t ui-border">
+        <div class="font-semibold text-[11px] uppercase ui-muted">Chuyển sang Studio khác:</div>
+        <a href="../../01-universal-studio/v3-crafted-light/index.html" class="block px-2.5 py-1.5 rounded-lg ui-subpanel border hover:border-sky-500 font-medium">📄 P04B: CV Studio →</a>
+        <a href="../../04-website-studio/v1-responsive-cms/index.html" class="block px-2.5 py-1.5 rounded-lg ui-subpanel border hover:border-sky-500 font-medium">🌐 P06: Website Studio →</a>
+        <a href="../../06-poster-catalog-studio/v1-3d-flipbook/index.html" class="block px-2.5 py-1.5 rounded-lg ui-subpanel border hover:border-sky-500 font-medium">📖 P08: Poster & Catalog 3D →</a>
+        <a href="../../05-map-studio/v1-satellite-gps/index.html" class="block px-2.5 py-1.5 rounded-lg ui-subpanel border hover:border-sky-500 font-medium">🛰 P07: Map Vệ tinh →</a>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- EMBED MODAL -->
+  <div id="embed-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+    <div class="bg-white text-zinc-900 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl border text-xs">
+      <div class="flex justify-between"><h3 class="font-bold text-base">Mã Thẻ Nhúng Web & Xuất Báo Cáo</h3><button onclick="document.getElementById('embed-modal').classList.add('hidden')">✕</button></div>
+      <pre class="p-3 rounded-xl bg-zinc-900 text-emerald-300 font-mono text-[11px] overflow-x-auto">&lt;vav-chart-embed document-id="doc-chart-8821" dataset="sales_regional_2026" theme="auto-host" /&gt;</pre>
+      <div class="flex justify-end"><button onclick="document.getElementById('embed-modal').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-zinc-900 text-white font-semibold">Đóng</button></div>
+    </div>
+  </div>
+
+  <script>
+    let selectedEl = document.getElementById('chart-title');
+    function selectLayer(el, name) {
+      document.querySelectorAll('.canvas-layer').forEach(n => n.classList.remove('is-selected'));
+      selectedEl = el;
+      el.classList.add('is-selected');
+      document.getElementById('active-layer-badge').textContent = 'Đang chọn: ' + name;
+    }
+    function setStudioTheme(m) { document.body.classList.toggle('mode-graphite', m === 'graphite'); }
+
+    const tabs = ['charts', 'motion', 'layers', 'databinds', 'fonts', 'colors', 'shapes', 'effects'];
+    function switchLeftTab(tab) {
+      tabs.forEach(t => {
+        document.getElementById('ltab-' + t).classList.toggle('hidden', t !== tab);
+        document.getElementById('lbtn-' + t).className = (t === tab)
+          ? 'w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-accent-btn'
+          : 'w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-muted hover:opacity-100';
+      });
+    }
+
+    function applySelectedFont(f) { if (selectedEl) selectedEl.style.fontFamily = f; }
+    function applySelectedColor(c) { if (selectedEl) selectedEl.style.color = c; }
+    function applyBlendMode(m) { if (selectedEl) selectedEl.style.mixBlendMode = m; }
+    function applyLayerOpacity(p) { if (selectedEl) selectedEl.style.opacity = p / 100; document.getElementById('top-opacity-val').textContent = p + '%'; }
+    function duplicateSelectedLayer() {
+      if (!selectedEl) return;
+      const c = selectedEl.cloneNode(true);
+      selectedEl.parentElement.appendChild(c);
+    }
+
+    function spawnChartCallout() {
+      const ab = document.getElementById('chart-artboard');
+      const d = document.createElement('div');
+      d.style.position = 'absolute'; d.style.top = '140px'; d.style.right = '60px'; d.style.zIndex = '30';
+      d.className = 'canvas-layer px-3.5 py-2 rounded-xl bg-amber-100 border border-amber-400 text-amber-950 text-xs font-bold shadow-lg cursor-move';
+      d.contentEditable = 'true';
+      d.textContent = '📌 Đỉnh tăng trưởng Quý 4 (+42%)';
+      d.onclick = (e) => { e.stopPropagation(); selectLayer(d, 'Nhãn Chú thích Nổi'); };
+      ab.appendChild(d);
+      selectLayer(d, 'Nhãn Chú thích Nổi');
+    }
+
+    const chart = echarts.init(document.getElementById('echarts-container'));
+    let currentType = 'bar';
+    let currentColors = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b'];
+    let cats = ['Miền Bắc', 'Miền Trung', 'Miền Nam', 'Quốc Tế'];
+    let s1 = [480, 620, 890, 1120];
+    let s2 = [210, 340, 510, 740];
+
+    function selectChart(type, btn) {
+      currentType = type;
+      document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderChart();
+    }
+
+    function renderChart() {
+      const showMean = document.getElementById('chk-mean').checked;
+      const showMinMax = document.getElementById('chk-minmax').checked;
+      const showLabels = document.getElementById('chk-labels').checked;
+      const sum = s1.reduce((a, b) => a + b, 0);
+      document.getElementById('kpi-sum').textContent = sum.toLocaleString();
+      document.getElementById('kpi-avg').textContent = (sum / s1.length).toFixed(1);
+
+      const markLine = showMean ? { data: [{ type: 'average', name: 'Trung bình' }] } : undefined;
+      const markPoint = showMinMax ? { data: [{ type: 'max', name: 'Max' }, { type: 'min', name: 'Min' }] } : undefined;
+      let option = { color: currentColors, tooltip: { trigger: 'axis' }, legend: { bottom: 0 } };
+
+      if (currentType === 'rose') {
+        option = { color: currentColors, tooltip: { trigger: 'item' }, series: [{ type: 'pie', radius: [25, 135], roseType: 'area', itemStyle: { borderRadius: 8 }, label: { show: showLabels, formatter: '{b}: {c}' }, data: cats.map((c, i) => ({ name: c, value: s1[i] })) }] };
+      } else if (currentType === 'treemap') {
+        option = { color: currentColors, series: [{ type: 'treemap', data: cats.map((c, i) => ({ name: c, value: s1[i] })) }] };
+      } else if (currentType === 'funnel') {
+        option = { color: currentColors, series: [{ type: 'funnel', left: '12%', width: '76%', data: cats.map((c, i) => ({ name: c, value: s1[i] })) }] };
+      } else if (currentType === 'waterfall') {
+        option = { color: ['#4f46e5'], xAxis: { type: 'category', data: ['Đầu kỳ', ...cats, 'Tổng'] }, yAxis: { type: 'value' }, series: [{ type: 'bar', stack: 't', itemStyle: { color: 'transparent' }, data: [0, 300, 780, 1400, 2290, 0] }, { type: 'bar', stack: 't', label: { show: true, position: 'top' }, data: [300, ...s1, sum + 300] }] };
+      } else if (currentType === 'boxplot') {
+        option = { color: currentColors, xAxis: { type: 'category', data: cats }, yAxis: { type: 'value' }, series: [{ type: 'boxplot', data: [[220,340,480,590,710],[310,480,620,750,880],[490,680,890,1020,1180],[640,890,1120,1280,1450]] }] };
+      } else if (currentType === 'heatmap') {
+        const hd = []; for(let x=0;x<4;x++) for(let y=0;y<4;y++) hd.push([x,y,Math.round((s1[x]+s2[y])/2)]);
+        option = { xAxis: { type: 'category', data: cats }, yAxis: { type: 'category', data: ['Q1','Q2','Q3','Q4'] }, visualMap: { min: 200, max: 1000, orient: 'horizontal', left: 'center', bottom: 0 }, series: [{ type: 'heatmap', data: hd, label: { show: true } }] };
+      } else if (currentType === 'gauge') {
+        option = { series: [{ type: 'gauge', progress: { show: true, width: 16 }, axisLine: { lineStyle: { width: 16 } }, data: [{ value: 86.4, name: 'KPI Quý (%)' }] }] };
+      } else if (currentType === 'hbar') {
+        option.xAxis = { type: 'value' }; option.yAxis = { type: 'category', data: cats };
+        option.series = [{ name: 'Chỉ số A', type: 'bar', data: s1, label: { show: showLabels, position: 'right' } }, { name: 'Chỉ số B', type: 'bar', data: s2 }];
+      } else {
+        option.xAxis = { type: 'category', data: cats }; option.yAxis = { type: 'value' };
+        option.series = [
+          { name: 'Chỉ số A (DB)', type: currentType === 'area' ? 'line' : 'bar', stack: currentType === 'stacked' ? 't' : undefined, smooth: true, areaStyle: currentType === 'area' ? { opacity: 0.25 } : undefined, itemStyle: { borderRadius: [6,6,0,0] }, label: { show: showLabels, position: 'top' }, markLine, markPoint, data: s1 },
+          { name: 'Chỉ số B (DB)', type: (currentType === 'combo' || currentType === 'area') ? 'line' : 'bar', stack: currentType === 'stacked' ? 't' : undefined, smooth: true, data: s2 }
+        ];
+      }
+      chart.setOption(option, true);
+    }
+
+    function syncTable() {
+      cats = [0,1,2,3].map(i => document.getElementById('lbl-' + i).value);
+      s1 = [0,1,2,3].map(i => Number(document.getElementById('v1-' + i).value));
+      s2 = [0,1,2,3].map(i => Number(document.getElementById('v2-' + i).value));
+      renderChart();
+    }
+    function setPalette(c) { currentColors = c; renderChart(); }
+    function loadDbDataset(ds) {
+      if (ds === 'funnel') { cats = ['Truy cập','Đăng ký','Dùng thử','Trả phí']; s1 = [1200,840,510,290]; selectChart('funnel'); }
+      else if (ds === 'budget') { cats = ['R&D Cloud','Marketing','Vận hành','Dự phòng']; s1 = [950,640,480,310]; selectChart('treemap'); }
+      else { cats = ['Miền Bắc','Miền Trung','Miền Nam','Quốc Tế']; s1 = [480,620,890,1120]; selectChart('combo'); }
+    }
+    renderChart();
+    window.addEventListener('resize', () => chart.resize());
+  </script>
+</body>
+</html>

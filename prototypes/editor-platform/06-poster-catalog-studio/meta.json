@@ -1,0 +1,15 @@
+{
+  "project": "editor-platform",
+  "slug": "06-poster-catalog-studio",
+  "title": "P08: Catalog 3D, Thiệp, Email & Poster Studio",
+  "domain": "04-creative-editor",
+  "persona": "creator-builder",
+  "approved_version": "",
+  "versions": [
+    {
+      "version": "v1-3d-flipbook",
+      "created_at": "2026-11-18T11:26:44+07:00",
+      "notes": "v1.0 — 5 định dạng ấn phẩm + Lật trang sách 3D & Mở phong bì"
+    }
+  ]
+}

@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mẫu 1 & 2 Hợp Nhất — Canva Studio + Figma Inspector (Full Animation, 16 PS Blend Modes, Layer FX & DB Binding)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link id="dynamic-gfonts" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,500;0,700;1,600&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Instrument+Serif:ital@0;1&family=Montserrat:wght@400;600;800&family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&family=Syne:wght@600;700;800&display=swap">
+  <style>
+    :root {
+      --ui-bg: #ebecef;
+      --ui-panel: #ffffff;
+      --ui-subpanel: #f8f9fa;
+      --ui-border: #e4e4e7;
+      --ui-text: #18181b;
+      --ui-muted: #71717a;
+      --ui-accent: #18181b;
+      --ui-accent-fg: #ffffff;
+    }
+
+    body.mode-graphite {
+      --ui-bg: #141414;
+      --ui-panel: #202020;
+      --ui-subpanel: #2a2a2a;
+      --ui-border: #333333;
+      --ui-text: #f4f4f5;
+      --ui-muted: #a1a1aa;
+      --ui-accent: #0d99ff;
+      --ui-accent-fg: #ffffff;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      background-color: var(--ui-bg);
+      color: var(--ui-text);
+    }
+
+    .ui-panel { background-color: var(--ui-panel); border-color: var(--ui-border); color: var(--ui-text); }
+    .ui-subpanel { background-color: var(--ui-subpanel); border-color: var(--ui-border); color: var(--ui-text); }
+    .ui-border { border-color: var(--ui-border); }
+    .ui-muted { color: var(--ui-muted); }
+    .ui-accent-btn { background-color: var(--ui-accent); color: var(--ui-accent-fg); }
+
+    .canvas-layer { transition: box-shadow 0.15s ease; user-select: none; }
+    .canvas-layer.is-selected { outline: 2px solid #0d99ff !important; outline-offset: 2px; }
+
+    /* Highlight Database Bound Fields when in Template Binding View */
+    .artboard-show-bindings [data-db-field] {
+      outline: 1.5px dashed #4f46e5;
+      background-color: rgba(99, 102, 241, 0.08);
+      border-radius: 4px;
+      padding: 0 4px;
+    }
+
+    /* Canva Text Effects */
+    .fx-hollow { color: transparent !important; -webkit-text-stroke: 2px #18181b; }
+    .fx-splice { text-shadow: 4px 4px 0px rgba(244, 63, 94, 0.5), -2px -2px 0px rgba(56, 189, 248, 0.5); }
+    .fx-neon { text-shadow: 0 0 8px rgba(139, 92, 246, 0.85), 0 0 22px rgba(236, 72, 153, 0.65); }
+    .fx-lift { text-shadow: 0 10px 24px rgba(0, 0, 0, 0.32); }
+    .fx-gradient {
+      background: linear-gradient(90deg, #4f46e5, #ec4899, #f59e0b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Photoshop Layer Styles (fx) */
+    .ps-fx-bevel {
+      box-shadow: inset 2px 2px 4px rgba(255,255,255,0.85), inset -3px -3px 6px rgba(0,0,0,0.25), 0 8px 20px rgba(0,0,0,0.12) !important;
+    }
+    .ps-fx-innershadow {
+      box-shadow: inset 0 6px 16px rgba(0,0,0,0.35) !important;
+    }
+    .ps-fx-outerglow {
+      box-shadow: 0 0 25px 6px rgba(236, 72, 153, 0.55) !important;
+    }
+    .ps-fx-gradmask {
+      -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 50%, rgba(0,0,0,0.1) 100%);
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 50%, rgba(0,0,0,0.1) 100%);
+    }
+
+    /* Rich Animation Keyframes Library */
+    @keyframes kfFadeRise { from { opacity: 0; transform: translateY(32px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes kfPopElastic { 0% { opacity: 0; transform: scale(0.75); } 70% { transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
+    @keyframes kfFlip3DX { from { opacity: 0; transform: perspective(600px) rotateX(-65deg); } to { opacity: 1; transform: perspective(600px) rotateX(0); } }
+    @keyframes kfFlip3DY { from { opacity: 0; transform: perspective(600px) rotateY(65deg); } to { opacity: 1; transform: perspective(600px) rotateY(0); } }
+    @keyframes kfBlurIn { from { opacity: 0; filter: blur(16px); transform: scale(1.08); } to { opacity: 1; filter: blur(0); transform: scale(1); } }
+    @keyframes kfSlideLeft { from { opacity: 0; transform: translateX(-48px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes kfBounceIn { 0% { opacity: 0; transform: translateY(-45px); } 60% { transform: translateY(10px); } 80% { transform: translateY(-5px); } 100% { opacity: 1; transform: translateY(0); } }
+    @keyframes kfFloatLoop { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-9px); } }
+    @keyframes kfPulseLoop { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+    @keyframes kfSwingLoop { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(3deg); } 75% { transform: rotate(-3deg); } }
+    @keyframes kfPageFlip { 0% { opacity: 0; transform: perspective(1200px) rotateY(-85deg); transform-origin: left center; } 100% { opacity: 1; transform: perspective(1200px) rotateY(0deg); transform-origin: left center; } }
+
+    .anim-fade-rise { animation: kfFadeRise var(--anim-dur, 0.65s) cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .anim-pop-elastic { animation: kfPopElastic var(--anim-dur, 0.6s) cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+    .anim-flip-x { animation: kfFlip3DX var(--anim-dur, 0.7s) ease-out both; }
+    .anim-flip-y { animation: kfFlip3DY var(--anim-dur, 0.7s) ease-out both; }
+    .anim-blur-in { animation: kfBlurIn var(--anim-dur, 0.7s) ease-out both; }
+    .anim-slide-left { animation: kfSlideLeft var(--anim-dur, 0.6s) cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .anim-bounce-in { animation: kfBounceIn var(--anim-dur, 0.75s) ease-out both; }
+    .anim-float-loop { animation: kfFloatLoop 2.2s ease-in-out infinite; }
+    .anim-pulse-loop { animation: kfPulseLoop 1.8s ease-in-out infinite; }
+    .anim-swing-loop { animation: kfSwingLoop 2.4s ease-in-out infinite; }
+    .anim-page-flip { animation: kfPageFlip 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-thumb { background: #a1a1aa; border-radius: 99px; }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden select-none">
+
+  <!-- Embedded SVG Filter Shaders Registry (Extensible like Fonts!) -->
+  <svg class="hidden" width="0" height="0">
+    <defs id="svg-shader-registry">
+      <filter id="shader-duotone">
+        <feColorMatrix type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 1 0"/>
+        <feComponentTransfer color-interpolation-filters="sRGB">
+          <feFuncR type="table" tableValues="0.12 0.96"/>
+          <feFuncG type="table" tableValues="0.08 0.62"/>
+          <feFuncB type="table" tableValues="0.35 0.25"/>
+        </feComponentTransfer>
+      </filter>
+      <filter id="shader-liquid">
+        <feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="2" result="noise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" />
+      </filter>
+      <filter id="shader-grain">
+        <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" result="noise"/>
+        <feColorMatrix type="saturate" values="0"/>
+        <feBlend in="SourceGraphic" in2="noise" mode="multiply"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- 1. TOP STUDIO HEADER: Mẫu 1/2 Switcher + LIVE DATABASE RECORD SWITCHER -->
+  <header class="h-13 ui-panel border-b px-4 py-2 flex items-center justify-between z-30 gap-2">
+    <div class="flex items-center gap-2.5">
+      <a href="../../../../index.html" class="px-2.5 py-1 rounded-lg border ui-border hover:opacity-80 text-xs font-semibold">
+        ← Bộ sưu tập 5 Editor
+      </a>
+      <span class="font-bold text-sm">Design Studio Pro</span>
+    </div>
+
+    <!-- DATABASE RECORD PREVIEW BAR (Chứng minh Bản thiết kế Động gắn với Host DB!) -->
+    <div class="flex items-center gap-1.5 ui-subpanel border px-2.5 py-1 rounded-xl text-xs">
+      <span class="font-semibold text-indigo-600">🔌 Nguồn Dữ liệu Host DB:</span>
+      <button onclick="bindDbRecord('template')" id="db-btn-tpl" class="px-2 py-0.5 rounded font-mono text-[11px] hover:bg-indigo-500/10">
+        {{"{{Biến Mẫu}}"}}
+      </button>
+      <button onclick="bindDbRecord('rec1')" id="db-btn-rec1" class="px-2.5 py-0.5 rounded bg-indigo-600 text-white font-semibold">
+        DB #1: Vũ Anh Vương
+      </button>
+      <button onclick="bindDbRecord('rec2')" id="db-btn-rec2" class="px-2.5 py-0.5 rounded hover:bg-indigo-500/10 font-medium">
+        DB #2: Nguyễn Minh Châu
+      </button>
+      <button onclick="bindDbRecord('rec3')" id="db-btn-rec3" class="px-2.5 py-0.5 rounded hover:bg-indigo-500/10 font-medium">
+        DB #3: Lê Hoàng Nam
+      </button>
+    </div>
+
+    <!-- Switcher: Mẫu 1 (Canva Daylight) vs Mẫu 2 (Figma Graphite) -->
+    <div class="flex items-center gap-2 text-xs font-semibold">
+      <div class="ui-subpanel border p-0.5 rounded-xl flex items-center">
+        <button onclick="setStudioTheme('daylight')" id="btn-theme-daylight" class="px-2.5 py-1 rounded-lg bg-zinc-900 text-white">
+          ☀ Mẫu 1 (Canva)
+        </button>
+        <button onclick="setStudioTheme('graphite')" id="btn-theme-graphite" class="px-2.5 py-1 rounded-lg ui-muted">
+          ☾ Mẫu 2 (Figma)
+        </button>
+      </div>
+      <button onclick="playPageSequence()" class="px-3 py-1.5 rounded-lg bg-amber-500/15 text-amber-600 border border-amber-500/30">
+        ▶ Chạy Animation
+      </button>
+    </div>
+  </header>
+
+  <!-- 2. CONTEXTUAL FORMATTING RIBBON -->
+  <div class="h-11 ui-panel border-b px-4 flex items-center justify-between text-xs z-20 gap-2 overflow-x-auto">
+    <div class="flex items-center gap-2">
+      <span id="active-layer-badge" class="px-2.5 py-1 rounded-md ui-subpanel border font-semibold">
+        Đang chọn: Lớp Tiêu Đề ({{candidate.fullName}})
+      </span>
+
+      <select id="top-font-select" onchange="applySelectedFont(this.value)" class="px-2 py-1 rounded-md border ui-border ui-subpanel font-medium outline-none">
+        <option value="'Playfair Display', serif">Playfair Display (Editorial)</option>
+        <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans (Modern)</option>
+        <option value="'Instrument Serif', serif">Instrument Serif (Luxury)</option>
+        <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
+        <option value="'Syne', sans-serif">Syne (Art Display)</option>
+        <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
+        <option value="'Bebas Neue', sans-serif">Bebas Neue</option>
+      </select>
+
+      <!-- All 16 W3C / Photoshop Blend Modes -->
+      <div class="flex items-center gap-1 px-2 py-1 rounded-md border ui-border ui-subpanel">
+        <span class="ui-muted">Hòa trộn (16 PS Modes):</span>
+        <select id="top-blend-select" onchange="applyBlendMode(this.value)" class="bg-transparent font-semibold outline-none cursor-pointer">
+          <optgroup label="1. Nhóm Cơ bản">
+            <option value="normal">Normal</option>
+          </optgroup>
+          <optgroup label="2. Nhóm Làm tối (Darken)">
+            <option value="darken">Darken</option>
+            <option value="multiply">Multiply (Hòa mực)</option>
+            <option value="color-burn">Color Burn</option>
+          </optgroup>
+          <optgroup label="3. Nhóm Làm sáng (Lighten)">
+            <option value="lighten">Lighten</option>
+            <option value="screen">Screen (Hòa sáng)</option>
+            <option value="color-dodge">Color Dodge</option>
+          </optgroup>
+          <optgroup label="4. Nhóm Tương phản (Contrast)">
+            <option value="overlay">Overlay</option>
+            <option value="soft-light">Soft Light</option>
+            <option value="hard-light">Hard Light</option>
+          </optgroup>
+          <optgroup label="5. Nhóm Đảo màu (Inversion)">
+            <option value="difference">Difference (Đảo màu)</option>
+            <option value="exclusion">Exclusion</option>
+          </optgroup>
+          <optgroup label="6. Nhóm Thành phần màu (Component)">
+            <option value="hue">Hue</option>
+            <option value="saturation">Saturation</option>
+            <option value="color">Color</option>
+            <option value="luminosity">Luminosity</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <!-- Opacity Slider -->
+      <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md border ui-border ui-subpanel">
+        <span class="ui-muted">Opacity:</span>
+        <input id="top-opacity-slider" type="range" min="10" max="100" value="100" oninput="applyLayerOpacity(this.value)" class="w-16 accent-sky-500" />
+        <span id="top-opacity-val" class="font-mono text-[11px] w-8">100%</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-1.5 shrink-0">
+      <button onclick="bringLayer(1)" class="px-2 py-1 rounded border ui-border hover:bg-zinc-500/10">↑ Lên trên</button>
+      <button onclick="bringLayer(-1)" class="px-2 py-1 rounded border ui-border hover:bg-zinc-500/10">↓ Xuống dưới</button>
+      <button onclick="duplicateSelectedLayer()" class="px-2 py-1 rounded border ui-border hover:bg-zinc-500/10">⧉ Nhân bản</button>
+    </div>
+  </div>
+
+  <!-- 3. MAIN WORKSPACE -->
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- 3A. LEFT ICON RAIL (7 TABS INCLUDING FULL MOTION & DB BINDING) -->
+    <nav class="w-[72px] ui-panel border-r flex flex-col items-center py-3 gap-1.5 text-[10px] font-semibold z-20">
+      <button onclick="switchLeftTab('motion')" id="lbtn-motion" class="w-14 py-2 rounded-xl flex flex-col items-center gap-1 ui-accent-btn">
+        <span class="text-base">🎬</span><span>Animation</span>
+      </button>
+      <button onclick="switchLeftTab('layers')" id="lbtn-layers" class="w-14 py-2 rounded-xl flex flex-col items-center gap-1 ui-muted hover:opacity-100">
+        <span class="text-base">🥞</span><span>Lớp PS & FX</span>
+      </button>
+      <button onclick="switchLeftTab('databinds')" id="lbtn-databinds" class="w-14 py-2 rounded-xl flex flex-col items-center gap-1 ui-muted hover:opacity-100">
+        <span class="text-base">🔌</span><span>DB & Tĩnh</span>
+      </button>
+      <button onclick="switchLeftTab('fonts')" id="lbtn-fonts" class="w-14 py-2 rounded-xl flex flex-col items-center gap-1 ui-muted hover:opacity-100">
+        <span class="text-base">🔤</span><span>Font & Chữ</span>
+      </button>
+      <button onclick="switchLeftTab('colors')" id="lbtn-colors" class="w-14 py-2 rounded-xl flex flex-col items-center gap-1 ui-muted hover:opacity-100">
+        <span class="text-base">🎨</span><span>Bảng màu</span>
+      </button>
+      <button onclick="switchLeftTab('shapes')" id="lbtn-shapes" class="w-14 py-2 rounded-xl flex flex-col items-center gap-1 ui-muted hover:opacity-100">
+        <span class="text-base">❖</span><span>Hình khối</span>
+      </button>
+      <button onclick="switchLeftTab('effects')" id="lbtn-effects" class="w-14 py-2 rounded-xl flex flex-col items-center gap-1 ui-muted hover:opacity-100">
+        <span class="text-base">✨</span><span>Bộ lọc</span>
+      </button>
+    </nav>
+
+    <!-- 3B. LEFT EXTENSIBLE STUDIO DRAWER (335px) -->
+    <aside class="w-[335px] ui-panel border-r p-4 overflow-y-auto space-y-5 text-xs z-10">
+
+      <!-- TAB 1: FULL ANIMATION STUDIO + CUSTOM KEYFRAME JSON IMPORT -->
+      <div id="ltab-motion" class="space-y-4">
+        <div>
+          <h3 class="font-bold text-sm">1. Studio Chuyển động (Animation & Motion)</h3>
+          <p class="ui-muted text-[11px]">Áp dụng cho từng Lớp hoặc Toàn trang + Hỗ trợ Import gói Animation mới</p>
+        </div>
+
+        <!-- Group A: Entrance Animations -->
+        <div class="space-y-1.5">
+          <div class="font-semibold text-[11px] uppercase tracking-wider ui-muted">A. Hiệu ứng Xuất hiện (Entrance)</div>
+          <div class="grid grid-cols-2 gap-1.5">
+            <button onclick="applyLayerAnimation('anim-fade-rise')" class="p-2 rounded-xl border ui-border hover:border-sky-500 text-left font-medium">↑ Fade Rise (Trượt lên)</button>
+            <button onclick="applyLayerAnimation('anim-pop-elastic')" class="p-2 rounded-xl border ui-border hover:border-sky-500 text-left font-medium">✦ Pop Elastic (Nảy)</button>
+            <button onclick="applyLayerAnimation('anim-flip-x')" class="p-2 rounded-xl border ui-border hover:border-sky-500 text-left font-medium">🔄 Flip 3D Ngang</button>
+            <button onclick="applyLayerAnimation('anim-flip-y')" class="p-2 rounded-xl border ui-border hover:border-sky-500 text-left font-medium">🔃 Flip 3D Dọc</button>
+            <button onclick="applyLayerAnimation('anim-blur-in')" class="p-2 rounded-xl border ui-border hover:border-sky-500 text-left font-medium">🌫 Blur Focus Reveal</button>
+            <button onclick="applyLayerAnimation('anim-bounce-in')" class="p-2 rounded-xl border ui-border hover:border-sky-500 text-left font-medium">⚡ Bounce Drop</button>
+          </div>
+        </div>
+
+        <!-- Group B: Continuous Loop / Emphasis -->
+        <div class="space-y-1.5">
+          <div class="font-semibold text-[11px] uppercase tracking-wider ui-muted">B. Chuyển động Lặp Liên tục (Loop / Emphasis)</div>
+          <div class="grid grid-cols-3 gap-1.5">
+            <button onclick="applyLayerAnimation('anim-float-loop')" class="p-2 rounded-xl border ui-border hover:border-sky-500 text-center font-medium">〰 Lơ lửng</button>
+            <button onclick="applyLayerAnimation('anim-pulse-loop')" class="p-2 rounded-xl border ui-border hover:border-sky-500 text-center font-medium">💓 Nhịp đập</button>
+            <button onclick="applyLayerAnimation('anim-swing-loop')" class="p-2 rounded-xl border ui-border hover:border-sky-500 text-center font-medium">🔔 Đung đưa</button>
+          </div>
+        </div>
+
+        <!-- Group C: Page Flip Transition -->
+        <div class="space-y-1.5">
+          <div class="font-semibold text-[11px] uppercase tracking-wider ui-muted">C. Hiệu ứng Chuyển Trang (Page Transition)</div>
+          <button onclick="triggerPageFlip()" class="w-full p-2.5 rounded-xl bg-indigo-500/15 text-indigo-600 border border-indigo-500/30 font-bold">
+            📖 Chạy thử Lật Trang Sách 3D (3D Book Page Flip)
+          </button>
+        </div>
+
+        <!-- Timeline Controls (Duration & Delay) -->
+        <div class="p-3 rounded-xl ui-subpanel border space-y-2.5">
+          <div>
+            <div class="flex justify-between mb-1"><span>Thời lượng (Duration)</span><span id="lbl-anim-dur">0.65s</span></div>
+            <input type="range" min="0.2" max="2.0" step="0.1" value="0.65" oninput="setAnimDuration(this.value)" class="w-full accent-sky-500" />
+          </div>
+          <button onclick="playPageSequence()" class="w-full py-2 rounded-lg ui-accent-btn font-semibold">▶ Phát Chuỗi Chuyển Động Toàn Trang</button>
+        </div>
+
+        <!-- EXTENSIBLE ANIMATION IMPORTER (Giống tư duy Import Font!) -->
+        <div class="p-3 rounded-xl ui-subpanel border space-y-2">
+          <div class="font-semibold text-emerald-600">📥 Import Gói Animation Mới (Web Animation JSON)</div>
+          <p class="text-[10px] ui-muted">Công nghệ Web hỗ trợ đóng gói chuyển động thành mảng JSON Keyframes và nạp động qua <code>Element.animate()</code>:</p>
+          <textarea id="inp-custom-anim" rows="3" class="w-full p-2 rounded border ui-border bg-transparent font-mono text-[10px]">[
+  {"transform": "scale(0.5) rotate(-12deg)", "opacity": 0},
+  {"transform": "scale(1.06) rotate(3deg)", "opacity": 1},
+  {"transform": "scale(1) rotate(0deg)", "opacity": 1}
+]</textarea>
+          <button onclick="runImportedJsonAnimation()" class="w-full py-1.5 rounded-lg border ui-border font-semibold hover:bg-zinc-500/10">
+            + Nạp & Chạy thử Animation JSON trên Lớp đang chọn
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 2: PHOTOSHOP LAYER STYLES (fx), 16 BLEND MODES & SVG SHADER IMPORT -->
+      <div id="ltab-layers" class="hidden space-y-4">
+        <div>
+          <h3 class="font-bold text-sm">2. Lớp Photoshop, Hòa trộn & Layer Styles (`fx`)</h3>
+          <p class="ui-muted text-[11px]">16 chế độ Blend Mode + Hộp thoại Layer Styles `fx` + Import SVG Filter Shader</p>
+        </div>
+
+        <!-- Photoshop Layer Styles (fx) -->
+        <div class="space-y-2">
+          <div class="font-semibold">🎨 Photoshop Layer Styles (`fx` trên Lớp đang chọn)</div>
+          <div class="grid grid-cols-2 gap-1.5">
+            <button onclick="togglePsLayerStyle('ps-fx-bevel')" class="p-2 rounded-xl border ui-border hover:border-sky-500 text-left font-medium">✨ Bevel & Emboss 3D</button>
+            <button onclick="togglePsLayerStyle('ps-fx-innershadow')" class="p-2 rounded-xl border ui-border hover:border-sky-500 text-left font-medium">🕳 Inner Shadow (Chìm)</button>
+            <button onclick="togglePsLayerStyle('ps-fx-outerglow')" class="p-2 rounded-xl border ui-border hover:border-sky-500 text-left font-medium">🌟 Outer Glow (Phát sáng)</button>
+            <button onclick="togglePsLayerStyle('ps-fx-gradmask')" class="p-2 rounded-xl border ui-border hover:border-sky-500 text-left font-medium">🎭 Gradient Layer Mask</button>
+          </div>
+        </div>
+
+        <!-- SVG Shader Filters (Duotone, Liquid Wave, Film Grain) -->
+        <div class="space-y-2">
+          <div class="font-semibold">🔮 Bộ lọc Shader Chuyên sâu (SVG Filters)</div>
+          <div class="grid grid-cols-2 gap-1.5">
+            <button onclick="applySvgShader('none')" class="p-2 rounded-xl border ui-border">Gốc (Normal)</button>
+            <button onclick="applySvgShader('url(#shader-duotone)')" class="p-2 rounded-xl border ui-border font-semibold text-fuchsia-500">Duotone Art</button>
+            <button onclick="applySvgShader('url(#shader-liquid)')" class="p-2 rounded-xl border ui-border font-semibold text-sky-500">Liquid Wave (Sóng)</button>
+            <button onclick="applySvgShader('url(#shader-grain)')" class="p-2 rounded-xl border ui-border font-semibold text-amber-600">Film Grain (Hạt phim)</button>
+          </div>
+        </div>
+
+        <!-- Import Custom SVG Filter Shader XML -->
+        <div class="p-3 rounded-xl ui-subpanel border space-y-2">
+          <div class="font-semibold text-emerald-600">📥 Import Hiệu ứng Shader mới (`<filter>` XML)</div>
+          <textarea id="inp-svg-shader" rows="3" class="w-full p-2 rounded border ui-border bg-transparent font-mono text-[10px]"><filter id="custom-sepia-glow"><feColorMatrix type="matrix" values="0.39 0.76 0.18 0 0 0.34 0.68 0.16 0 0 0.27 0.53 0.13 0 0 0 0 0 1 0"/></filter></textarea>
+          <button onclick="importCustomSvgShader()" class="w-full py-1.5 rounded-lg ui-accent-btn font-semibold">+ Nạp & Áp dụng Hiệu ứng Shader</button>
+        </div>
+      </div>
+
+      <!-- TAB 3: DYNAMIC DATABASE BINDING vs STATIC TEMPLATE BLOCKS -->
+      <div id="ltab-databinds" class="hidden space-y-4">
+        <div>
+          <h3 class="font-bold text-sm">3. Liên kết Dữ liệu Host DB & Khối Tĩnh</h3>
+          <p class="ui-muted text-[11px]">Phân tách rõ phần lấy từ Database và phần trang trí cố định của Mẫu</p>
+        </div>
+
+        <label class="flex items-center justify-between p-3 rounded-xl ui-subpanel border cursor-pointer">
+          <span class="font-semibold">Hiển thị viền đánh dấu biến `{{DB}}`</span>
+          <input type="checkbox" checked onchange="document.getElementById('artboard-stage').classList.toggle('artboard-show-bindings', this.checked)" />
+        </label>
+
+        <!-- Dynamic DB Fields -->
+        <div class="p-3 rounded-xl ui-subpanel border space-y-2">
+          <div class="font-semibold text-indigo-600">🔌 Trường Dữ liệu Động (Từ Host Database)</div>
+          <p class="text-[11px] ui-muted">Khi lưu Mẫu, các khối này lưu đường dẫn biến (VD: <code>{{candidate.fullName}}</code>) để tự động điền theo từng bản ghi DB:</p>
+          <div class="space-y-1 font-mono text-[11px]">
+            <div class="p-1.5 rounded bg-indigo-500/10 text-indigo-600 flex justify-between"><span>{{candidate.fullName}}</span><span>String</span></div>
+            <div class="p-1.5 rounded bg-indigo-500/10 text-indigo-600 flex justify-between"><span>{{candidate.headline}}</span><span>String</span></div>
+            <div class="p-1.5 rounded bg-indigo-500/10 text-indigo-600 flex justify-between"><span>{{#each candidate.projects}}</span><span>Repeater[]</span></div>
+          </div>
+        </div>
+
+        <!-- Static Decorator Blocks (Not in DB) -->
+        <div class="p-3 rounded-xl ui-subpanel border space-y-2">
+          <div class="font-semibold text-amber-600">📌 Khối Tĩnh Thuộc Bản Mẫu (Không nằm trong DB)</div>
+          <p class="text-[11px] ui-muted">Logo, Chân trang, Con dấu chứng nhận, Chữ ký mẫu cố định trên mọi bản in:</p>
+          <div class="grid grid-cols-2 gap-1.5">
+            <button onclick="insertStaticBlock('logo')" class="p-2 rounded-lg border ui-border hover:border-amber-500 font-medium">+ Chèn Logo Mẫu</button>
+            <button onclick="insertStaticBlock('footer')" class="p-2 rounded-lg border ui-border hover:border-amber-500 font-medium">+ Chèn Chân Trang</button>
+            <button onclick="insertStaticBlock('seal')" class="p-2 rounded-lg border ui-border hover:border-amber-500 font-medium">+ Con Dấu Bảo Chứng</button>
+            <button onclick="insertStaticBlock('quote')" class="p-2 rounded-lg border ui-border hover:border-amber-500 font-medium">+ Text Bổ Sung Tĩnh</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: DYNAMIC FONT IMPORT & TEXT EFFECTS -->
+      <div id="ltab-fonts" class="hidden space-y-4">
+        <h3 class="font-bold text-sm">4. Import Font Chữ & Hiệu ứng Chữ Canva</h3>
+        <div class="p-3 rounded-xl ui-subpanel border space-y-2">
+          <div class="font-semibold">📥 Import Google Font bất kỳ</div>
+          <div class="flex gap-1.5">
+            <input id="inp-gfont-name" placeholder="VD: Lobster, Oswald, Pacifico..." class="flex-1 px-2.5 py-1.5 rounded-lg border ui-border bg-transparent text-xs outline-none" />
+            <button onclick="importGoogleFont()" class="px-3 py-1.5 rounded-lg ui-accent-btn font-semibold">+ Nạp</button>
+          </div>
+        </div>
+        <div class="p-3 rounded-xl ui-subpanel border space-y-1.5">
+          <div class="font-semibold">📁 Upload File Font (`.ttf`, `.otf`, `.woff2`)</div>
+          <input type="file" accept=".ttf,.otf,.woff,.woff2" onchange="uploadCustomFontFile(this)" class="text-[11px] w-full" />
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="setTextEffect('none')" class="p-2 rounded-xl border ui-border font-semibold">Solid Chuẩn</button>
+          <button onclick="setTextEffect('fx-hollow')" class="p-2 rounded-xl border ui-border font-bold">Chữ Rỗng (Hollow)</button>
+          <button onclick="setTextEffect('fx-splice')" class="p-2 rounded-xl border ui-border font-bold">Tách Bóng (Splice)</button>
+          <button onclick="setTextEffect('fx-neon')" class="p-2 rounded-xl border ui-border font-bold text-fuchsia-500">Neon Phát Sáng</button>
+          <button onclick="setTextEffect('fx-gradient')" class="p-2 rounded-xl border ui-border font-bold">Chữ Gradient</button>
+          <button onclick="setTextEffect('fx-lift')" class="p-2 rounded-xl border ui-border font-bold">Bóng Nổi 3D</button>
+        </div>
+      </div>
+
+      <!-- TAB 5: COLORS & GRADIENT BUILDER -->
+      <div id="ltab-colors" class="hidden space-y-4">
+        <h3 class="font-bold text-sm">5. Bảng màu Tự do & Gradient 360°</h3>
+        <div class="p-3 rounded-xl ui-subpanel border space-y-2">
+          <div class="flex items-center gap-2">
+            <input id="custom-hex-picker" type="color" value="#FAF8F5" oninput="setArtboardColor(this.value)" class="w-10 h-10 rounded cursor-pointer" />
+            <input id="custom-hex-text" value="#FAF8F5" oninput="setArtboardColor(this.value)" class="flex-1 px-2.5 py-1.5 rounded border ui-border bg-transparent font-mono" />
+          </div>
+        </div>
+        <div class="p-3 rounded-xl ui-subpanel border space-y-2">
+          <div class="font-semibold">🌈 Tự Pha Gradient 360°</div>
+          <div class="grid grid-cols-2 gap-2">
+            <input id="grad-c1" type="color" value="#ffecd2" oninput="buildCustomGradient()" class="w-full h-8 rounded" />
+            <input id="grad-c2" type="color" value="#fcb69f" oninput="buildCustomGradient()" class="w-full h-8 rounded" />
+          </div>
+          <input id="grad-angle" type="range" min="0" max="360" value="135" oninput="buildCustomGradient()" class="w-full accent-sky-500" />
+        </div>
+      </div>
+
+      <!-- TAB 6: VECTOR SHAPES & SVG IMPORT -->
+      <div id="ltab-shapes" class="hidden space-y-4">
+        <h3 class="font-bold text-sm">6. Kho Hình Khối Vector & Dán mã SVG</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="spawnVectorShape('blob')" class="p-2.5 rounded-xl border ui-border font-medium">+ Organic Blob</button>
+          <button onclick="spawnVectorShape('starburst')" class="p-2.5 rounded-xl border ui-border font-medium">+ Sao 12 Cánh</button>
+          <button onclick="spawnVectorShape('glass-card')" class="p-2.5 rounded-xl border ui-border font-medium">+ Thẻ Kính Mờ</button>
+          <button onclick="spawnVectorShape('gradient-orb')" class="p-2.5 rounded-xl border ui-border font-medium">+ Quả cầu Hòa trộn</button>
+        </div>
+        <div class="p-3 rounded-xl ui-subpanel border space-y-2">
+          <div class="font-semibold">📥 Dán mã `<svg>` tùy chỉnh</div>
+          <textarea id="inp-custom-svg" rows="3" class="w-full p-2 rounded border ui-border bg-transparent font-mono text-[10px]"><svg viewBox="0 0 100 100" width="90" height="90"><circle cx="50" cy="50" r="40" fill="none" stroke="#e11d48" stroke-width="8" stroke-dasharray="12 6"/></svg></textarea>
+          <button onclick="insertCustomSvg()" class="w-full py-1.5 rounded-lg ui-accent-btn font-semibold">+ Chèn SVG vào Trang</button>
+        </div>
+      </div>
+
+      <!-- TAB 7: CSS FILTERS -->
+      <div id="ltab-effects" class="hidden space-y-3">
+        <h3 class="font-bold text-sm">7. Bộ Lọc Chỉnh Màu (Brightness / Contrast / Blur)</h3>
+        <div class="p-3 rounded-xl ui-subpanel border space-y-2.5">
+          <div><span>Brightness</span><input id="flt-b" type="range" min="50" max="150" value="100" oninput="updateCssFilters()" class="w-full" /></div>
+          <div><span>Contrast</span><input id="flt-c" type="range" min="50" max="180" value="100" oninput="updateCssFilters()" class="w-full" /></div>
+          <div><span>Saturate</span><input id="flt-s" type="range" min="0" max="250" value="100" oninput="updateCssFilters()" class="w-full" /></div>
+          <div><span>Hue Rotate</span><input id="flt-h" type="range" min="0" max="360" value="0" oninput="updateCssFilters()" class="w-full" /></div>
+          <div><span>Blur</span><input id="flt-blur" type="range" min="0" max="16" value="0" oninput="updateCssFilters()" class="w-full" /></div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- 3C. CENTER INTERACTIVE MULTI-LAYER ARTBOARD -->
+    <main class="flex-1 flex flex-col items-center justify-center p-6 overflow-auto relative">
+
+      <div id="artboard-stage" class="artboard-show-bindings w-[560px] min-h-[680px] bg-[#FAF8F5] text-zinc-900 rounded-md shadow-[0_25px_70px_rgba(0,0,0,0.18)] p-10 relative overflow-hidden flex flex-col justify-between transition-all">
+
+        <!-- STATIC TEMPLATE HEADER LOGO (Not from DB) -->
+        <div id="static-logo-bar" class="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-stone-400 border-b border-stone-200/80 pb-2 mb-3">
+          <span>✦ VUONG ANH VU ATELIER (KHỐI LOGO MẪU TĨNH)</span>
+          <span class="font-mono text-amber-700">STATIC TEMPLATE BLOCK</span>
+        </div>
+
+        <!-- Freeform Overlapping Layer 1: Decorative Color Orb (Draggable + 16 Blend Modes) -->
+        <div id="layer-orb-1"
+             onclick="selectCanvasLayer(this, 'Lớp Quả cầu Hòa trộn (Multiply)')"
+             data-draggable="true"
+             style="position: absolute; top: 48px; right: 42px; width: 135px; height: 135px; mix-blend-mode: multiply; z-index: 20;"
+             class="canvas-layer rounded-full bg-gradient-to-br from-amber-300 via-rose-400 to-fuchsia-500 opacity-85 cursor-move flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
+          Kéo đè lên chữ!
+        </div>
+
+        <!-- Layer 2: Dynamic DB-Bound Candidate Hero -->
+        <div id="layer-header-box"
+             onclick="selectCanvasLayer(this, 'Khối Thông tin Ứng viên (DB Bound)')"
+             style="position: relative; z-index: 10;"
+             class="canvas-layer p-6 rounded-2xl bg-white/90 border border-stone-200/90 shadow-sm mb-4 cursor-pointer">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-600">🔌 Liên kết DB: `candidate.*`</span>
+          </div>
+          <h1 id="layer-title"
+              data-db-field="candidate.fullName"
+              onclick="event.stopPropagation(); selectCanvasLayer(this, 'Lớp Tiêu Đề ({{candidate.fullName}})')"
+              contenteditable="true"
+              style="font-family: 'Playfair Display', serif; font-size: 36px; line-height: 1.15;"
+              class="canvas-layer is-selected font-black tracking-tight outline-none">
+            VŨ ANH VƯƠNG
+          </h1>
+          <p id="layer-sub"
+             data-db-field="candidate.headline"
+             onclick="event.stopPropagation(); selectCanvasLayer(this, 'Lớp Chức danh ({{candidate.headline}})')"
+             contenteditable="true"
+             class="canvas-layer text-sm font-semibold text-zinc-600 mt-1.5 outline-none">
+            Principal Platform & Design Systems Architect
+          </p>
+        </div>
+
+        <!-- Dynamic DB Repeater Grid (`{{#each candidate.projects}}`) -->
+        <div class="grid grid-cols-2 gap-4 relative z-10 my-auto">
+          <div id="layer-card-left"
+               onclick="selectCanvasLayer(this, 'Khối Dự án #1 ({{projects[0]}})')"
+               class="canvas-layer p-5 rounded-2xl bg-white/90 border border-stone-200 shadow-sm space-y-1.5 cursor-pointer">
+            <div class="text-[10px] font-mono text-indigo-600">🔌 {{#each candidate.projects}}</div>
+            <h3 id="db-proj1-title" data-db-field="projects[0].title" contenteditable="true" class="font-bold text-sm outline-none">Modular Editor Ecosystem</h3>
+            <p id="db-proj1-desc" data-db-field="projects[0].summary" contenteditable="true" class="text-xs text-zinc-600 leading-relaxed outline-none">
+              Kiến trúc Hexagonal Java 21 + 5 bộ Editor chuyên sâu nhúng đa ứng dụng.
+            </p>
+          </div>
+
+          <div id="layer-card-right"
+               onclick="selectCanvasLayer(this, 'Khối Dự án #2 ({{projects[1]}})')"
+               class="canvas-layer p-5 rounded-2xl bg-white/90 border border-stone-200 shadow-sm space-y-1.5 cursor-pointer">
+            <div class="text-[10px] font-mono text-indigo-600">🔌 {{#each candidate.projects}}</div>
+            <h3 id="db-proj2-title" data-db-field="projects[1].title" contenteditable="true" class="font-bold text-sm outline-none">Shared Platform Infra</h3>
+            <p id="db-proj2-desc" data-db-field="projects[1].summary" contenteditable="true" class="text-xs text-zinc-600 leading-relaxed outline-none">
+              Hạ tầng PostgreSQL pgvector, Redis 7 Streams, SeaweedFS S3 & Keycloak SSO.
+            </p>
+          </div>
+        </div>
+
+        <!-- STATIC TEMPLATE FOOTER (Owned by Template, not DB) -->
+        <div id="static-footer-bar" onclick="selectCanvasLayer(this, 'Khối Chân Trang Tĩnh (Static Template Footer)')" class="canvas-layer mt-6 pt-3 border-t border-stone-300 flex items-center justify-between text-[11px] text-stone-500 cursor-pointer">
+          <span contenteditable="true">📌 Chân trang Mẫu cố định: Tài liệu được bảo chứng bởi Hệ thống Quản trị Nhân sự</span>
+          <span class="font-mono text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-900">STATIC BLOCK</span>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- 3D. RIGHT SIDEBAR: FIGMA PRECISION INSPECTOR -->
+    <aside class="w-[255px] ui-panel border-l p-4 overflow-y-auto space-y-4 text-xs z-10">
+      <div class="font-bold text-sm border-b ui-border pb-2">Thuộc tính Lớp (Figma Inspector)</div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div class="ui-subpanel border px-2.5 py-1.5 rounded-lg flex justify-between">
+          <span class="ui-muted">Xoay °</span>
+          <input type="number" value="0" oninput="applyRotation(this.value)" class="w-12 bg-transparent text-right font-mono outline-none" />
+        </div>
+        <div class="ui-subpanel border px-2.5 py-1.5 rounded-lg flex justify-between">
+          <span class="ui-muted">Bo góc</span>
+          <input type="number" value="16" oninput="applySelectedStyle('borderRadius', this.value + 'px')" class="w-12 bg-transparent text-right font-mono outline-none" />
+        </div>
+      </div>
+
+      <div class="space-y-2 pt-2 border-t ui-border">
+        <div class="font-semibold text-[11px] uppercase ui-muted">Chuyển nhanh sang 4 Editor kia:</div>
+        <a href="../../03-chart-studio/v1-12-chart-types/index.html" class="block px-2.5 py-1.5 rounded-lg ui-subpanel border hover:border-sky-500 font-medium">📊 P05: Chart Thống kê (12 Mẫu) →</a>
+        <a href="../../04-website-studio/v1-responsive-cms/index.html" class="block px-2.5 py-1.5 rounded-lg ui-subpanel border hover:border-sky-500 font-medium">🌐 P06: Website Studio Pro →</a>
+        <a href="../../05-map-studio/v1-satellite-gps/index.html" class="block px-2.5 py-1.5 rounded-lg ui-subpanel border hover:border-sky-500 font-medium">🛰 P07: Map Vệ tinh & Thống kê →</a>
+        <a href="../../06-poster-catalog-studio/v1-3d-flipbook/index.html" class="block px-2.5 py-1.5 rounded-lg ui-subpanel border hover:border-sky-500 font-medium">📖 P08: Poster, Catalog, Thiệp, Email →</a>
+      </div>
+    </aside>
+
+  </div>
+
+  <script>
+    let selectedEl = document.getElementById('layer-title');
+
+    function selectCanvasLayer(el, label) {
+      document.querySelectorAll('.canvas-layer').forEach(node => node.classList.remove('is-selected'));
+      selectedEl = el;
+      el.classList.add('is-selected');
+      document.getElementById('active-layer-badge').textContent = 'Đang chọn: ' + label;
+    }
+
+    // Live Host Database Record Switcher (Demonstrating Dynamic DB Binding vs Static Blocks)
+    const dbRecords = {
+      template: {
+        name: '{{candidate.fullName}}',
+        role: '{{candidate.headline}}',
+        p1Title: '{{projects[0].title}}',
+        p1Desc: '{{projects[0].summary}}',
+        p2Title: '{{projects[1].title}}',
+        p2Desc: '{{projects[1].summary}}'
+      },
+      rec1: {
+        name: 'VŨ ANH VƯƠNG',
+        role: 'Principal Platform & Design Systems Architect',
+        p1Title: 'Modular Editor Ecosystem',
+        p1Desc: 'Kiến trúc Hexagonal Java 21 + 5 bộ Editor chuyên sâu nhúng đa ứng dụng.',
+        p2Title: 'Shared Platform Infra',
+        p2Desc: 'Hạ tầng PostgreSQL pgvector, Redis 7 Streams, SeaweedFS S3 & Keycloak SSO.'
+      },
+      rec2: {
+        name: 'NGUYỄN MINH CHÂU',
+        role: 'Creative Director & Brand Strategist',
+        p1Title: 'Global Rebranding Campaign 2026',
+        p1Desc: 'Chỉ đạo nghệ thuật cho 12 thương hiệu bán lẻ và tạp chí thời trang quốc tế.',
+        p2Title: 'Interactive Digital Lookbook',
+        p2Desc: 'Thiết kế hệ thống Catalog lật trang 3D và thiệp mời sự kiện tương tác.'
+      },
+      rec3: {
+        name: 'LÊ HOÀNG NAM',
+        role: 'Lead Geospatial & Data Science Engineer',
+        p1Title: 'Satellite Fleet Telemetry Map',
+        p1Desc: 'Hệ thống bản đồ vệ tinh theo dõi 5.000 phương tiện vận tải thời gian thực.',
+        p2Title: 'BI Statistical Chart Engine',
+        p2Desc: 'Phân tích tương quan đa biến, phễu chuyển đổi và dự báo chuỗi thời gian.'
+      }
+    };
+
+    function bindDbRecord(key) {
+      const r = dbRecords[key];
+      document.getElementById('layer-title').textContent = r.name;
+      document.getElementById('layer-sub').textContent = r.role;
+      document.getElementById('db-proj1-title').textContent = r.p1Title;
+      document.getElementById('db-proj1-desc').textContent = r.p1Desc;
+      document.getElementById('db-proj2-title').textContent = r.p2Title;
+      document.getElementById('db-proj2-desc').textContent = r.p2Desc;
+
+      ['tpl', 'rec1', 'rec2', 'rec3'].forEach(k => {
+        const btn = document.getElementById('db-btn-' + k);
+        if (btn) btn.className = (k === key || (key === 'template' && k === 'tpl'))
+          ? 'px-2.5 py-0.5 rounded bg-indigo-600 text-white font-semibold'
+          : 'px-2.5 py-0.5 rounded hover:bg-indigo-500/10 font-medium';
+      });
+      playPageSequence();
+    }
+
+    function insertStaticBlock(type) {
+      const stage = document.getElementById('artboard-stage');
+      const div = document.createElement('div');
+      div.dataset.draggable = 'true';
+      div.style.position = 'absolute';
+      div.style.bottom = '65px';
+      div.style.right = '40px';
+      div.style.zIndex = '30';
+      div.className = 'canvas-layer px-3.5 py-2 rounded-xl bg-amber-50 border-2 border-amber-700/60 text-amber-950 text-xs font-bold shadow cursor-move';
+      if (type === 'seal') div.textContent = '💮 CON DẤU XÁC THỰC MẪU (TĨNH)';
+      else if (type === 'logo') div.textContent = '🏛 LOGO TỔ CHỨC (TĨNH)';
+      else if (type === 'footer') div.textContent = '📌 Ghi chú Chân trang Mẫu';
+      else div.textContent = '✍ Chữ ký / Text Tĩnh bổ sung';
+      div.onclick = () => selectCanvasLayer(div, 'Khối Tĩnh Mẫu (' + type + ')');
+      stage.appendChild(div);
+      makeDraggable(div);
+      selectCanvasLayer(div, 'Khối Tĩnh Mẫu (' + type + ')');
+    }
+
+    // Animation Controls
+    const allAnimClasses = [
+      'anim-fade-rise', 'anim-pop-elastic', 'anim-flip-x', 'anim-flip-y',
+      'anim-blur-in', 'anim-slide-left', 'anim-bounce-in',
+      'anim-float-loop', 'anim-pulse-loop', 'anim-swing-loop', 'anim-page-flip'
+    ];
+
+    function applyLayerAnimation(cls) {
+      if (!selectedEl) return;
+      selectedEl.classList.remove(...allAnimClasses);
+      void selectedEl.offsetWidth;
+      selectedEl.classList.add(cls);
+    }
+
+    function setAnimDuration(sec) {
+      document.documentElement.style.setProperty('--anim-dur', sec + 's');
+      document.getElementById('lbl-anim-dur').textContent = sec + 's';
+    }
+
+    function triggerPageFlip() {
+      const stage = document.getElementById('artboard-stage');
+      stage.classList.remove('anim-page-flip');
+      void stage.offsetWidth;
+      stage.classList.add('anim-page-flip');
+    }
+
+    function playPageSequence() {
+      document.querySelectorAll('.canvas-layer').forEach((el, idx) => {
+        el.classList.remove(...allAnimClasses);
+        void el.offsetWidth;
+        el.style.animationDelay = (idx * 75) + 'ms';
+        el.classList.add('anim-fade-rise');
+      });
+    }
+
+    function runImportedJsonAnimation() {
+      if (!selectedEl) return;
+      try {
+        const keyframes = JSON.parse(document.getElementById('inp-custom-anim').value);
+        selectedEl.animate(keyframes, { duration: 750, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
+      } catch (e) {
+        alert('JSON Keyframes không hợp lệ!');
+      }
+    }
+
+    // Photoshop Layer Styles & SVG Shaders
+    function togglePsLayerStyle(cls) {
+      if (selectedEl) selectedEl.classList.toggle(cls);
+    }
+    function applySvgShader(filterUrl) {
+      if (selectedEl) selectedEl.style.filter = filterUrl;
+    }
+    function importCustomSvgShader() {
+      const raw = document.getElementById('inp-svg-shader').value.trim();
+      if (!raw) return;
+      const defs = document.getElementById('svg-shader-registry');
+      defs.insertAdjacentHTML('beforeend', raw);
+      const match = raw.match(/id=["']([^"']+)["']/);
+      if (match && selectedEl) {
+        selectedEl.style.filter = `url(#${match[1]})`;
+      }
+    }
+
+    function setStudioTheme(mode) {
+      document.body.classList.toggle('mode-graphite', mode === 'graphite');
+    }
+
+    const leftTabs = ['motion', 'layers', 'databinds', 'fonts', 'colors', 'shapes', 'effects'];
+    function switchLeftTab(tab) {
+      leftTabs.forEach(t => {
+        document.getElementById('ltab-' + t).classList.toggle('hidden', t !== tab);
+        document.getElementById('lbtn-' + t).className = (t === tab)
+          ? 'w-14 py-2 rounded-xl flex flex-col items-center gap-1 ui-accent-btn'
+          : 'w-14 py-2 rounded-xl flex flex-col items-center gap-1 ui-muted hover:opacity-100';
+      });
+    }
+
+    function importGoogleFont() {
+      const name = document.getElementById('inp-gfont-name').value.trim();
+      if (!name) return;
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = `https://fonts.googleapis.com/css2?family=${name.replace(/\s+/g, '+')}:wght@400;700&display=swap`;
+      document.head.appendChild(link);
+      const select = document.getElementById('top-font-select');
+      const opt = document.createElement('option');
+      opt.value = `'${name}', sans-serif`;
+      opt.textContent = `${name} (Imported)`;
+      opt.selected = true;
+      select.appendChild(opt);
+      applySelectedFont(opt.value);
+    }
+
+    async function uploadCustomFontFile(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const fontName = file.name.replace(/\.[^.]+$/, '');
+      const customFont = new FontFace(fontName, await file.arrayBuffer());
+      await customFont.load();
+      document.fonts.add(customFont);
+      applySelectedFont(`'${fontName}'`);
+    }
+
+    function applySelectedFont(f) { if (selectedEl) selectedEl.style.fontFamily = f; }
+    function applySelectedStyle(p, v) { if (selectedEl) selectedEl.style[p] = v; }
+    function setTextEffect(cls) {
+      if (!selectedEl) return;
+      selectedEl.classList.remove('fx-hollow', 'fx-splice', 'fx-neon', 'fx-lift', 'fx-gradient');
+      if (cls !== 'none') selectedEl.classList.add(cls);
+    }
+    function setArtboardColor(hex) {
+      document.getElementById('artboard-stage').style.background = hex;
+      document.getElementById('custom-hex-text').value = hex;
+    }
+    function buildCustomGradient() {
+      const c1 = document.getElementById('grad-c1').value;
+      const c2 = document.getElementById('grad-c2').value;
+      const a = document.getElementById('grad-angle').value;
+      document.getElementById('artboard-stage').style.background = `linear-gradient(${a}deg, ${c1}, ${c2})`;
+    }
+    function applyBlendMode(m) { if (selectedEl) selectedEl.style.mixBlendMode = m; }
+    function applyLayerOpacity(p) {
+      if (selectedEl) selectedEl.style.opacity = p / 100;
+      document.getElementById('top-opacity-val').textContent = p + '%';
+    }
+    function bringLayer(d) {
+      if (!selectedEl) return;
+      const c = parseInt(window.getComputedStyle(selectedEl).zIndex) || 10;
+      selectedEl.style.zIndex = Math.max(1, c + d * 5);
+    }
+    function duplicateSelectedLayer() {
+      if (!selectedEl) return;
+      const clone = selectedEl.cloneNode(true);
+      document.getElementById('artboard-stage').appendChild(clone);
+      makeDraggable(clone);
+      selectCanvasLayer(clone, 'Bản sao Lớp');
+    }
+    function spawnVectorShape(type) {
+      const stage = document.getElementById('artboard-stage');
+      const div = document.createElement('div');
+      div.dataset.draggable = 'true';
+      div.style.position = 'absolute';
+      div.style.top = '150px'; div.style.left = '190px'; div.style.zIndex = '30';
+      div.style.mixBlendMode = 'multiply';
+      div.className = 'canvas-layer cursor-move p-2';
+      if (type === 'blob') div.innerHTML = `<svg width="120" height="120" viewBox="0 0 100 100" fill="#f43f5e"><path d="M81.5,61.5Q73,73,59.5,79Q46,85,32.5,76.5Q19,68,16,52Q13,36,26.5,25Q40,14,56.5,17.5Q73,21,81.5,35.5Q90,50,81.5,61.5Z"/></svg>`;
+      else if (type === 'starburst') div.innerHTML = `<svg width="110" height="110" viewBox="0 0 100 100" fill="#f59e0b"><polygon points="50,2 63,28 92,18 76,44 98,64 69,68 72,97 50,77 28,97 31,68 2,64 24,44 8,18 37,28"/></svg>`;
+      else if (type === 'glass-card') { div.style.mixBlendMode = 'normal'; div.style.backdropFilter = 'blur(10px)'; div.className = 'canvas-layer cursor-move px-4 py-2.5 rounded-2xl bg-white/45 border border-white shadow-xl text-xs font-bold'; div.textContent = '✦ Khối Kính Mờ'; }
+      else div.className = 'canvas-layer cursor-move w-28 h-28 rounded-full bg-gradient-to-tr from-cyan-400 via-violet-500 to-fuchsia-500';
+      div.onclick = (e) => { e.stopPropagation(); selectCanvasLayer(div, 'Lớp Hình Khối (' + type + ')'); };
+      stage.appendChild(div);
+      makeDraggable(div);
+      selectCanvasLayer(div, 'Lớp Hình Khối (' + type + ')');
+    }
+    function insertCustomSvg() {
+      const code = document.getElementById('inp-custom-svg').value.trim();
+      if (!code) return;
+      const stage = document.getElementById('artboard-stage');
+      const div = document.createElement('div');
+      div.dataset.draggable = 'true';
+      div.style.position = 'absolute'; div.style.top = '170px'; div.style.left = '210px'; div.style.zIndex = '30';
+      div.className = 'canvas-layer cursor-move p-2';
+      div.innerHTML = code;
+      div.onclick = () => selectCanvasLayer(div, 'Custom SVG');
+      stage.appendChild(div);
+      makeDraggable(div);
+    }
+    function updateCssFilters() {
+      if (!selectedEl) return;
+      const b = document.getElementById('flt-b').value;
+      const c = document.getElementById('flt-c').value;
+      const s = document.getElementById('flt-s').value;
+      const h = document.getElementById('flt-h').value;
+      const blur = document.getElementById('flt-blur').value;
+      selectedEl.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%) hue-rotate(${h}deg) blur(${blur}px)`;
+    }
+    function applyRotation(deg) { if (selectedEl) selectedEl.style.transform = `rotate(${deg}deg)`; }
+
+    function makeDraggable(el) {
+      let sx = 0, sy = 0, ol = 0, ot = 0, drag = false;
+      el.addEventListener('mousedown', (e) => {
+        if (document.activeElement === el && el.isContentEditable) return;
+        drag = true; sx = e.clientX; sy = e.clientY;
+        const r = el.getBoundingClientRect();
+        const pr = document.getElementById('artboard-stage').getBoundingClientRect();
+        ol = r.left - pr.left; ot = r.top - pr.top;
+        el.style.right = 'auto';
+        el.style.left = ol + 'px'; el.style.top = ot + 'px';
+      });
+      window.addEventListener('mousemove', (e) => {
+        if (!drag) return;
+        el.style.left = (ol + (e.clientX - sx)) + 'px';
+        el.style.top = (ot + (e.clientY - sy)) + 'px';
+      });
+      window.addEventListener('mouseup', () => { drag = false; });
+    }
+    document.querySelectorAll('[data-draggable="true"]').forEach(makeDraggable);
+  </script>
+</body>
+</html>

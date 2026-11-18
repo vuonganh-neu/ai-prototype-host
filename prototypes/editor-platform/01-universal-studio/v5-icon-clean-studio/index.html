@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>v5.0 Commercial Studio — Icon-First Toolbar, Section Variants, Bg Alpha Transparency & 4 Distinct Spatial Templates</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Playfair+Display:ital,wght@0,600;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap">
+  <style>
+    :root {
+      --ui-bg: #ebecef;
+      --ui-panel: #ffffff;
+      --ui-subpanel: #f4f4f6;
+      --ui-border: #e4e4e7;
+      --ui-text: #18181b;
+      --ui-muted: #71717a;
+      --ui-accent: #18181b;
+      --ui-accent-fg: #ffffff;
+    }
+    body.mode-graphite {
+      --ui-bg: #121214;
+      --ui-panel: #1c1c1f;
+      --ui-subpanel: #27272a;
+      --ui-border: #333338;
+      --ui-text: #f4f4f5;
+      --ui-muted: #a1a1aa;
+      --ui-accent: #0d99ff;
+      --ui-accent-fg: #ffffff;
+    }
+    body { font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; background-color: var(--ui-bg); color: var(--ui-text); }
+    .ui-panel { background-color: var(--ui-panel); border-color: var(--ui-border); color: var(--ui-text); }
+    .ui-subpanel { background-color: var(--ui-subpanel); border-color: var(--ui-border); color: var(--ui-text); }
+    .ui-border { border-color: var(--ui-border); }
+    .ui-muted { color: var(--ui-muted); }
+    .ui-accent-btn { background-color: var(--ui-accent); color: var(--ui-accent-fg); }
+
+    /* Fixed-dimension Icon Button (Never warps or stretches!) */
+    .tb-icon-btn {
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 7px;
+      transition: background-color 0.12s ease;
+      flex-shrink: 0;
+    }
+    .tb-icon-btn:hover { background-color: rgba(113, 113, 122, 0.14); }
+    .tb-sep { width: 1px; height: 20px; background-color: var(--ui-border); margin: 0 4px; flex-shrink: 0; }
+
+    /* Universal Draggable & 8-Handle Resizable Block */
+    .studio-block {
+      position: absolute;
+      box-sizing: border-box;
+      transition: box-shadow 0.15s ease;
+      cursor: grab;
+    }
+    .studio-block:active { cursor: grabbing; }
+    .studio-block:hover:not(.is-selected) { outline: 1.5px dashed rgba(79, 70, 229, 0.55); }
+    .studio-block.is-selected { outline: 2px solid #4f46e5 !important; z-index: 80; }
+
+    .resize-handle {
+      display: none;
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      background: #ffffff;
+      border: 2px solid #4f46e5;
+      border-radius: 99px;
+      z-index: 95;
+    }
+    .studio-block.is-selected .resize-handle { display: block; }
+    .rh-nw { top: -5px; left: -5px; cursor: nwse-resize; }
+    .rh-n  { top: -5px; left: calc(50% - 4.5px); cursor: ns-resize; }
+    .rh-ne { top: -5px; right: -5px; cursor: nesw-resize; }
+    .rh-e  { top: calc(50% - 4.5px); right: -5px; cursor: ew-resize; }
+    .rh-se { bottom: -5px; right: -5px; cursor: nwse-resize; }
+    .rh-s  { bottom: -5px; left: calc(50% - 4.5px); cursor: ns-resize; }
+    .rh-sw { bottom: -5px; left: -5px; cursor: nesw-resize; }
+    .rh-w  { top: calc(50% - 4.5px); left: -5px; cursor: ew-resize; }
+
+    .block-badge {
+      display: none;
+      position: absolute;
+      top: -22px;
+      left: 0;
+      background: #4f46e5;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 4px;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .studio-block.is-selected .block-badge { display: inline-flex; }
+
+    /* 3D Cube */
+    @keyframes spin3DCube { 0% { transform: rotateX(-18deg) rotateY(0deg); } 100% { transform: rotateX(-18deg) rotateY(360deg); } }
+    .cube-3d-scene { perspective: 500px; }
+    .cube-3d { width: 64px; height: 64px; position: relative; transform-style: preserve-3d; animation: spin3DCube 9s linear infinite; }
+    .cube-face {
+      position: absolute; width: 64px; height: 64px;
+      border: 1.5px solid rgba(255,255,255,0.85);
+      background: linear-gradient(135deg, rgba(99,102,241,0.78), rgba(236,72,153,0.78));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 800; color: white;
+    }
+    .cf-front  { transform: translateZ(32px); }
+    .cf-back   { transform: rotateY(180deg) translateZ(32px); }
+    .cf-right  { transform: rotateY(90deg) translateZ(32px); }
+    .cf-left   { transform: rotateY(-90deg) translateZ(32px); }
+    .cf-top    { transform: rotateX(90deg) translateZ(32px); }
+    .cf-bottom { transform: rotateX(-90deg) translateZ(32px); }
+
+    /* Canva Text & PS Layer Effects */
+    .fx-hollow { color: transparent !important; -webkit-text-stroke: 1.6px currentColor; }
+    .fx-splice { text-shadow: 3px 3px 0px rgba(244, 63, 94, 0.5), -2px -2px 0px rgba(56, 189, 248, 0.5); }
+    .fx-neon { text-shadow: 0 0 10px rgba(139, 92, 246, 0.85), 0 0 22px rgba(236, 72, 153, 0.65); }
+    .fx-gradient { background: linear-gradient(90deg, #4f46e5, #ec4899, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .ps-fx-bevel { box-shadow: inset 2px 2px 4px rgba(255,255,255,0.9), inset -3px -3px 6px rgba(0,0,0,0.22), 0 10px 25px rgba(0,0,0,0.12) !important; }
+    .ps-fx-innershadow { box-shadow: inset 0 5px 15px rgba(0,0,0,0.35) !important; }
+    .ps-fx-outerglow { box-shadow: 0 0 25px 5px rgba(99, 102, 241, 0.45) !important; }
+
+    /* Animations */
+    @keyframes kfFadeRise { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes kfPopElastic { 0% { opacity: 0; transform: scale(0.82); } 70% { transform: scale(1.03); } 100% { opacity: 1; transform: scale(1); } }
+    @keyframes kfFlip3DX { from { opacity: 0; transform: perspective(600px) rotateX(-60deg); } to { opacity: 1; transform: perspective(600px) rotateX(0); } }
+    @keyframes kfFloatLoop { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-7px); } }
+    .anim-fade-rise { animation: kfFadeRise 0.55s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .anim-pop-elastic { animation: kfPopElastic 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+    .anim-flip-x { animation: kfFlip3DX 0.65s ease-out both; }
+    .anim-float-loop { animation: kfFloatLoop 2.4s ease-in-out infinite; }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden select-none">
+
+  <!-- =========================================================================
+       1. TOP COMPACT STUDIO HEADER (h-12, Clean & Balanced)
+       ========================================================================= -->
+  <header class="h-12 ui-panel border-b px-3 flex items-center justify-between z-40 text-xs">
+    <div class="flex items-center gap-2">
+      <a href="../../../../index.html" class="h-8 px-2.5 rounded-lg border ui-border hover:opacity-80 font-semibold inline-flex items-center gap-1.5" title="Quay về kho phiên bản Mockup">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        <span>v5.0 Studio</span>
+      </a>
+      <div class="tb-sep"></div>
+      <input value="Vũ Anh Vương — Architecture Portfolio" class="h-8 font-bold text-xs bg-transparent hover:bg-zinc-500/10 px-2 rounded-lg outline-none w-56" />
+    </div>
+
+    <!-- Center: Page Format Icon Selector + DB Profile Selector -->
+    <div class="flex items-center gap-2">
+      <div class="h-8 ui-subpanel border px-2 rounded-lg inline-flex items-center gap-1.5" title="Chọn khổ trang thiết kế (A4, A5, A6, Poster, 16:9)">
+        <svg class="w-3.5 h-3.5 ui-muted" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/></svg>
+        <select id="page-size-select" onchange="changePageSize(this.value)" class="bg-transparent font-semibold text-xs outline-none cursor-pointer">
+          <option value="595x842">A4 Dọc (210×297)</option>
+          <option value="842x595">A4 Ngang (297×210)</option>
+          <option value="460x650">A5 (148×210)</option>
+          <option value="380x540">A6 (105×148)</option>
+          <option value="680x960">Poster A3</option>
+          <option value="820x462">Slide 16:9</option>
+        </select>
+      </div>
+
+      <div class="h-8 ui-subpanel border px-2 rounded-lg inline-flex items-center gap-1.5" title="Chuyển đổi bản ghi dữ liệu từ Host Database">
+        <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        <select onchange="switchHostDatabaseProfile(this.value)" class="bg-transparent font-semibold text-xs outline-none cursor-pointer">
+          <option value="vuong">DB #1: Vũ Anh Vương</option>
+          <option value="chau">DB #2: Nguyễn Minh Châu</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Right Actions (Fixed h-8 buttons) -->
+    <div class="flex items-center gap-1.5 font-semibold">
+      <button onclick="document.body.classList.toggle('mode-graphite')" class="tb-icon-btn border ui-border" title="Chuyển đổi Giao diện Sáng (Canva) / Tối (Figma)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2"/></svg>
+      </button>
+      <button onclick="playAllBlocksAnimation()" class="tb-icon-btn border border-amber-500/40 bg-amber-500/10 text-amber-600" title="Chạy thử Animation toàn trang">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      </button>
+      <button onclick="document.getElementById('save-tpl-modal').classList.remove('hidden')" class="h-8 px-3 rounded-lg border ui-border hover:bg-zinc-500/10" title="Lưu thiết kế hiện tại vào Kho Mẫu">
+        Lưu Mẫu
+      </button>
+      <button onclick="showToast('✓ Đã lưu Snapshot v18 lên SeaweedFS S3!')" class="h-8 px-3.5 rounded-lg ui-accent-btn shadow-2xs">
+        Xuất bản
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       2. ICON-FIRST UNIFORM FORMATTING TOOLBAR (h-11, Fixed 32px Icon Grid — Zero Text Wrapping!)
+       ========================================================================= -->
+  <div class="h-11 ui-panel border-b px-3 flex items-center justify-between text-xs z-30">
+
+    <div class="flex items-center gap-1 overflow-x-auto py-0.5">
+      <!-- Selected Block Compact Pill -->
+      <span id="tb-block-tag" class="h-8 px-2.5 rounded-lg bg-indigo-500/10 text-indigo-600 border border-indigo-500/25 font-bold inline-flex items-center gap-1.5 shrink-0">
+        <span>🧩</span>
+        <span id="tb-block-name" class="max-w-[140px] truncate">Kinh nghiệm</span>
+      </span>
+
+      <!-- DYNAMIC PER-SECTION LAYOUT VARIANT SWITCHER (Matches Skills / Experiences / Projects!) -->
+      <div id="tb-section-controls" class="inline-flex items-center gap-1">
+        <button onclick="openRightInspector('section-data')" class="h-8 px-2.5 rounded-lg bg-indigo-600 text-white font-semibold inline-flex items-center gap-1 shrink-0" title="Thêm/Sửa dữ liệu của Section này">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <span>Dữ liệu</span>
+        </button>
+
+        <!-- Dynamic Variant Dropdown populated per Section Type (Skills vs Experiences vs Projects) -->
+        <div class="h-8 ui-subpanel border px-2 rounded-lg inline-flex items-center gap-1 shrink-0" title="Đổi kiểu hiển thị thiết kế của Section đang chọn">
+          <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <select id="tb-variant-select" onchange="onChangeActiveSectionVariant(this.value)" class="bg-transparent font-semibold text-xs outline-none cursor-pointer"></select>
+        </div>
+      </div>
+
+      <div class="tb-sep"></div>
+
+      <!-- Font Family Dropdown (Compact w-36 h-8) -->
+      <select id="tb-font-family" onchange="applyBlockStyle('fontFamily', this.value)" class="h-8 w-36 px-2 rounded-lg border ui-border ui-subpanel font-medium text-xs outline-none cursor-pointer shrink-0" title="Phông chữ (Font Family)">
+        <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans</option>
+        <option value="'Playfair Display', serif">Playfair Display</option>
+        <option value="'Instrument Serif', serif">Instrument Serif</option>
+        <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
+        <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
+        <option value="'Bebas Neue', sans-serif">Bebas Neue</option>
+      </select>
+
+      <!-- Font Size Stepper (h-8) -->
+      <div class="h-8 inline-flex items-center border ui-border rounded-lg overflow-hidden shrink-0" title="Cỡ chữ (Font Size)">
+        <button onclick="stepFontSize(-1)" class="w-7 h-full hover:bg-zinc-500/10 font-bold">−</button>
+        <span id="tb-fontsize-val" class="w-8 text-center font-mono text-[11px]">13</span>
+        <button onclick="stepFontSize(1)" class="w-7 h-full hover:bg-zinc-500/10 font-bold">+</button>
+      </div>
+
+      <!-- Pure Icon Buttons: Bold, Italic, Underline, Align Left/Center/Right (32x32px) -->
+      <button onclick="toggleInlineStyle('fontWeight','bold','normal')" class="tb-icon-btn font-extrabold text-sm" title="In đậm (Bold)">B</button>
+      <button onclick="toggleInlineStyle('fontStyle','italic','normal')" class="tb-icon-btn italic font-serif text-sm" title="In nghiêng (Italic)">I</button>
+      <button onclick="toggleInlineStyle('textDecoration','underline','none')" class="tb-icon-btn underline text-sm" title="Gạch chân (Underline)">U</button>
+
+      <div class="tb-sep"></div>
+
+      <button onclick="applyBlockStyle('textAlign','left')" class="tb-icon-btn" title="Căn trái">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+      </button>
+      <button onclick="applyBlockStyle('textAlign','center')" class="tb-icon-btn" title="Căn giữa">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="10" x2="6" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="18" y1="18" x2="6" y2="18"/></svg>
+      </button>
+
+      <div class="tb-sep"></div>
+
+      <!-- Text Color Icon Picker (A with color bar underneath) -->
+      <label class="tb-icon-btn border ui-border cursor-pointer flex-col gap-0.5" title="Màu chữ (Text Color)">
+        <span class="font-extrabold text-[11px] leading-none">A</span>
+        <input type="color" value="#18181b" oninput="applyBlockStyle('color', this.value); this.nextElementSibling.style.backgroundColor=this.value" class="sr-only" />
+        <span class="w-4 h-1 rounded-full bg-zinc-900"></span>
+      </label>
+
+      <!-- Block Background Color + BACKGROUND ALPHA SLIDER (Solves overlapping block transparency!) -->
+      <div class="h-8 px-2 rounded-lg border ui-border ui-subpanel inline-flex items-center gap-1.5 shrink-0" title="Màu nền Khối & Độ trong suốt Nền (Bg Alpha — Kéo về 0% để nhìn xuyên thấu xuống Layer dưới mà không làm mờ chữ!)">
+        <label class="inline-flex items-center gap-1 cursor-pointer">
+          <svg class="w-3.5 h-3.5 ui-muted" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 11l-8-8-8.6 8.6a2 2 0 0 0 0 2.8l5.2 5.2c.8.8 2 .8 2.8 0L19 11z"/><path d="M2 22h20"/></svg>
+          <input id="tb-bg-color" type="color" value="#ffffff" oninput="updateBlockBgColorAndAlpha()" class="w-4 h-4 border-0 bg-transparent cursor-pointer" />
+        </label>
+        <input id="tb-bg-alpha" type="range" min="0" max="100" value="92" oninput="updateBlockBgColorAndAlpha()" class="w-14 accent-indigo-600" title="Độ đục/trong suốt của riêng Nền Khối (0% = Trong suốt hoàn toàn)" />
+        <span id="tb-bg-alpha-lbl" class="font-mono text-[10px] w-7">92%</span>
+      </div>
+
+      <!-- Photoshop Blend Mode Compact Icon Select -->
+      <div class="h-8 px-2 rounded-lg border ui-border ui-subpanel inline-flex items-center gap-1 shrink-0" title="Chế độ Hòa trộn Lớp Photoshop (16 Blend Modes)">
+        <svg class="w-3.5 h-3.5 text-fuchsia-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg>
+        <select id="tb-blend-mode" onchange="applyBlockStyle('mixBlendMode', this.value)" class="bg-transparent font-semibold text-[11px] outline-none cursor-pointer w-20">
+          <option value="normal">Normal</option>
+          <option value="multiply">Multiply</option>
+          <option value="screen">Screen</option>
+          <option value="overlay">Overlay</option>
+          <option value="darken">Darken</option>
+          <option value="lighten">Lighten</option>
+          <option value="color-dodge">Dodge</option>
+          <option value="color-burn">Burn</option>
+          <option value="soft-light">SoftLight</option>
+          <option value="hard-light">HardLight</option>
+          <option value="difference">Difference</option>
+          <option value="exclusion">Exclusion</option>
+          <option value="luminosity">Luminosity</option>
+        </select>
+      </div>
+
+      <div class="tb-sep"></div>
+
+      <!-- Icon Triggers for Advanced Inspector Panels (Effects/FX & Animation) -->
+      <button onclick="openRightInspector('style-fx')" class="h-8 px-2.5 rounded-lg border ui-border hover:bg-zinc-500/10 inline-flex items-center gap-1 font-semibold shrink-0" title="Mở bảng Hiệu ứng, Đổ bóng, Viền, Kính mờ & Bộ lọc">
+        <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3l1.9 5.8h6.1l-4.9 3.6 1.9 5.8-5-3.6-5 3.6 1.9-5.8-4.9-3.6h6.1z"/></svg>
+        <span>FX</span>
+      </button>
+
+      <button onclick="openRightInspector('motion')" class="h-8 px-2.5 rounded-lg border ui-border hover:bg-zinc-500/10 inline-flex items-center gap-1 font-semibold shrink-0" title="Mở bảng Chuyển động (Animation)">
+        <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span>Motion</span>
+      </button>
+    </div>
+
+    <!-- Right-side Pure Icon Layer Actions (Up, Down, Duplicate, Delete — 32x32px) -->
+    <div class="flex items-center gap-0.5 shrink-0 pl-2">
+      <button onclick="moveBlockLayer(1)" class="tb-icon-btn" title="Đưa lên 1 lớp (Bring Forward)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+      </button>
+      <button onclick="moveBlockLayer(-1)" class="tb-icon-btn" title="Đưa xuống 1 lớp (Send Backward)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <button onclick="duplicateActiveBlock()" class="tb-icon-btn" title="Nhân bản Khối (Duplicate)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      </button>
+      <button onclick="deleteActiveBlock()" class="tb-icon-btn text-rose-600 hover:bg-rose-500/15" title="Xóa Khối (Delete)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- =========================================================================
+       3. MAIN WORKSPACE: LEFT ICON RAIL + COLLAPSIBLE DRAWER + ARTBOARD + SLIDE-OVER INSPECTOR
+       ========================================================================= -->
+  <div class="flex-1 flex overflow-hidden relative">
+
+    <!-- 3A. CLEAN SVG LEFT ICON RAIL (64px) -->
+    <nav class="w-16 ui-panel border-r flex flex-col items-center py-3 gap-2 text-[10px] font-semibold z-30 shrink-0">
+      <button onclick="toggleLeftDrawer('templates')" id="rail-btn-templates" class="w-12 py-2 rounded-xl flex flex-col items-center gap-1 ui-accent-btn" title="Kho Mẫu Thiết kế (Templates)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+        <span>Mẫu</span>
+      </button>
+      <button onclick="toggleLeftDrawer('sections')" id="rail-btn-sections" class="w-12 py-2 rounded-xl flex flex-col items-center gap-1 ui-muted hover:opacity-100" title="Thêm Section Nghiệp vụ (Database)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Section</span>
+      </button>
+      <button onclick="toggleLeftDrawer('text')" id="rail-btn-text" class="w-12 py-2 rounded-xl flex flex-col items-center gap-1 ui-muted hover:opacity-100" title="Thêm Văn bản & Import Font">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+        <span>Văn bản</span>
+      </button>
+      <button onclick="toggleLeftDrawer('media')" id="rail-btn-media" class="w-12 py-2 rounded-xl flex flex-col items-center gap-1 ui-muted hover:opacity-100" title="Chèn Ảnh, Video MP4 & Vật thể 3D">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2.18"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span>Media/3D</span>
+      </button>
+      <button onclick="toggleLeftDrawer('shapes')" id="rail-btn-shapes" class="w-12 py-2 rounded-xl flex flex-col items-center gap-1 ui-muted hover:opacity-100" title="Kho Hình khối, Màu nền Gradient & SVG">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 19 21 12 17 5 21 12 2"/></svg>
+        <span>Khối/Màu</span>
+      </button>
+      <button onclick="toggleLeftDrawer('layers')" id="rail-btn-layers" class="w-12 py-2 rounded-xl flex flex-col items-center gap-1 ui-muted hover:opacity-100" title="Quản lý Cây Layer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        <span>Layers</span>
+      </button>
+    </nav>
+
+    <!-- 3B. COLLAPSIBLE LEFT DRAWER (310px) -->
+    <aside id="left-drawer" class="w-[310px] ui-panel border-r flex flex-col z-20 relative shrink-0">
+      <button onclick="closeLeftDrawer()" title="Thu gọn ngăn kéo" class="absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-14 rounded-r-xl ui-panel border border-l-0 flex items-center justify-center text-xs font-bold shadow-md hover:opacity-80 z-30">‹</button>
+
+      <div class="flex-1 p-4 overflow-y-auto space-y-4 text-xs">
+
+        <!-- TAB 1: 4 TRULY DISTINCT SPATIAL TEMPLATES (Different Layouts, Transparency, Columns & Variants!) -->
+        <div id="dtab-templates" class="space-y-4">
+          <div>
+            <h3 class="font-bold text-sm">Kho Mẫu Thiết Kế (4 Bố Cục Khác Biệt)</h3>
+            <p class="ui-muted text-[11px]">Bấm vào từng mẫu để đổi toàn bộ cấu trúc cột, vị trí khối, kiểu hiển thị Kỹ năng & độ trong suốt nền</p>
+          </div>
+
+          <div id="template-cards-list" class="space-y-3">
+            <!-- Template 1: Editorial Transparent (Bg Alpha = 0% + Multiply Blend) -->
+            <div onclick="applySpatialTemplate('vogue-transparent')" class="p-3 rounded-xl border-2 border-indigo-600 cursor-pointer transition space-y-2">
+              <div class="h-24 rounded-lg bg-[#FAF6F0] border border-stone-300 p-2.5 flex flex-col justify-between relative overflow-hidden">
+                <div class="w-14 h-14 rounded-full bg-rose-300/60 absolute -top-2 -right-2"></div>
+                <div style="font-family:'Playfair Display',serif" class="font-bold text-xs text-stone-900">1. Vogue Editorial (Nền Khối Trong Suốt)</div>
+                <div class="border-t border-stone-300 pt-1 text-[10px] text-stone-600">Không khung viền • Hòa trộn lớp • Tag Pills</div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="font-bold">Vogue Transparent Studio</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-600 font-semibold">SYSTEM</span>
+              </div>
+            </div>
+
+            <!-- Template 2: Executive Dark Left Sidebar (Sidebar Trái + Progress Bars) -->
+            <div onclick="applySpatialTemplate('sidebar-left-exec')" class="p-3 rounded-xl border ui-border hover:border-indigo-500 cursor-pointer transition space-y-2">
+              <div class="h-24 rounded-lg bg-white border border-zinc-200 overflow-hidden grid grid-cols-3">
+                <div class="col-span-1 bg-slate-900 text-white p-2 flex flex-col justify-between">
+                  <div class="w-5 h-5 rounded-full bg-sky-500"></div>
+                  <div class="space-y-1"><div class="h-1 bg-sky-400 rounded w-full"></div><div class="h-1 bg-sky-400 rounded w-2/3"></div></div>
+                </div>
+                <div class="col-span-2 p-2 flex flex-col justify-between">
+                  <div class="font-bold text-[11px] text-slate-900">2. Executive Sidebar Trái</div>
+                  <div class="text-[10px] text-zinc-500">Cột trái tối • Kỹ năng Thanh %</div>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="font-bold">Executive Dark Sidebar</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 font-semibold">PUBLIC</span>
+              </div>
+            </div>
+
+            <!-- Template 3: Swiss Bento Cards (2-Col Cards + Grid Skills) -->
+            <div onclick="applySpatialTemplate('swiss-bento')" class="p-3 rounded-xl border ui-border hover:border-indigo-500 cursor-pointer transition space-y-2">
+              <div class="h-24 rounded-lg bg-zinc-100 border border-zinc-200 p-2 grid grid-cols-2 gap-1.5">
+                <div class="col-span-2 bg-white rounded p-1.5 font-extrabold text-[11px] text-zinc-900">3. SWISS BENTO GRID</div>
+                <div class="bg-white rounded p-1.5 text-[10px] text-zinc-500">Card 2 Cột</div>
+                <div class="bg-white rounded p-1.5 text-[10px] text-zinc-500">Kỹ năng Lưới</div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="font-bold">Swiss Bento Modular</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 font-semibold">PUBLIC</span>
+              </div>
+            </div>
+
+            <!-- Template 4: Midnight Glassmorphism (Dark Page + Translucent Frosted Blocks) -->
+            <div onclick="applySpatialTemplate('midnight-glass')" class="p-3 rounded-xl border ui-border hover:border-indigo-500 cursor-pointer transition space-y-2">
+              <div class="h-24 rounded-lg bg-gradient-to-br from-slate-950 via-indigo-950 to-fuchsia-950 text-white p-2.5 flex flex-col justify-between">
+                <div style="font-family:'Space Grotesk',sans-serif" class="font-bold text-xs text-sky-300">4. Midnight Frosted Glass</div>
+                <div class="p-1.5 rounded bg-white/10 backdrop-blur border border-white/20 text-[10px]">Khối Kính Mờ Xuyên Thấu (Alpha 18%)</div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="font-bold">Midnight Glass Studio</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 font-semibold">🔒 PRIVATE</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: DATABASE SECTIONS (With Direct Layout Variant Selector for each Section!) -->
+        <div id="dtab-sections" class="hidden space-y-3">
+          <div>
+            <h3 class="font-bold text-sm">Section Nghiệp vụ (Database Sections)</h3>
+            <p class="ui-muted text-[11px]">Chọn kiểu hiển thị hoặc thêm Section mới vào trang</p>
+          </div>
+
+          <div class="p-3 rounded-xl ui-subpanel border space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-indigo-600">⚡ Section Kỹ năng (`skills[]`)</span>
+              <button onclick="selectBlock(document.getElementById('blk-sec-skills'))" class="text-[11px] underline">Chọn</button>
+            </div>
+            <div class="grid grid-cols-2 gap-1 text-[11px]">
+              <button onclick="setSkillsVariant('tags')" class="p-1.5 rounded border ui-border bg-white text-zinc-900 font-medium">1. Nhãn Tag Pills</button>
+              <button onclick="setSkillsVariant('grid')" class="p-1.5 rounded border ui-border bg-white text-zinc-900 font-medium">2. Lưới 2 Cột (Grid)</button>
+              <button onclick="setSkillsVariant('bars')" class="p-1.5 rounded border ui-border bg-white text-zinc-900 font-medium">3. Thanh % (Bars)</button>
+              <button onclick="setSkillsVariant('list')" class="p-1.5 rounded border ui-border bg-white text-zinc-900 font-medium">4. Danh sách (List)</button>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-xl ui-subpanel border space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-indigo-600">💼 Section Kinh nghiệm (`experiences[]`)</span>
+              <button onclick="selectBlock(document.getElementById('blk-sec-experiences'))" class="text-[11px] underline">Chọn</button>
+            </div>
+            <div class="grid grid-cols-3 gap-1 text-[11px]">
+              <button onclick="setExpVariant('timeline')" class="p-1.5 rounded border ui-border bg-white text-zinc-900 font-medium">1. Timeline</button>
+              <button onclick="setExpVariant('cards')" class="p-1.5 rounded border ui-border bg-white text-zinc-900 font-medium">2. Card 2 Cột</button>
+              <button onclick="setExpVariant('minimal')" class="p-1.5 rounded border ui-border bg-white text-zinc-900 font-medium">3. Tối giản</button>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-xl ui-subpanel border space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-indigo-600">🚀 Section Dự án (`projects[]`)</span>
+              <button onclick="selectBlock(document.getElementById('blk-sec-projects'))" class="text-[11px] underline">Chọn</button>
+            </div>
+            <div class="grid grid-cols-2 gap-1 text-[11px]">
+              <button onclick="setProjVariant('bento')" class="p-1.5 rounded border ui-border bg-white text-zinc-900 font-medium">1. Thẻ Bento</button>
+              <button onclick="setProjVariant('minimal')" class="p-1.5 rounded border ui-border bg-white text-zinc-900 font-medium">2. Danh sách Ngang</button>
+            </div>
+          </div>
+
+          <button onclick="addSectionBlock('educations')" class="w-full py-2 rounded-xl ui-accent-btn font-semibold">+ Thêm Section Học vấn & Chứng chỉ</button>
+        </div>
+
+        <!-- TAB 3: FREEFORM TEXT & FONT IMPORT -->
+        <div id="dtab-text" class="hidden space-y-4">
+          <h3 class="font-bold text-sm">Khối Văn Bản Tự Do & Font</h3>
+          <div class="space-y-2">
+            <button onclick="addFreeTextBlock('heading')" class="w-full p-2.5 rounded-xl border ui-border hover:border-indigo-500 text-left font-bold text-sm">+ Thêm Tiêu đề Lớn (Trong suốt nền)</button>
+            <button onclick="addFreeTextBlock('body')" class="w-full p-2.5 rounded-xl border ui-border hover:border-indigo-500 text-left">+ Thêm Đoạn Văn Bản Tự Do</button>
+          </div>
+          <div class="p-3 rounded-xl ui-subpanel border space-y-2">
+            <div class="font-semibold">📥 Import Google Font / Upload `.ttf`</div>
+            <div class="flex gap-1.5">
+              <input id="inp-gfont" placeholder="VD: Lobster, Oswald, Lora..." class="flex-1 px-2 py-1.5 rounded border ui-border bg-transparent" />
+              <button onclick="importCustomGoogleFont()" class="px-3 py-1.5 rounded ui-accent-btn font-semibold">+ Nạp</button>
+            </div>
+            <input type="file" accept=".ttf,.otf,.woff,.woff2" onchange="uploadFontFile(this)" class="text-[10px] w-full pt-1" />
+          </div>
+          <div class="space-y-1.5">
+            <div class="font-semibold">✨ Hiệu ứng Chữ Canva</div>
+            <div class="grid grid-cols-2 gap-1.5">
+              <button onclick="setTextFx('none')" class="p-2 rounded-lg border ui-border">Mặc định</button>
+              <button onclick="setTextFx('fx-hollow')" class="p-2 rounded-lg border ui-border font-bold">Chữ Rỗng</button>
+              <button onclick="setTextFx('fx-splice')" class="p-2 rounded-lg border ui-border font-bold">Tách Bóng</button>
+              <button onclick="setTextFx('fx-neon')" class="p-2 rounded-lg border ui-border font-bold text-fuchsia-600">Neon Glow</button>
+              <button onclick="setTextFx('fx-gradient')" class="p-2 rounded-lg border ui-border font-bold">Chữ Gradient</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: MEDIA BLOCKS (IMAGE, VIDEO, 3D) -->
+        <div id="dtab-media" class="hidden space-y-3">
+          <h3 class="font-bold text-sm">Chèn Khối Media (Ảnh, Video, 3D)</h3>
+          <button onclick="addMediaBlock('image')" class="w-full p-3 rounded-xl border ui-border hover:border-indigo-500 text-left font-semibold">🖼 + Chèn Khối Hình Ảnh</button>
+          <button onclick="addMediaBlock('video')" class="w-full p-3 rounded-xl border ui-border hover:border-indigo-500 text-left font-semibold">🎬 + Chèn Khối Video MP4</button>
+          <button onclick="addMediaBlock('3d')" class="w-full p-3 rounded-xl border ui-border hover:border-indigo-500 text-left font-semibold">🧊 + Chèn Khối Vật Thể 3D</button>
+        </div>
+
+        <!-- TAB 5: SHAPES, GRADIENT 360 & SVG IMPORT -->
+        <div id="dtab-shapes" class="hidden space-y-4">
+          <h3 class="font-bold text-sm">Hình Khối, Gradient 360° & SVG</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="addShapeBlock('orb')" class="p-2.5 rounded-xl border ui-border font-semibold">🥞 + Quả cầu Hòa trộn</button>
+            <button onclick="addShapeBlock('seal')" class="p-2.5 rounded-xl border ui-border font-semibold">💮 + Con dấu</button>
+          </div>
+          <div class="p-3 rounded-xl ui-subpanel border space-y-2">
+            <div class="font-semibold">🌈 Pha Gradient 360° cho Trang/Khối</div>
+            <div class="grid grid-cols-2 gap-2">
+              <input id="g-c1" type="color" value="#ffecd2" oninput="applyGrad()" class="w-full h-7 rounded" />
+              <input id="g-c2" type="color" value="#fcb69f" oninput="applyGrad()" class="w-full h-7 rounded" />
+            </div>
+            <input id="g-ang" type="range" min="0" max="360" value="135" oninput="applyGrad()" class="w-full accent-indigo-600" />
+          </div>
+          <div class="p-3 rounded-xl ui-subpanel border space-y-2">
+            <div class="font-semibold">📥 Dán mã `<svg>`</div>
+            <textarea id="inp-svg" rows="2" class="w-full p-1.5 rounded border ui-border bg-transparent font-mono text-[10px]"><svg viewBox="0 0 100 100" width="80" height="80"><circle cx="50" cy="50" r="40" fill="none" stroke="#4f46e5" stroke-width="8" stroke-dasharray="10 6"/></svg></textarea>
+            <button onclick="insertCustomSvg()" class="w-full py-1.5 rounded-lg ui-accent-btn font-semibold">+ Chèn SVG</button>
+          </div>
+        </div>
+
+        <!-- TAB 6: LAYER TREE -->
+        <div id="dtab-layers" class="hidden space-y-3">
+          <h3 class="font-bold text-sm">Quản lý Cây Layer (Block Stack)</h3>
+          <div id="layer-tree-list" class="space-y-1.5"></div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- =======================================================================
+         3C. MAIN ARTBOARD STAGE
+         ======================================================================= -->
+    <main id="canvas-viewport" onclick="deselectAllIfBackground(event)" class="flex-1 flex flex-col items-center justify-between p-5 overflow-auto relative">
+
+      <!-- THE PAGE ARTBOARD -->
+      <div id="page-artboard"
+           style="width: 595px; height: 842px; background-color: #FAF6F0;"
+           class="text-zinc-900 rounded-sm shadow-[0_25px_70px_rgba(0,0,0,0.16)] relative transition-all duration-300 origin-top shrink-0 my-auto overflow-hidden">
+
+        <!-- Decorative Ambient Blend Orb (Demonstrating Layer Blending with Transparent Blocks above it!) -->
+        <div id="blk-ambient-orb"
+             data-block-type="shape"
+             data-block-title="Lớp Ánh sáng Hòa trộn (Multiply)"
+             data-bg-hex="#fda4af"
+             data-bg-alpha="45"
+             style="left: 360px; top: -20px; width: 250px; height: 250px; z-index: 2; mix-blend-mode: multiply; background-color: rgba(253, 164, 175, 0.45); filter: blur(18px);"
+             class="studio-block rounded-full pointer-events-auto">
+          <div class="block-badge">🥞 Lớp Ánh sáng Nền (z:2)</div>
+        </div>
+
+        <!-- BLOCK 1: SECTION PERSONAL INFO -->
+        <div id="blk-sec-personal"
+             data-block-type="section"
+             data-section-key="personal"
+             data-block-title="Section: Thông tin Cá nhân"
+             data-bg-hex="#ffffff"
+             data-bg-alpha="75"
+             style="left: 32px; top: 28px; width: 531px; height: 128px; z-index: 10; background-color: rgba(255, 255, 255, 0.75); backdrop-filter: blur(8px);"
+             class="studio-block p-5 rounded-2xl border border-stone-200/80 flex items-center justify-between gap-4">
+          <div class="block-badge">🧩 Section: Thông tin Cá nhân</div>
+          <div class="space-y-1 flex-1">
+            <div class="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-800">Architecture & Design Portfolio</div>
+            <h1 id="bind-fullname" contenteditable="true" style="font-family: 'Playfair Display', serif; font-size: 28px;" class="font-bold tracking-tight outline-none">
+              Vũ Anh Vương
+            </h1>
+            <p id="bind-headline" contenteditable="true" class="text-xs font-semibold text-indigo-700 outline-none">
+              Principal Platform & Distributed Systems Architect
+            </p>
+            <p id="bind-contact" contenteditable="true" class="text-[11px] opacity-70 outline-none">
+              vuonganhvu@vuonganhvu.vn • Hà Nội, Việt Nam • id.vuonganhvu.vn
+            </p>
+          </div>
+          <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-stone-900 to-amber-700 text-white flex items-center justify-center font-serif text-xl font-bold shrink-0 shadow">V</div>
+        </div>
+
+        <!-- BLOCK 2: SECTION EXPERIENCES -->
+        <div id="blk-sec-experiences"
+             data-block-type="section"
+             data-section-key="experiences"
+             data-block-title="Section: Kinh nghiệm"
+             data-bg-hex="#ffffff"
+             data-bg-alpha="88"
+             style="left: 32px; top: 172px; width: 336px; height: 295px; z-index: 12; background-color: rgba(255, 255, 255, 0.88);"
+             class="studio-block p-5 rounded-2xl border border-stone-200/80 overflow-hidden">
+          <div class="block-badge">🧩 Section: Kinh nghiệm (`experiences[]`)</div>
+          <div class="flex items-center justify-between border-b border-current/10 pb-2 mb-3">
+            <span class="text-[11px] font-extrabold uppercase tracking-wider">💼 Kinh nghiệm Chuyên môn</span>
+          </div>
+          <div id="render-experiences" class="space-y-3 text-xs"></div>
+        </div>
+
+        <!-- BLOCK 3: SECTION PROJECTS -->
+        <div id="blk-sec-projects"
+             data-block-type="section"
+             data-section-key="projects"
+             data-block-title="Section: Dự án"
+             data-bg-hex="#ffffff"
+             data-bg-alpha="88"
+             style="left: 32px; top: 482px; width: 336px; height: 250px; z-index: 14; background-color: rgba(255, 255, 255, 0.88);"
+             class="studio-block p-5 rounded-2xl border border-stone-200/80 overflow-hidden">
+          <div class="block-badge">🧩 Section: Dự án (`projects[]`)</div>
+          <div class="flex items-center justify-between border-b border-current/10 pb-2 mb-3">
+            <span class="text-[11px] font-extrabold uppercase tracking-wider">🚀 Dự án Trọng điểm</span>
+          </div>
+          <div id="render-projects" class="space-y-3 text-xs"></div>
+        </div>
+
+        <!-- BLOCK 4: SECTION SKILLS (Selected by default so user can immediately test switching Tag / Grid / Progress Bar / List!) -->
+        <div id="blk-sec-skills"
+             data-block-type="section"
+             data-section-key="skills"
+             data-block-title="Section: Kỹ năng"
+             data-bg-hex="#ffffff"
+             data-bg-alpha="88"
+             style="left: 382px; top: 172px; width: 181px; height: 295px; z-index: 16; background-color: rgba(255, 255, 255, 0.88);"
+             class="studio-block is-selected p-4 rounded-2xl border border-stone-200/80 overflow-hidden">
+          <div class="block-badge">🧩 Section: Kỹ năng (Đổi kiểu Tag / Lưới / Thanh % trên thanh công cụ!)</div>
+          <div class="text-[11px] font-extrabold uppercase tracking-wider border-b border-current/10 pb-2 mb-3">⚡ Kỹ năng</div>
+          <div id="render-skills" class="text-[11px]"></div>
+        </div>
+
+        <!-- BLOCK 5: FREEFORM 3D MEDIA BLOCK -->
+        <div id="blk-media-3d"
+             data-block-type="media"
+             data-block-title="Khối Media 3D"
+             data-bg-hex="#0f172a"
+             data-bg-alpha="90"
+             style="left: 382px; top: 482px; width: 181px; height: 155px; z-index: 18; background-color: rgba(15, 23, 42, 0.90);"
+             class="studio-block p-3 rounded-2xl text-white shadow-lg flex flex-col items-center justify-between">
+          <div class="block-badge">🧊 Khối Media 3D</div>
+          <div class="text-[10px] font-semibold text-indigo-300 uppercase tracking-wider">3D Layer</div>
+          <div class="cube-3d-scene my-auto">
+            <div class="cube-3d">
+              <div class="cube-face cf-front">3D</div><div class="cube-face cf-back">WEB</div>
+              <div class="cube-face cf-right">SDK</div><div class="cube-face cf-left">PRO</div>
+              <div class="cube-face cf-top">TOP</div><div class="cube-face cf-bottom">BOT</div>
+            </div>
+          </div>
+          <div class="text-[10px] text-zinc-300">Xoay 360°</div>
+        </div>
+
+        <!-- BLOCK 6: TRANSPARENT FREEFORM TEXT BLOCK (Bg Alpha = 0% by default so it never covers lower layers!) -->
+        <div id="blk-free-note"
+             data-block-type="text"
+             data-block-title="Khối Text Tự do (Trong suốt nền)"
+             data-bg-hex="#ffffff"
+             data-bg-alpha="0"
+             style="left: 382px; top: 650px; width: 181px; height: 82px; z-index: 25; background-color: rgba(255, 255, 255, 0);"
+             class="studio-block p-2 rounded-xl">
+          <div class="block-badge">🔤 Khối Text Tự do (Bg Alpha 0% — Không đè che lớp dưới!)</div>
+          <div contenteditable="true" style="font-family: 'Cormorant Garamond', serif" class="text-sm italic font-bold text-amber-900 leading-snug outline-none">
+            “Khối chữ này có độ trong suốt nền 0% nên đặt đè lên bất kỳ Layer nào cũng hòa quyện tự nhiên!”
+          </div>
+        </div>
+
+      </div>
+
+      <!-- BOTTOM FLOATING ZOOM & OVERVIEW BAR -->
+      <div class="mt-3 ui-panel border rounded-full px-4 py-1 shadow-md flex items-center gap-3 text-xs z-30">
+        <span id="page-dim-readout" class="font-mono text-[11px] ui-muted">A4: 595×842</span>
+        <div class="tb-sep"></div>
+        <button onclick="setCanvasZoom(currentZoom - 0.15)" class="w-6 h-6 rounded hover:bg-zinc-500/10 font-bold">−</button>
+        <input id="zoom-slider" type="range" min="0.4" max="1.4" step="0.05" value="1" oninput="setCanvasZoom(Number(this.value))" class="w-24 accent-indigo-600" />
+        <span id="zoom-pct-lbl" class="font-mono text-[11px] w-10 text-center">100%</span>
+        <button onclick="setCanvasZoom(currentZoom + 0.15)" class="w-6 h-6 rounded hover:bg-zinc-500/10 font-bold">+</button>
+        <div class="tb-sep"></div>
+        <button onclick="setCanvasZoom(0.62)" class="px-2.5 py-0.5 rounded-full ui-subpanel border font-semibold hover:border-indigo-500" title="Thu nhỏ nhìn toàn cảnh trang">
+          🔍 Toàn cảnh (62%)
+        </button>
+        <button onclick="setCanvasZoom(1.0)" class="px-2.5 py-0.5 rounded-full ui-subpanel border font-semibold hover:border-indigo-500">
+          100%
+        </button>
+      </div>
+
+    </main>
+
+    <!-- =======================================================================
+         3D. SLIDE-OVER RIGHT INSPECTOR (Only opens when requested)
+         ======================================================================= -->
+    <aside id="right-inspector" class="hidden w-[320px] ui-panel border-l flex-col z-30 shadow-2xl shrink-0">
+      <div class="p-3.5 border-b ui-border flex items-center justify-between">
+        <h3 id="insp-title" class="font-bold text-xs uppercase tracking-wider">Thuộc tính Chi tiết</h3>
+        <button onclick="closeRightInspector()" class="tb-icon-btn">✕</button>
+      </div>
+
+      <div class="flex-1 p-4 overflow-y-auto space-y-4 text-xs">
+
+        <!-- PANE 1: SECTION DB DATA EDITOR -->
+        <div id="insp-pane-section-data" class="space-y-4">
+          <div class="flex justify-between items-center">
+            <span class="font-bold">Dữ liệu Kinh nghiệm (`experiences[]`)</span>
+            <button onclick="addExperienceItemToDb()" class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-semibold text-[11px]">+ Thêm dòng</button>
+          </div>
+          <div id="db-exp-editor-list" class="space-y-2"></div>
+
+          <div class="pt-3 border-t ui-border space-y-2">
+            <div class="font-bold">Thêm Kỹ năng vào `skills[]`</div>
+            <div class="flex gap-1.5">
+              <input id="inp-new-skill" placeholder="VD: Rust, WebGL, K8s..." class="flex-1 px-2.5 py-1.5 rounded-lg border ui-border bg-transparent" />
+              <button onclick="addSkillToDb()" class="px-3 py-1.5 rounded-lg ui-accent-btn font-semibold">+ Thêm</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANE 2: FX, BORDER, SHADOW, GLASSMORPHISM & CSS FILTERS -->
+        <div id="insp-pane-style-fx" class="hidden space-y-4">
+          <div class="grid grid-cols-2 gap-2">
+            <div class="ui-subpanel border p-2 rounded-lg flex justify-between">
+              <span class="ui-muted">Bo góc px</span>
+              <input type="number" value="16" oninput="applyBlockStyle('borderRadius', this.value+'px')" class="w-12 bg-transparent text-right font-mono outline-none" />
+            </div>
+            <div class="ui-subpanel border p-2 rounded-lg flex justify-between">
+              <span class="ui-muted">Xoay °</span>
+              <input type="number" value="0" oninput="applyBlockStyle('transform', 'rotate('+this.value+'deg)')" class="w-12 bg-transparent text-right font-mono outline-none" />
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between mb-1 font-semibold"><span>Kính mờ xuyên lớp (Backdrop Blur)</span><span id="lbl-blur-glass">8px</span></div>
+            <input type="range" min="0" max="24" value="8" oninput="applyBlockStyle('backdropFilter','blur('+this.value+'px)'); document.getElementById('lbl-blur-glass').textContent=this.value+'px'" class="w-full accent-indigo-600" />
+          </div>
+
+          <div>
+            <div class="flex justify-between mb-1 font-semibold"><span>Độ trong suốt cả Khối (Layer Opacity)</span><span id="lbl-layer-op">100%</span></div>
+            <input type="range" min="15" max="100" value="100" oninput="applyBlockStyle('opacity', this.value/100); document.getElementById('lbl-layer-op').textContent=this.value+'%'" class="w-full accent-indigo-600" />
+          </div>
+
+          <div class="space-y-1.5">
+            <div class="font-semibold">Đổ bóng & Layer Style (`fx`)</div>
+            <div class="grid grid-cols-2 gap-1.5">
+              <button onclick="applyBlockStyle('boxShadow','none')" class="p-2 rounded-lg border ui-border">Không bóng</button>
+              <button onclick="applyBlockStyle('boxShadow','0 14px 32px rgba(0,0,0,0.12)')" class="p-2 rounded-lg border ui-border">Bóng mềm</button>
+              <button onclick="applyBlockStyle('boxShadow','4px 4px 0px #18181b')" class="p-2 rounded-lg border ui-border font-bold">Retro Cứng</button>
+              <button onclick="if(activeBlock) activeBlock.classList.toggle('ps-fx-bevel')" class="p-2 rounded-lg border ui-border">Bevel 3D Nổi</button>
+            </div>
+          </div>
+
+          <div class="space-y-2 pt-2 border-t ui-border">
+            <div class="font-semibold">Bộ lọc Màu (Brightness / Contrast / Hue)</div>
+            <div><span>Brightness</span><input id="flt-b" type="range" min="60" max="140" value="100" oninput="applyFilters()" class="w-full" /></div>
+            <div><span>Contrast</span><input id="flt-c" type="range" min="60" max="160" value="100" oninput="applyFilters()" class="w-full" /></div>
+            <div><span>Hue Shift</span><input id="flt-h" type="range" min="0" max="360" value="0" oninput="applyFilters()" class="w-full" /></div>
+          </div>
+        </div>
+
+        <!-- PANE 3: MOTION & ANIMATION -->
+        <div id="insp-pane-motion" class="hidden space-y-4">
+          <div class="font-semibold">Hiệu ứng Chuyển động Block</div>
+          <div class="grid grid-cols-2 gap-1.5">
+            <button onclick="triggerBlockAnim('anim-fade-rise')" class="p-2 rounded-lg border ui-border text-left font-medium">↑ Fade Rise</button>
+            <button onclick="triggerBlockAnim('anim-pop-elastic')" class="p-2 rounded-lg border ui-border text-left font-medium">✦ Pop Elastic</button>
+            <button onclick="triggerBlockAnim('anim-flip-x')" class="p-2 rounded-lg border ui-border text-left font-medium">🔄 Flip 3D</button>
+            <button onclick="triggerBlockAnim('anim-float-loop')" class="p-2 rounded-lg border ui-border text-left font-medium">〰 Float Loop</button>
+          </div>
+          <div class="p-3 rounded-xl ui-subpanel border space-y-2">
+            <div class="font-semibold text-emerald-600">📥 Import Animation JSON</div>
+            <textarea id="inp-anim-json" rows="2" class="w-full p-1.5 rounded border ui-border bg-transparent font-mono text-[10px]">[{"transform":"scale(0.7)","opacity":0},{"transform":"scale(1)","opacity":1}]</textarea>
+            <button onclick="runCustomJsonAnim()" class="w-full py-1.5 rounded-lg border ui-border font-semibold">+ Chạy Animation JSON</button>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- TOAST -->
+  <div id="studio-toast" class="hidden fixed bottom-6 right-6 bg-zinc-900 text-white px-4 py-2.5 rounded-xl shadow-2xl border border-zinc-700 text-xs font-semibold z-50"></div>
+
+  <!-- SAVE TEMPLATE MODAL -->
+  <div id="save-tpl-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+    <div class="ui-panel border rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl text-xs">
+      <div class="flex justify-between items-center"><h3 class="font-bold text-base">Lưu thành Mẫu (Public / Private)</h3><button onclick="document.getElementById('save-tpl-modal').classList.add('hidden')">✕</button></div>
+      <input id="inp-new-tpl-name" value="Mẫu Thiết kế Cá nhân 2026" class="w-full px-3 py-2 rounded-xl border ui-border bg-transparent font-semibold" />
+      <div class="flex justify-end gap-2">
+        <button onclick="document.getElementById('save-tpl-modal').classList.add('hidden')" class="px-4 py-2 rounded-xl border ui-border">Hủy</button>
+        <button onclick="confirmSaveTemplate()" class="px-5 py-2 rounded-xl bg-indigo-600 text-white font-bold">Lưu Mẫu</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. DATABASE PROFILES & PER-SECTION VARIANT RENDERING (Skills: Tags, Grid, Bars, List!)
+    // =========================================================================
+    const hostDbProfiles = {
+      vuong: {
+        personalInfo: { fullName: 'Vũ Anh Vương', headline: 'Principal Platform & Distributed Systems Architect', contact: 'vuonganhvu@vuonganhvu.vn • Hà Nội, VN' },
+        experiences: [
+          { role: 'Principal Architect — Modular Editor', period: '2024 – Nay', desc: 'Thiết kế kiến trúc Universal Block-Layer SDK & Document Engine.' },
+          { role: 'Lead Infrastructure Engineer', period: '2022 – 2024', desc: 'Xây dựng hạ tầng PostgreSQL pgvector, Redis Streams, SeaweedFS & Keycloak.' }
+        ],
+        projects: [
+          { name: 'Modular Embedded Editor Suite', tech: 'React • Vue • Java 21', summary: 'Hệ sinh thái 5 trình thiết kế nhúng độc lập.' },
+          { name: 'Multi-Agent DevOps CLI', tech: 'Java 21 • Playwright', summary: 'Cô lập tài nguyên theo Slot & kiểm thử tự động.' }
+        ],
+        skills: [
+          { name: 'Java 21 / Spring', pct: 95 },
+          { name: 'Hexagonal Arch', pct: 92 },
+          { name: 'React & Vue SDK', pct: 90 },
+          { name: 'PostgreSQL', pct: 88 },
+          { name: 'SeaweedFS S3', pct: 85 },
+          { name: 'Keycloak SSO', pct: 90 }
+        ]
+      },
+      chau: {
+        personalInfo: { fullName: 'Nguyễn Minh Châu', headline: 'Executive Creative Director & Brand Architect', contact: 'minhchau@atelier.vn • TP.HCM' },
+        experiences: [
+          { role: 'Creative Director — Vogue Atelier', period: '2023 – Nay', desc: 'Chỉ đạo nghệ thuật cho 15 thương hiệu và tạp chí tương tác 3D.' },
+          { role: 'Lead Product Designer', period: '2020 – 2023', desc: 'Thiết kế hệ thống Design System & trải nghiệm kéo thả đa lớp.' }
+        ],
+        projects: [
+          { name: 'Interactive 3D Lookbook', tech: 'WebGL • Motion', summary: 'Ấn phẩm kỹ thuật số kết hợp 3D & lật trang.' },
+          { name: 'Brand Identity Token System', tech: 'Design Tokens', summary: 'Đồng bộ chủ đề thương hiệu tự động.' }
+        ],
+        skills: [
+          { name: 'Art Direction', pct: 96 },
+          { name: 'Design Systems', pct: 94 },
+          { name: 'Interactive 3D', pct: 88 },
+          { name: 'Typography', pct: 95 },
+          { name: 'Motion Studio', pct: 90 },
+          { name: 'Figma & Canva', pct: 98 }
+        ]
+      }
+    };
+
+    let currentProfileKey = 'vuong';
+    let sectionVariants = {
+      skills: 'tags',         // 'tags' | 'grid' | 'bars' | 'list'
+      experiences: 'timeline',// 'timeline' | 'cards' | 'minimal'
+      projects: 'bento',      // 'bento' | 'minimal'
+      personal: 'standard'
+    };
+
+    function renderAllDatabaseSections() {
+      const data = hostDbProfiles[currentProfileKey];
+      const fn = document.getElementById('bind-fullname');
+      const hl = document.getElementById('bind-headline');
+      const ct = document.getElementById('bind-contact');
+      if (fn) fn.textContent = data.personalInfo.fullName;
+      if (hl) hl.textContent = data.personalInfo.headline;
+      if (ct) ct.textContent = data.personalInfo.contact;
+
+      // 1. Render Skills according to sectionVariants.skills ('tags' | 'grid' | 'bars' | 'list')
+      const skillZone = document.getElementById('render-skills');
+      if (skillZone) {
+        const sv = sectionVariants.skills;
+        if (sv === 'tags') {
+          skillZone.className = 'flex flex-wrap gap-1.5 text-[11px]';
+          skillZone.innerHTML = data.skills.map(s => `<span class="px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-700 border border-indigo-500/20 font-semibold">${s.name}</span>`).join('');
+        } else if (sv === 'grid') {
+          skillZone.className = 'grid grid-cols-2 gap-1.5 text-[10px]';
+          skillZone.innerHTML = data.skills.map(s => `<div class="p-2 rounded-lg bg-current/5 border border-current/10 font-bold text-center">${s.name}</div>`).join('');
+        } else if (sv === 'bars') {
+          skillZone.className = 'space-y-2 text-[10px]';
+          skillZone.innerHTML = data.skills.map(s => `
+            <div>
+              <div class="flex justify-between font-semibold mb-0.5"><span>${s.name}</span><span>${s.pct}%</span></div>
+              <div class="h-1.5 bg-current/10 rounded-full overflow-hidden"><div class="h-full bg-indigo-600 rounded-full" style="width:${s.pct}%"></div></div>
+            </div>`).join('');
+        } else {
+          skillZone.className = 'space-y-1 text-[11px]';
+          skillZone.innerHTML = data.skills.map(s => `<div class="flex items-center gap-1.5"><span class="text-indigo-600 font-bold">✦</span><span class="font-medium">${s.name}</span></div>`).join('');
+        }
+      }
+
+      // 2. Render Experiences according to sectionVariants.experiences ('timeline' | 'cards' | 'minimal')
+      const expZone = document.getElementById('render-experiences');
+      if (expZone) {
+        const ev = sectionVariants.experiences;
+        if (ev === 'cards') {
+          expZone.className = 'grid grid-cols-2 gap-2 text-[11px]';
+          expZone.innerHTML = data.experiences.map(e => `
+            <div class="p-2.5 rounded-xl bg-current/5 border border-current/10 space-y-1">
+              <div class="font-bold">${e.role}</div>
+              <div class="text-[10px] text-indigo-600 font-mono">${e.period}</div>
+              <p class="opacity-75 leading-snug">${e.desc}</p>
+            </div>`).join('');
+        } else if (ev === 'minimal') {
+          expZone.className = 'space-y-3 text-xs';
+          expZone.innerHTML = data.experiences.map(e => `
+            <div class="pb-2 border-b border-current/10">
+              <div class="flex justify-between font-bold"><span>${e.role}</span><span class="text-[10px] opacity-60">${e.period}</span></div>
+              <p class="text-[11px] opacity-75 mt-0.5">${e.desc}</p>
+            </div>`).join('');
+        } else {
+          expZone.className = 'space-y-3 text-xs';
+          expZone.innerHTML = data.experiences.map(e => `
+            <div class="border-l-2 border-indigo-500 pl-3 space-y-0.5">
+              <div class="flex justify-between font-bold"><span>${e.role}</span><span class="text-[10px] font-mono opacity-60">${e.period}</span></div>
+              <p class="text-[11px] opacity-75 leading-relaxed">${e.desc}</p>
+            </div>`).join('');
+        }
+      }
+
+      // 3. Render Projects according to sectionVariants.projects ('bento' | 'minimal')
+      const projZone = document.getElementById('render-projects');
+      if (projZone) {
+        const pv = sectionVariants.projects;
+        if (pv === 'minimal') {
+          projZone.className = 'space-y-2 text-xs';
+          projZone.innerHTML = data.projects.map(p => `
+            <div class="flex justify-between items-baseline border-b border-current/10 pb-1.5">
+              <div><span class="font-bold">${p.name}</span> — <span class="text-[11px] opacity-75">${p.summary}</span></div>
+              <span class="text-[10px] font-mono text-indigo-600 shrink-0 ml-2">${p.tech}</span>
+            </div>`).join('');
+        } else {
+          projZone.className = 'space-y-2.5 text-xs';
+          projZone.innerHTML = data.projects.map(p => `
+            <div class="p-2.5 rounded-xl bg-current/5 border border-current/10 space-y-0.5">
+              <div class="flex justify-between font-bold"><span>${p.name}</span><span class="text-[10px] font-mono text-indigo-600">${p.tech}</span></div>
+              <p class="text-[11px] opacity-75">${p.summary}</p>
+            </div>`).join('');
+        }
+      }
+
+      // Sync Inspector List
+      const editorList = document.getElementById('db-exp-editor-list');
+      if (editorList) {
+        editorList.innerHTML = data.experiences.map((e, idx) => `
+          <div class="p-2.5 rounded-xl ui-subpanel border space-y-1">
+            <input value="${e.role}" oninput="hostDbProfiles[currentProfileKey].experiences[${idx}].role=this.value; renderAllDatabaseSections()" class="w-full px-2 py-1 rounded border ui-border bg-transparent font-bold" />
+            <textarea rows="2" oninput="hostDbProfiles[currentProfileKey].experiences[${idx}].desc=this.value; renderAllDatabaseSections()" class="w-full p-1.5 rounded border ui-border bg-transparent text-[11px]">${e.desc}</textarea>
+          </div>`).join('');
+      }
+    }
+
+    function setSkillsVariant(v) { sectionVariants.skills = v; renderAllDatabaseSections(); populateVariantDropdown('skills'); showToast('⚡ Đã đổi kiểu hiển thị Section Kỹ năng sang: ' + v.toUpperCase()); }
+    function setExpVariant(v) { sectionVariants.experiences = v; renderAllDatabaseSections(); populateVariantDropdown('experiences'); showToast('💼 Đã đổi kiểu hiển thị Section Kinh nghiệm sang: ' + v.toUpperCase()); }
+    function setProjVariant(v) { sectionVariants.projects = v; renderAllDatabaseSections(); populateVariantDropdown('projects'); showToast('🚀 Đã đổi kiểu hiển thị Section Dự án sang: ' + v.toUpperCase()); }
+
+    function populateVariantDropdown(secKey) {
+      const sel = document.getElementById('tb-variant-select');
+      if (!sel) return;
+      sel.innerHTML = '';
+      const optionsMap = {
+        skills: [
+          { val: 'tags', text: 'Kiểu: Nhãn Tag Pills' },
+          { val: 'grid', text: 'Kiểu: Lưới 2 Cột (Grid)' },
+          { val: 'bars', text: 'Kiểu: Thanh Mức Độ (%)' },
+          { val: 'list', text: 'Kiểu: Danh sách (List)' }
+        ],
+        experiences: [
+          { val: 'timeline', text: 'Kiểu: Timeline Dọc' },
+          { val: 'cards', text: 'Kiểu: Thẻ Card 2 Cột' },
+          { val: 'minimal', text: 'Kiểu: Tạp chí Không Viền' }
+        ],
+        projects: [
+          { val: 'bento', text: 'Kiểu: Thẻ Bento Nổi' },
+          { val: 'minimal', text: 'Kiểu: Danh sách Tối giản' }
+        ],
+        personal: [
+          { val: 'standard', text: 'Kiểu: Header Chuẩn' }
+        ]
+      };
+      const opts = optionsMap[secKey] || optionsMap.personal;
+      opts.forEach(o => {
+        const opt = document.createElement('option');
+        opt.value = o.val;
+        opt.textContent = o.text;
+        opt.selected = (sectionVariants[secKey] === o.val);
+        sel.appendChild(opt);
+      });
+    }
+
+    function onChangeActiveSectionVariant(val) {
+      if (!activeBlock) return;
+      const secKey = activeBlock.dataset.sectionKey;
+      if (secKey === 'skills') setSkillsVariant(val);
+      else if (secKey === 'experiences') setExpVariant(val);
+      else if (secKey === 'projects') setProjVariant(val);
+    }
+
+    // =========================================================================
+    // 2. INDEPENDENT BACKGROUND ALPHA (OPACITY) SO OVERLAPPING BLOCKS BLEND NATURALLY!
+    // =========================================================================
+    function hexToRgba(hex, alphaPct) {
+      const clean = hex.replace('#', '');
+      const bigint = parseInt(clean, 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return `rgba(${r}, ${g}, ${b}, ${(alphaPct / 100).toFixed(2)})`;
+    }
+
+    function updateBlockBgColorAndAlpha() {
+      if (!activeBlock) return;
+      const hex = document.getElementById('tb-bg-color').value;
+      const alpha = Number(document.getElementById('tb-bg-alpha').value);
+      activeBlock.dataset.bgHex = hex;
+      activeBlock.dataset.bgAlpha = alpha;
+      activeBlock.style.backgroundColor = hexToRgba(hex, alpha);
+      if (alpha === 0) activeBlock.style.borderColor = 'transparent';
+      document.getElementById('tb-bg-alpha-lbl').textContent = alpha + '%';
+    }
+
+    function setBlockBgRgba(block, hex, alphaPct, textColor = '#18181b') {
+      if (!block) return;
+      block.dataset.bgHex = hex;
+      block.dataset.bgAlpha = alphaPct;
+      block.style.backgroundColor = hexToRgba(hex, alphaPct);
+      block.style.color = textColor;
+      block.style.borderColor = alphaPct === 0 ? 'transparent' : 'rgba(120,120,120,0.18)';
+    }
+
+    // =========================================================================
+    // 3. 4 TRULY DISTINCT SPATIAL TEMPLATES (Rearranges Coordinates, Alpha & Variants!)
+    // =========================================================================
+    function applySpatialTemplate(tplId) {
+      const board = document.getElementById('page-artboard');
+      const p = document.getElementById('blk-sec-personal');
+      const e = document.getElementById('blk-sec-experiences');
+      const pr = document.getElementById('blk-sec-projects');
+      const sk = document.getElementById('blk-sec-skills');
+
+      if (tplId === 'vogue-transparent') {
+        // Mẫu 1: Nền giấy kem ấm, TẤT CẢ các khối trong suốt nền (Bg Alpha = 0%) để lộ lớp hòa trộn phía dưới!
+        board.style.background = '#FAF6F0';
+        if (p)  { p.style.left='32px'; p.style.top='28px'; p.style.width='531px'; p.style.height='125px'; setBlockBgRgba(p, '#ffffff', 0, '#1c1917'); }
+        if (e)  { e.style.left='32px'; e.style.top='170px'; e.style.width='336px'; e.style.height='295px'; setBlockBgRgba(e, '#ffffff', 0, '#1c1917'); }
+        if (pr) { pr.style.left='32px'; pr.style.top='480px'; pr.style.width='336px'; pr.style.height='245px'; setBlockBgRgba(pr, '#ffffff', 0, '#1c1917'); }
+        if (sk) { sk.style.left='382px'; sk.style.top='170px'; sk.style.width='181px'; sk.style.height='295px'; setBlockBgRgba(sk, '#ffffff', 0, '#1c1917'); }
+        sectionVariants.skills = 'tags';
+        sectionVariants.experiences = 'minimal';
+        sectionVariants.projects = 'minimal';
+      } else if (tplId === 'sidebar-left-exec') {
+        // Mẫu 2: Cột Sidebar Trái màu tối (#0f172a), Cột Phải sáng, Kỹ năng dạng Thanh Progress Bar!
+        board.style.background = '#FFFFFF';
+        if (p)  { p.style.left='225px'; p.style.top='28px'; p.style.width='340px'; p.style.height='130px'; setBlockBgRgba(p, '#f8fafc', 100, '#0f172a'); }
+        if (sk) { sk.style.left='24px'; sk.style.top='28px'; sk.style.width='185px'; sk.style.height='440px'; setBlockBgRgba(sk, '#0f172a', 96, '#f8fafc'); }
+        if (e)  { e.style.left='225px'; e.style.top='172px'; e.style.width='340px'; e.style.height='295px'; setBlockBgRgba(e, '#ffffff', 100, '#0f172a'); }
+        if (pr) { pr.style.left='225px'; pr.style.top='482px'; pr.style.width='340px'; pr.style.height='245px'; setBlockBgRgba(pr, '#ffffff', 100, '#0f172a'); }
+        sectionVariants.skills = 'bars';
+        sectionVariants.experiences = 'timeline';
+        sectionVariants.projects = 'bento';
+      } else if (tplId === 'swiss-bento') {
+        // Mẫu 3: Lưới Bento đối xứng, Kỹ năng dạng Lưới 2 cột, Kinh nghiệm dạng Card 2 Cột!
+        board.style.background = '#F1F5F9';
+        if (p)  { p.style.left='28px'; p.style.top='24px'; p.style.width='539px'; p.style.height='120px'; setBlockBgRgba(p, '#ffffff', 100, '#0f172a'); }
+        if (e)  { e.style.left='28px'; e.style.top='158px'; e.style.width='539px'; e.style.height='235px'; setBlockBgRgba(e, '#ffffff', 100, '#0f172a'); }
+        if (sk) { sk.style.left='28px'; sk.style.top='408px'; sk.style.width='260px'; sk.style.height='240px'; setBlockBgRgba(sk, '#ffffff', 100, '#0f172a'); }
+        if (pr) { pr.style.left='304px'; pr.style.top='408px'; pr.style.width='263px'; pr.style.height='240px'; setBlockBgRgba(pr, '#ffffff', 100, '#0f172a'); }
+        sectionVariants.skills = 'grid';
+        sectionVariants.experiences = 'cards';
+        sectionVariants.projects = 'bento';
+      } else if (tplId === 'midnight-glass') {
+        // Mẫu 4: Nền tối Nghệ thuật + Các khối Kính mờ Xuyên thấu (Bg Alpha = 16% + Backdrop Blur)!
+        board.style.background = 'linear-gradient(135deg, #090d16 0%, #1e1b4b 55%, #311042 100%)';
+        [p, e, pr, sk].forEach(b => {
+          if (b) { setBlockBgRgba(b, '#ffffff', 14, '#f8fafc'); b.style.backdropFilter = 'blur(12px)'; }
+        });
+        sectionVariants.skills = 'bars';
+        sectionVariants.experiences = 'timeline';
+      }
+
+      renderAllDatabaseSections();
+      if (activeBlock) selectBlock(activeBlock);
+      playAllBlocksAnimation();
+      showToast('🎨 Đã áp dụng Bố cục Không gian & Kiểu Section của Mẫu!');
+    }
+
+    // =========================================================================
+    // 4. UNIVERSAL DRAG & 8-DIRECTION RESIZE ENGINE
+    // =========================================================================
+    let activeBlock = document.getElementById('blk-sec-skills');
+
+    function initAllBlocks() {
+      document.querySelectorAll('.studio-block').forEach(attachBlockInteractions);
+      refreshLayerTree();
+    }
+
+    function attachBlockInteractions(block) {
+      if (!block.querySelector('.resize-handle')) {
+        ['nw','n','ne','e','se','s','sw','w'].forEach(dir => {
+          const h = document.createElement('div');
+          h.className = `resize-handle rh-${dir}`;
+          h.dataset.resizeDir = dir;
+          block.appendChild(h);
+        });
+      }
+
+      block.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        selectBlock(block);
+
+        const resizeDir = e.target.dataset.resizeDir;
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const startLeft = parseInt(block.style.left) || 0;
+        const startTop = parseInt(block.style.top) || 0;
+        const startW = block.offsetWidth;
+        const startH = block.offsetHeight;
+
+        if (!resizeDir && e.target.isContentEditable && document.activeElement === e.target) return;
+
+        const onMove = (me) => {
+          const dx = (me.clientX - startX) / currentZoom;
+          const dy = (me.clientY - startY) / currentZoom;
+          if (resizeDir) {
+            if (resizeDir.includes('e')) block.style.width = Math.max(80, startW + dx) + 'px';
+            if (resizeDir.includes('s')) block.style.height = Math.max(45, startH + dy) + 'px';
+            if (resizeDir.includes('w')) {
+              const nw = Math.max(80, startW - dx);
+              block.style.width = nw + 'px';
+              block.style.left = (startLeft + (startW - nw)) + 'px';
+            }
+            if (resizeDir.includes('n')) {
+              const nh = Math.max(45, startH - dy);
+              block.style.height = nh + 'px';
+              block.style.top = (startTop + (startH - nh)) + 'px';
+            }
+          } else {
+            block.style.left = Math.round(startLeft + dx) + 'px';
+            block.style.top = Math.round(startTop + dy) + 'px';
+          }
+        };
+
+        const onUp = () => {
+          window.removeEventListener('mousemove', onMove);
+          window.removeEventListener('mouseup', onUp);
+        };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+      });
+    }
+
+    function selectBlock(block) {
+      document.querySelectorAll('.studio-block').forEach(b => b.classList.remove('is-selected'));
+      activeBlock = block;
+      block.classList.add('is-selected');
+
+      const title = (block.dataset.blockTitle || 'Khối').replace('Section: ', '');
+      const type = block.dataset.blockType || 'free';
+      document.getElementById('tb-block-name').textContent = title;
+
+      // Sync Background Alpha Slider & Color Picker to selected block!
+      const hex = block.dataset.bgHex || '#ffffff';
+      const alpha = block.dataset.bgAlpha !== undefined ? Number(block.dataset.bgAlpha) : 90;
+      document.getElementById('tb-bg-color').value = hex;
+      document.getElementById('tb-bg-alpha').value = alpha;
+      document.getElementById('tb-bg-alpha-lbl').textContent = alpha + '%';
+
+      // Show Section Variant Selector ONLY when a Section Block is selected
+      const secCtrl = document.getElementById('tb-section-controls');
+      if (type === 'section') {
+        secCtrl.classList.remove('hidden');
+        secCtrl.classList.add('inline-flex');
+        populateVariantDropdown(block.dataset.sectionKey || 'personal');
+      } else {
+        secCtrl.classList.add('hidden');
+        secCtrl.classList.remove('inline-flex');
+      }
+      refreshLayerTree();
+    }
+
+    function deselectAllIfBackground(e) {
+      if (e.target.id === 'canvas-viewport' || e.target.id === 'page-artboard') {
+        document.querySelectorAll('.studio-block').forEach(b => b.classList.remove('is-selected'));
+        activeBlock = null;
+        document.getElementById('tb-block-name').textContent = 'Trang thiết kế';
+        document.getElementById('tb-section-controls').classList.add('hidden');
+        refreshLayerTree();
+      }
+    }
+
+    // =========================================================================
+    // 5. ADDING NEW BLOCKS (DEFAULT TRANSPARENT OR TRANSLUCENT SO THEY DON'T HIDE LOWER LAYERS!)
+    // =========================================================================
+    function addFreeTextBlock(kind) {
+      const board = document.getElementById('page-artboard');
+      const div = document.createElement('div');
+      div.dataset.blockType = 'text';
+      div.dataset.blockTitle = 'Văn bản Tự do';
+      div.dataset.bgHex = '#ffffff';
+      div.dataset.bgAlpha = '0'; // 0% Transparent background by default so it blends over lower layers!
+      div.style.left = '130px'; div.style.top = '130px'; div.style.width = '280px'; div.style.height = '75px'; div.style.zIndex = '50';
+      div.style.backgroundColor = 'rgba(255,255,255,0)';
+      div.className = 'studio-block anim-pop-elastic p-3 rounded-xl';
+      div.innerHTML = kind === 'heading'
+        ? `<div class="block-badge">🔤 Tiêu đề Tự do (Nền trong suốt 0%)</div><h2 contenteditable="true" style="font-family:'Playfair Display',serif;font-size:26px;" class="font-bold outline-none">Tiêu đề Nghệ thuật Tự do</h2>`
+        : `<div class="block-badge">🔤 Văn bản Tự do (Nền trong suốt 0%)</div><p contenteditable="true" class="text-xs outline-none">Đoạn văn bản tự do có nền trong suốt (0%) — kéo đè lên bất kỳ khối nào mà không che khuất!</p>`;
+      board.appendChild(div);
+      attachBlockInteractions(div);
+      selectBlock(div);
+      showToast('🔤 Đã thêm Văn bản Tự do (Nền trong suốt 0% — kéo thanh Bg Alpha nếu muốn đổ màu nền)!');
+    }
+
+    function addSectionBlock(secKey) {
+      const board = document.getElementById('page-artboard');
+      const div = document.createElement('div');
+      div.dataset.blockType = 'section';
+      div.dataset.sectionKey = secKey;
+      div.dataset.blockTitle = 'Section: Học vấn';
+      div.dataset.bgHex = '#ffffff';
+      div.dataset.bgAlpha = '82';
+      div.style.left = '90px'; div.style.top = '280px'; div.style.width = '340px'; div.style.height = '150px'; div.style.zIndex = '45';
+      div.style.backgroundColor = 'rgba(255,255,255,0.82)';
+      div.style.backdropFilter = 'blur(8px)';
+      div.className = 'studio-block anim-pop-elastic p-4 rounded-2xl border border-stone-200/80 shadow-lg';
+      div.innerHTML = `<div class="block-badge">🧩 Section: Học vấn & Chứng chỉ</div><div class="text-[11px] font-extrabold uppercase tracking-wider border-b pb-1.5 mb-2">🎓 Học vấn & Chứng chỉ</div><div contenteditable="true" class="text-xs outline-none"><strong>Đại học Bách Khoa Hà Nội</strong><br><span class="opacity-75">Kỹ sư Hệ thống Thông tin • Giải Nhất Sáng tạo Công nghệ</span></div>`;
+      board.appendChild(div);
+      attachBlockInteractions(div);
+      selectBlock(div);
+      showToast('🧩 Đã thêm Section Học vấn (Độ trong suốt nền 82% + Kính mờ)!');
+    }
+
+    function addMediaBlock(mType) {
+      const board = document.getElementById('page-artboard');
+      const div = document.createElement('div');
+      div.dataset.blockType = 'media';
+      div.dataset.bgHex = '#0f172a';
+      div.dataset.bgAlpha = '85';
+      div.style.left = '160px'; div.style.top = '220px'; div.style.width = '220px'; div.style.height = '170px'; div.style.zIndex = '48';
+      if (mType === 'image') {
+        div.dataset.blockTitle = 'Khối Ảnh';
+        div.className = 'studio-block anim-pop-elastic rounded-2xl p-4 text-white flex flex-col justify-between shadow-xl';
+        div.style.background = 'linear-gradient(135deg, rgba(79,70,229,0.85), rgba(236,72,153,0.85))';
+        div.innerHTML = `<div class="block-badge">🖼 Khối Ảnh Media</div><span class="text-[10px] uppercase tracking-widest">Image Layer</span><div contenteditable="true" class="font-serif text-lg font-bold outline-none">Ảnh Nghệ Thuật</div>`;
+      } else if (mType === 'video') {
+        div.dataset.blockTitle = 'Khối Video MP4';
+        div.className = 'studio-block anim-pop-elastic rounded-2xl p-4 bg-zinc-950/90 text-white flex flex-col justify-between shadow-xl';
+        div.innerHTML = `<div class="block-badge">🎬 Khối Video MP4</div><div class="text-[10px] text-rose-400 font-bold">● VIDEO PLAYER</div><button onclick="this.textContent=this.textContent==='⏸ Đang phát'?'▶ Phát Video':'⏸ Đang phát'" class="my-auto mx-auto px-4 py-1.5 rounded-full bg-rose-600 text-xs font-bold">▶ Phát Video</button><div class="h-1 bg-zinc-800 rounded"><div class="w-1/2 h-full bg-rose-500"></div></div>`;
+      } else {
+        div.dataset.blockTitle = 'Khối 3D';
+        div.className = 'studio-block anim-pop-elastic rounded-2xl p-3 bg-slate-900/90 text-white flex flex-col items-center justify-between shadow-xl';
+        div.innerHTML = `<div class="block-badge">🧊 Khối Vật thể 3D</div><div class="text-[10px] text-sky-300 font-bold">3D LAYER</div><div class="cube-3d-scene my-auto"><div class="cube-3d"><div class="cube-face cf-front">3D</div><div class="cube-face cf-back">GL</div><div class="cube-face cf-right">X</div><div class="cube-face cf-left">Y</div><div class="cube-face cf-top">Z</div><div class="cube-face cf-bottom">OK</div></div></div><div class="text-[10px]">360°</div>`;
+      }
+      board.appendChild(div);
+      attachBlockInteractions(div);
+      selectBlock(div);
+    }
+
+    function addShapeBlock(kind) {
+      const board = document.getElementById('page-artboard');
+      const div = document.createElement('div');
+      div.dataset.blockType = 'shape';
+      div.dataset.blockTitle = 'Khối Hòa trộn';
+      div.dataset.bgHex = '#f43f5e';
+      div.dataset.bgAlpha = '65';
+      div.style.left = '200px'; div.style.top = '120px'; div.style.width = '140px'; div.style.height = '140px'; div.style.zIndex = '55';
+      div.style.mixBlendMode = 'multiply';
+      div.style.backgroundColor = 'rgba(244, 63, 94, 0.65)';
+      div.className = 'studio-block rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-md';
+      div.innerHTML = `<div class="block-badge">🥞 Quả cầu Hòa trộn (Multiply)</div><span>Multiply</span>`;
+      board.appendChild(div);
+      attachBlockInteractions(div);
+      selectBlock(div);
+    }
+
+    // =========================================================================
+    // 6. TOOLBAR & INSPECTOR HELPERS
+    // =========================================================================
+    let currentFontSize = 13;
+    function stepFontSize(d) {
+      currentFontSize = Math.min(42, Math.max(10, currentFontSize + d));
+      document.getElementById('tb-fontsize-val').textContent = currentFontSize;
+      if (activeBlock) activeBlock.style.fontSize = currentFontSize + 'px';
+    }
+    function toggleInlineStyle(prop, valOn, valOff) {
+      if (!activeBlock) return;
+      activeBlock.style[prop] = (activeBlock.style[prop] === valOn) ? valOff : valOn;
+    }
+    function applyBlockStyle(prop, val) { if (activeBlock) activeBlock.style[prop] = val; }
+    function setTextFx(cls) {
+      if (!activeBlock) return;
+      activeBlock.classList.remove('fx-hollow','fx-splice','fx-neon','fx-gradient');
+      if (cls !== 'none') activeBlock.classList.add(cls);
+    }
+    function applyGrad() {
+      const c1 = document.getElementById('g-c1').value;
+      const c2 = document.getElementById('g-c2').value;
+      const a = document.getElementById('g-ang').value;
+      if (activeBlock) activeBlock.style.background = `linear-gradient(${a}deg, ${c1}, ${c2})`;
+      else document.getElementById('page-artboard').style.background = `linear-gradient(${a}deg, ${c1}, ${c2})`;
+    }
+    function insertCustomSvg() {
+      const board = document.getElementById('page-artboard');
+      const d = document.createElement('div');
+      d.dataset.blockType = 'shape'; d.dataset.blockTitle = 'Custom SVG';
+      d.style.left = '220px'; d.style.top = '180px'; d.style.width = '100px'; d.style.height = '100px'; d.style.zIndex = '55';
+      d.className = 'studio-block p-2';
+      d.innerHTML = `<div class="block-badge">❖ Custom SVG</div>` + document.getElementById('inp-svg').value;
+      board.appendChild(d);
+      attachBlockInteractions(d);
+      selectBlock(d);
+    }
+    function importCustomGoogleFont() {
+      const n = document.getElementById('inp-gfont').value.trim();
+      if (!n) return;
+      const l = document.createElement('link');
+      l.rel = 'stylesheet'; l.href = `https://fonts.googleapis.com/css2?family=${n.replace(/\s+/g,'+')}:wght@400;700&display=swap`;
+      document.head.appendChild(l);
+      const sel = document.getElementById('tb-font-family');
+      const opt = document.createElement('option');
+      opt.value = `'${n}', sans-serif`; opt.textContent = n; opt.selected = true;
+      sel.appendChild(opt);
+      applyBlockStyle('fontFamily', opt.value);
+      showToast(`🔤 Đã nạp Google Font "${n}"!`);
+    }
+    async function uploadFontFile(inp) {
+      const f = inp.files[0]; if (!f) return;
+      const name = f.name.replace(/\.[^.]+$/, '');
+      const ff = new FontFace(name, await f.arrayBuffer());
+      await ff.load(); document.fonts.add(ff);
+      applyBlockStyle('fontFamily', `'${name}'`);
+      showToast(`🔤 Đã nạp file font "${name}"!`);
+    }
+    function applyFilters() {
+      if (!activeBlock) return;
+      const b = document.getElementById('flt-b').value;
+      const c = document.getElementById('flt-c').value;
+      const h = document.getElementById('flt-h').value;
+      activeBlock.style.filter = `brightness(${b}%) contrast(${c}%) hue-rotate(${h}deg)`;
+    }
+    function runCustomJsonAnim() {
+      if (!activeBlock) return;
+      try { activeBlock.animate(JSON.parse(document.getElementById('inp-anim-json').value), { duration: 650 }); } catch(e) {}
+    }
+
+    let currentLeftTab = 'templates';
+    let isLeftDrawerOpen = true;
+    function toggleLeftDrawer(tab) {
+      const drawer = document.getElementById('left-drawer');
+      if (currentLeftTab === tab && isLeftDrawerOpen) { closeLeftDrawer(); return; }
+      currentLeftTab = tab; isLeftDrawerOpen = true;
+      drawer.classList.remove('hidden'); drawer.classList.add('flex');
+      ['templates','sections','text','media','shapes','layers'].forEach(t => {
+        document.getElementById('dtab-' + t).classList.toggle('hidden', t !== tab);
+        document.getElementById('rail-btn-' + t).className = (t === tab)
+          ? 'w-12 py-2 rounded-xl flex flex-col items-center gap-1 ui-accent-btn'
+          : 'w-12 py-2 rounded-xl flex flex-col items-center gap-1 ui-muted hover:opacity-100';
+      });
+      if (tab === 'layers') refreshLayerTree();
+    }
+    function closeLeftDrawer() {
+      isLeftDrawerOpen = false;
+      document.getElementById('left-drawer').classList.add('hidden');
+      document.getElementById('left-drawer').classList.remove('flex');
+    }
+
+    function openRightInspector(pane) {
+      const insp = document.getElementById('right-inspector');
+      insp.classList.remove('hidden'); insp.classList.add('flex');
+      ['section-data','style-fx','motion'].forEach(p => {
+        document.getElementById('insp-pane-' + p).classList.toggle('hidden', p !== pane);
+      });
+    }
+    function closeRightInspector() {
+      const insp = document.getElementById('right-inspector');
+      insp.classList.add('hidden'); insp.classList.remove('flex');
+    }
+
+    let currentZoom = 1.0;
+    function changePageSize(dimStr) {
+      const [w, h] = dimStr.split('x').map(Number);
+      const board = document.getElementById('page-artboard');
+      board.style.width = w + 'px'; board.style.height = h + 'px';
+      document.getElementById('page-dim-readout').textContent = `${w}×${h}`;
+    }
+    function setCanvasZoom(z) {
+      currentZoom = Math.min(1.4, Math.max(0.4, z));
+      document.getElementById('page-artboard').style.transform = `scale(${currentZoom})`;
+      document.getElementById('zoom-pct-lbl').textContent = Math.round(currentZoom * 100) + '%';
+      document.getElementById('zoom-slider').value = currentZoom;
+    }
+
+    function moveBlockLayer(delta) {
+      if (!activeBlock) return;
+      const cur = parseInt(activeBlock.style.zIndex) || 10;
+      activeBlock.style.zIndex = Math.max(1, cur + delta * 5);
+      refreshLayerTree();
+    }
+    function duplicateActiveBlock() {
+      if (!activeBlock) return;
+      const c = activeBlock.cloneNode(true);
+      c.id = 'blk-clone-' + Date.now();
+      c.style.left = (parseInt(activeBlock.style.left) + 20) + 'px';
+      c.style.top = (parseInt(activeBlock.style.top) + 20) + 'px';
+      document.getElementById('page-artboard').appendChild(c);
+      attachBlockInteractions(c);
+      selectBlock(c);
+    }
+    function deleteActiveBlock() {
+      if (!activeBlock) return;
+      activeBlock.remove(); activeBlock = null; refreshLayerTree();
+    }
+    function refreshLayerTree() {
+      const tree = document.getElementById('layer-tree-list');
+      if (!tree) return;
+      tree.innerHTML = '';
+      const blocks = Array.from(document.querySelectorAll('.studio-block')).sort((a,b) => (parseInt(b.style.zIndex)||10)-(parseInt(a.style.zIndex)||10));
+      blocks.forEach(b => {
+        const r = document.createElement('div');
+        r.className = `p-2 rounded-xl border cursor-pointer flex justify-between items-center ${b===activeBlock?'border-indigo-600 bg-indigo-500/10 font-bold':'ui-border ui-subpanel'}`;
+        r.innerHTML = `<span class="truncate">${b.dataset.blockTitle||'Block'}</span><span class="font-mono text-[10px] ui-muted">z:${b.style.zIndex||10}</span>`;
+        r.onclick = () => selectBlock(b);
+        tree.appendChild(r);
+      });
+    }
+
+    function switchHostDatabaseProfile(key) { currentProfileKey = key; renderAllDatabaseSections(); showToast('🔌 Đã chuyển đổi Hồ sơ Database!'); }
+    function addExperienceItemToDb() {
+      hostDbProfiles[currentProfileKey].experiences.unshift({ role: 'Chức danh Mới', period: '2026', desc: 'Mô tả công việc mới.' });
+      renderAllDatabaseSections();
+    }
+    function addSkillToDb() {
+      const inp = document.getElementById('inp-new-skill');
+      if (!inp.value.trim()) return;
+      hostDbProfiles[currentProfileKey].skills.push({ name: inp.value.trim(), pct: 90 });
+      inp.value = ''; renderAllDatabaseSections();
+    }
+    function triggerBlockAnim(cls) {
+      if (!activeBlock) return;
+      activeBlock.classList.remove('anim-fade-rise','anim-pop-elastic','anim-flip-x','anim-float-loop');
+      void activeBlock.offsetWidth; activeBlock.classList.add(cls);
+    }
+    function playAllBlocksAnimation() {
+      document.querySelectorAll('.studio-block').forEach((b, i) => {
+        b.classList.remove('anim-fade-rise'); void b.offsetWidth;
+        b.style.animationDelay = (i * 60) + 'ms'; b.classList.add('anim-fade-rise');
+      });
+    }
+    function confirmSaveTemplate() {
+      const name = document.getElementById('inp-new-tpl-name').value;
+      const list = document.getElementById('template-cards-list');
+      const c = document.createElement('div');
+      c.onclick = () => applySpatialTemplate('vogue-transparent');
+      c.className = 'p-3 rounded-xl border-2 border-indigo-500 cursor-pointer space-y-1';
+      c.innerHTML = `<div class="flex justify-between"><span class="font-bold">${name}</span><span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-600 font-semibold">SAVED</span></div>`;
+      list.prepend(c);
+      document.getElementById('save-tpl-modal').classList.add('hidden');
+      showToast('✓ Đã lưu mẫu mới vào Kho Mẫu!');
+    }
+    function showToast(msg) {
+      const t = document.getElementById('studio-toast');
+      t.textContent = msg; t.classList.remove('hidden');
+      clearTimeout(window._t); window._t = setTimeout(() => t.classList.add('hidden'), 2800);
+    }
+
+    renderAllDatabaseSections();
+    initAllBlocks();
+    selectBlock(document.getElementById('blk-sec-skills'));
+  </script>
+</body>
+</html>

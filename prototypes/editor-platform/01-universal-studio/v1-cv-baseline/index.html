@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>P04B Mockup — CV Editor Module (@vuonganhvu/editor-cv)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .contract-tag { display: none; }
+    body.show-contracts .contract-tag { display: inline-block; }
+    body.show-contracts [data-contract] { outline: 2px dashed #818cf8; outline-offset: 2px; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-screen flex flex-col font-sans overflow-hidden">
+
+  <!-- Top Gate 1 Simulator Toolbar -->
+  <div class="bg-indigo-950 border-b border-indigo-800 px-4 py-2 flex items-center justify-between text-xs">
+    <div class="flex items-center gap-3">
+      <a href="../../../../index.html" class="text-indigo-300 hover:text-white font-medium">← Quay lại Gallery</a>
+      <span class="text-indigo-400">|</span>
+      <span class="font-mono font-semibold text-indigo-200">P04B CV EDITOR MOCKUP:</span>
+      <button onclick="switchTemplate('modern')" class="px-2.5 py-1 rounded bg-indigo-600 text-white">Template: Modern Tech</button>
+      <button onclick="switchTemplate('executive')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700">Template: Executive</button>
+      <button onclick="document.getElementById('export-modal').classList.remove('hidden')" class="px-2.5 py-1 rounded bg-emerald-700 hover:bg-emerald-600 text-white font-medium">Mở Modal Export PDF & n8n</button>
+    </div>
+    <label class="flex items-center gap-2 cursor-pointer bg-slate-900 border border-indigo-600 px-3 py-1 rounded text-indigo-300">
+      <input type="checkbox" onchange="document.body.classList.toggle('show-contracts', this.checked)" />
+      <span>Hiển thị SDK Contract Overlay</span>
+    </label>
+  </div>
+
+  <!-- 3-Column CV Editor Workspace -->
+  <div class="flex-1 grid grid-cols-12 overflow-hidden">
+
+    <!-- Column 1: Section Navigation & Ordering (2 cols) -->
+    <aside class="col-span-2 bg-slate-900 border-r border-slate-800 p-4 flex flex-col justify-between" data-contract="CvEditorEngine.reorderSections()">
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Cấu trúc CV</span>
+          <span class="contract-tag text-[10px] font-mono bg-indigo-950 text-indigo-300 px-1.5 py-0.5 rounded">sectionOrder[]</span>
+        </div>
+        <ul class="space-y-1.5 text-xs">
+          <li class="px-3 py-2 rounded-lg bg-indigo-600/20 border border-indigo-500/50 text-indigo-200 font-medium flex justify-between items-center cursor-pointer">
+            <span>☰ 1. Thông tin cá nhân</span>
+            <span class="text-[10px] text-indigo-400">Fixed</span>
+          </li>
+          <li class="px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-200 flex justify-between items-center cursor-move">
+            <span>☰ 2. Kinh nghiệm (2)</span>
+            <span class="text-slate-500">↕</span>
+          </li>
+          <li class="px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-200 flex justify-between items-center cursor-move">
+            <span>☰ 3. Học vấn (1)</span>
+            <span class="text-slate-500">↕</span>
+          </li>
+          <li class="px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-200 flex justify-between items-center cursor-move">
+            <span>☰ 4. Kỹ năng (6)</span>
+            <span class="text-slate-500">↕</span>
+          </li>
+          <li class="px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-200 flex justify-between items-center cursor-move">
+            <span>☰ 5. Ngoại ngữ (2)</span>
+            <span class="text-slate-500">↕</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 text-[11px] text-slate-400 space-y-1">
+        <div class="font-mono text-indigo-400">@vuonganhvu/editor-cv</div>
+        <div>Schema Version: <code>2.0</code></div>
+        <div>Formats: <code>pdf, json, docx</code></div>
+      </div>
+    </aside>
+
+    <!-- Column 2: Block Form Editor (5 cols) -->
+    <section class="col-span-5 bg-slate-950 border-r border-slate-800 p-6 overflow-y-auto space-y-6" data-contract="EditorEngine.serialize() / onChange">
+      <div class="flex items-center justify-between">
+        <h2 class="text-base font-bold">Chỉnh sửa Nội dung CV</h2>
+        <span class="contract-tag text-[10px] font-mono bg-indigo-950 text-indigo-300 border border-indigo-700 px-2 py-0.5 rounded">Emits onChange({dirty: true})</span>
+      </div>
+
+      <!-- Personal Info Block -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-indigo-400">1. Thông tin cá nhân (personalInfo)</h3>
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <label class="text-slate-400 block mb-1">Họ và tên *</label>
+            <input id="inp-name" oninput="syncPreview()" value="Vương Anh Vũ" class="w-full bg-slate-950 border border-slate-700 rounded px-3 py-1.5 text-white" />
+          </div>
+          <div>
+            <label class="text-slate-400 block mb-1">Chức danh (Headline) *</label>
+            <input id="inp-title" oninput="syncPreview()" value="Principal Software Architect" class="w-full bg-slate-950 border border-slate-700 rounded px-3 py-1.5 text-white" />
+          </div>
+          <div>
+            <label class="text-slate-400 block mb-1">Email *</label>
+            <input id="inp-email" oninput="syncPreview()" value="vuonganhvu@example.vn" class="w-full bg-slate-950 border border-slate-700 rounded px-3 py-1.5 text-white" />
+          </div>
+          <div>
+            <label class="text-slate-400 block mb-1">Địa điểm</label>
+            <input value="Hà Nội, Việt Nam" class="w-full bg-slate-950 border border-slate-700 rounded px-3 py-1.5 text-white" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Experience Block -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-indigo-400">2. Kinh nghiệm làm việc (experiences[])</h3>
+          <button class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">+ Thêm Kinh nghiệm</button>
+        </div>
+        <div class="bg-slate-950 border border-slate-800 rounded-lg p-3 space-y-2 text-xs">
+          <div class="flex justify-between font-semibold text-white">
+            <span>Platform Architect — Enterprise Ecosystem</span>
+            <span class="text-slate-400 font-mono">2023 — Hiện tại</span>
+          </div>
+          <textarea rows="3" class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-300">Thiết kế kiến trúc Hexagonal Modular cho hệ sinh thái ứng dụng trên nền tảng PostgreSQL, Redis Streams, SeaweedFS S3 và Keycloak SSO.</textarea>
+        </div>
+      </div>
+
+      <!-- Skills Block -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-indigo-400">4. Kỹ năng (skills[])</h3>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <span class="px-2.5 py-1 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800">Java 21 / Spring Boot 3</span>
+          <span class="px-2.5 py-1 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800">Hexagonal Architecture</span>
+          <span class="px-2.5 py-1 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800">PostgreSQL & Redis Streams</span>
+          <span class="px-2.5 py-1 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800">React / Vue / TypeScript SDK</span>
+          <span class="px-2.5 py-1 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800">Keycloak & SeaweedFS</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Column 3: Live A4 Preview Canvas (5 cols) -->
+    <section class="col-span-5 bg-slate-900 p-6 overflow-y-auto flex flex-col items-center" data-contract="CvPreviewRenderer (A4 Live Canvas)">
+      <div class="w-full flex items-center justify-between mb-3 text-xs text-slate-400">
+        <span>Live Preview (A4 • 210mm × 297mm)</span>
+        <span class="contract-tag font-mono bg-indigo-950 text-indigo-300 border border-indigo-700 px-2 py-0.5 rounded">exportClientBlob('pdf')</span>
+      </div>
+
+      <!-- A4 Sheet -->
+      <div id="a4-sheet" class="w-full max-w-md bg-white text-slate-900 rounded shadow-2xl p-8 space-y-5 min-h-[540px]">
+        <div id="a4-header" class="border-b-2 border-indigo-600 pb-4">
+          <h1 id="prev-name" class="text-2xl font-extrabold text-slate-900">Vương Anh Vũ</h1>
+          <div id="prev-title" class="text-sm font-semibold text-indigo-600 mt-0.5">Principal Software Architect</div>
+          <div id="prev-email" class="text-xs text-slate-500 mt-1">vuonganhvu@example.vn • Hà Nội, Việt Nam</div>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-700 mb-2">Kinh nghiệm Chuyên môn</h4>
+          <div class="text-xs space-y-1">
+            <div class="font-bold flex justify-between">
+              <span>Platform Architect — Enterprise Ecosystem</span>
+              <span class="text-slate-500">2023 – Hiện tại</span>
+            </div>
+            <p class="text-slate-600 leading-relaxed">
+              Thiết kế kiến trúc Hexagonal Modular cho hệ sinh thái ứng dụng trên nền tảng PostgreSQL, Redis Streams, SeaweedFS S3 và Keycloak SSO.
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-700 mb-2">Kỹ năng cốt lõi</h4>
+          <div class="flex flex-wrap gap-1.5 text-[11px]">
+            <span class="px-2 py-0.5 bg-slate-100 rounded font-medium">Java 21 / Spring Boot 3</span>
+            <span class="px-2 py-0.5 bg-slate-100 rounded font-medium">Hexagonal Architecture</span>
+            <span class="px-2 py-0.5 bg-slate-100 rounded font-medium">PostgreSQL & Redis Streams</span>
+            <span class="px-2 py-0.5 bg-slate-100 rounded font-medium">TypeScript SDK</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Export & n8n Connector Modal -->
+  <div id="export-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-md w-full p-6 space-y-4" data-contract="POST /api/v1/documents/{id}/exports">
+      <h3 class="text-base font-bold text-white">Xuất bản CV & Kích hoạt Connector</h3>
+      <div class="space-y-3 text-xs">
+        <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
+          <div class="font-semibold text-emerald-400">1. Client-Side Fast Export (MVP Default)</div>
+          <p class="text-slate-400 mt-1">Tạo PDF Blob trực tiếp từ <code>@vuonganhvu/editor-cv</code> và tải lên SeaweedFS qua Pre-signed URL.</p>
+        </div>
+        <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
+          <div class="font-semibold text-sky-400">2. Server-Side Export via Redis Stream</div>
+          <p class="text-slate-400 mt-1">Đẩy job vào <code>stream:export-jobs</code> và tùy chọn bắn kết quả sang <strong>n8n Workflow Connector</strong> (qua API Key).</p>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="document.getElementById('export-modal').classList.add('hidden')" class="px-3 py-1.5 rounded bg-slate-800 text-xs">Đóng</button>
+        <button onclick="document.getElementById('export-modal').classList.add('hidden')" class="px-4 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold">Xuất PDF & Lưu Artifact</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function syncPreview() {
+      document.getElementById('prev-name').textContent = document.getElementById('inp-name').value;
+      document.getElementById('prev-title').textContent = document.getElementById('inp-title').value;
+      document.getElementById('prev-email').textContent = document.getElementById('inp-email').value + ' • Hà Nội, Việt Nam';
+    }
+    function switchTemplate(tpl) {
+      const header = document.getElementById('a4-header');
+      if (tpl === 'executive') {
+        header.className = 'border-b-4 border-slate-900 pb-4 text-center';
+      } else {
+        header.className = 'border-b-2 border-indigo-600 pb-4';
+      }
+    }
+  </script>
+</body>
+</html>

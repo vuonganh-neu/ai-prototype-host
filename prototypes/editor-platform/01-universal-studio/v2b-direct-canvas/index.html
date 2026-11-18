@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Style B — Direct Canvas Manipulation (Canva Poster / Website Builder Style)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-950 text-zinc-100 h-screen flex flex-col font-sans overflow-hidden">
+
+  <!-- Top Control Bar -->
+  <div class="bg-zinc-900 border-b border-zinc-800 px-4 py-2 flex items-center justify-between text-xs">
+    <div class="flex items-center gap-3">
+      <a href="../../../../index.html" class="text-sky-400 hover:underline font-medium">← Quay lại Gallery</a>
+      <span class="text-zinc-600">|</span>
+      <span class="font-mono text-fuchsia-400 font-semibold">STYLE B — DIRECT ARTBOARD CANVAS + FLOATING PILL TOOLBAR (Hợp với Poster / Website / Map Editor)</span>
+    </div>
+    <a href="../../01-universal-studio/v2a-canva-hybrid/index.html" class="px-3 py-1 rounded bg-indigo-600 text-white font-medium">So sánh với Style A (Split Form + Live Preview) →</a>
+  </div>
+
+  <!-- Main 3-Pane Direct Canvas Workspace -->
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- Left: Icon Rail + Asset/Template Drawer -->
+    <aside class="w-72 bg-zinc-900 border-r border-zinc-800 flex">
+      <div class="w-14 border-r border-zinc-800 flex flex-col items-center py-4 gap-4 text-[10px]">
+        <div class="p-2 rounded-lg bg-fuchsia-600/20 text-fuchsia-300 border border-fuchsia-500/40 text-center">🎨<br/>Mẫu</div>
+        <div class="p-2 text-zinc-400 text-center">🔤<br/>Chữ</div>
+        <div class="p-2 text-zinc-400 text-center">🖼<br/>Ảnh</div>
+        <div class="p-2 text-zinc-400 text-center">📊<br/>Chart</div>
+      </div>
+      <div class="flex-1 p-4 space-y-3 text-xs overflow-y-auto">
+        <div class="font-bold text-sm">Kho Mẫu & Thành phần</div>
+        <div class="p-3 rounded-lg bg-zinc-950 border border-zinc-800 space-y-1">
+          <div class="font-semibold text-fuchsia-300">Kéo thả trực tiếp vào Artboard</div>
+          <p class="text-[11px] text-zinc-400">Phù hợp nhất cho <code>@vuonganhvu/editor-poster</code>, <code>editor-website</code>, <code>editor-chart</code>.</p>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div class="p-3 rounded bg-zinc-800/70 text-center cursor-pointer hover:bg-zinc-800">+ Heading</div>
+          <div class="p-3 rounded bg-zinc-800/70 text-center cursor-pointer hover:bg-zinc-800">+ Card Khối</div>
+          <div class="p-3 rounded bg-zinc-800/70 text-center cursor-pointer hover:bg-zinc-800">+ Biểu đồ</div>
+          <div class="p-3 rounded bg-zinc-800/70 text-center cursor-pointer hover:bg-zinc-800">+ Khung Ảnh</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Center: Direct Interactive Artboard with Canva Floating Contextual Toolbar -->
+    <main class="flex-1 bg-zinc-950 flex flex-col items-center justify-center p-8 relative">
+
+      <!-- CANVA FLOATING CONTEXTUAL TOOLBAR (Appears directly above selected element) -->
+      <div class="mb-4 bg-zinc-900 border border-zinc-700 rounded-full px-4 py-1.5 shadow-2xl flex items-center gap-3 text-xs">
+        <span class="font-semibold text-fuchsia-400">Đang chọn: Khối Tiêu Đề</span>
+        <span class="text-zinc-700">|</span>
+        <button class="hover:text-white">Inter Bold ▾</button>
+        <button class="px-2 py-0.5 bg-zinc-800 rounded">24px</button>
+        <span class="w-4 h-4 rounded-full bg-fuchsia-500 inline-block border border-white"></span>
+        <span class="text-zinc-700">|</span>
+        <button class="hover:text-white" title="Nhân bản">⧉ Nhân bản</button>
+        <button class="hover:text-white" title="Khóa vị trí">🔒 Khóa</button>
+        <button class="text-rose-400 hover:text-rose-300">🗑 Xóa</button>
+      </div>
+
+      <!-- Artboard Sheet -->
+      <div class="w-full max-w-lg bg-white text-zinc-900 rounded shadow-2xl p-8 space-y-4">
+        <!-- Selected Element with Canva Bounding Box & Resize Handles -->
+        <div class="relative border-2 border-fuchsia-500 rounded p-3 bg-fuchsia-50/20">
+          <span class="absolute -top-2.5 left-2 bg-fuchsia-600 text-white text-[10px] font-mono px-1.5 py-0.2 rounded">Selected Node • Click đúp để sửa trực tiếp</span>
+          <div class="w-2.5 h-2.5 bg-white border-2 border-fuchsia-600 rounded-full absolute -top-1.5 -left-1.5"></div>
+          <div class="w-2.5 h-2.5 bg-white border-2 border-fuchsia-600 rounded-full absolute -top-1.5 -right-1.5"></div>
+          <div class="w-2.5 h-2.5 bg-white border-2 border-fuchsia-600 rounded-full absolute -bottom-1.5 -left-1.5"></div>
+          <div class="w-2.5 h-2.5 bg-white border-2 border-fuchsia-600 rounded-full absolute -bottom-1.5 -right-1.5"></div>
+          <h1 contenteditable="true" class="text-2xl font-black outline-none">VƯƠNG ANH VŨ — ARCHITECT</h1>
+          <p contenteditable="true" class="text-xs text-fuchsia-700 font-semibold outline-none">Click trực tiếp vào chữ trên trang giấy này để gõ nội dung mới!</p>
+        </div>
+
+        <div class="p-3 border border-dashed border-zinc-300 rounded text-xs text-zinc-600">
+          Khối Kinh nghiệm & Kỹ năng (Hover để hiện khung căn chỉnh)
+        </div>
+      </div>
+    </main>
+
+    <!-- Right: Compact Property & Layer Inspector -->
+    <aside class="w-80 bg-zinc-900 border-l border-zinc-800 p-4 space-y-4 text-xs">
+      <div class="font-bold text-sm border-b border-zinc-800 pb-2">Thuộc tính Lớp (Inspector)</div>
+      <div class="grid grid-cols-2 gap-2">
+        <div class="bg-zinc-950 border border-zinc-800 p-2 rounded">X: <code>48px</code></div>
+        <div class="bg-zinc-950 border border-zinc-800 p-2 rounded">Y: <code>32px</code></div>
+        <div class="bg-zinc-950 border border-zinc-800 p-2 rounded">W: <code>520px</code></div>
+        <div class="bg-zinc-950 border border-zinc-800 p-2 rounded">H: <code>84px</code></div>
+      </div>
+      <div class="p-3 rounded-lg bg-zinc-950 border border-zinc-800 space-y-2">
+        <div class="font-semibold text-zinc-300">Nhận xét So sánh Style A vs Style B:</div>
+        <p class="text-[11px] text-zinc-400 leading-relaxed">
+          • <strong>Style A (Canva Studio + Split Form + Live Preview):</strong> Tối ưu nhất cho <strong>CV Editor & Chart Editor</strong> (dữ liệu có cấu trúc JSON chặt chẽ + nhìn thấy ngay kết quả bên phải).<br/>
+          • <strong>Style B (Direct Canvas):</strong> Tối ưu nhất cho <strong>Poster Editor, Website Editor & Map Editor</strong> (kéo thả tự do trên mặt phẳng 2D).
+        </p>
+      </div>
+    </aside>
+  </div>
+</body>
+</html>

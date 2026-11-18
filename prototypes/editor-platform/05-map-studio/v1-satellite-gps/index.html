@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>P07 Map Studio (Unified Canva Daylight + Figma Inspector + Vệ tinh & Thống kê Thời gian thực)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap">
+  <style>
+    :root {
+      --ui-bg: #ebecef;
+      --ui-panel: #ffffff;
+      --ui-subpanel: #f8f9fa;
+      --ui-border: #e4e4e7;
+      --ui-text: #18181b;
+      --ui-muted: #71717a;
+      --ui-accent: #18181b;
+      --ui-accent-fg: #ffffff;
+    }
+    body.mode-graphite {
+      --ui-bg: #141414;
+      --ui-panel: #202020;
+      --ui-subpanel: #2a2a2a;
+      --ui-border: #333333;
+      --ui-text: #f4f4f5;
+      --ui-muted: #a1a1aa;
+      --ui-accent: #0d99ff;
+      --ui-accent-fg: #ffffff;
+    }
+    body { font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; background-color: var(--ui-bg); color: var(--ui-text); }
+    .ui-panel { background-color: var(--ui-panel); border-color: var(--ui-border); color: var(--ui-text); }
+    .ui-subpanel { background-color: var(--ui-subpanel); border-color: var(--ui-border); color: var(--ui-text); }
+    .ui-border { border-color: var(--ui-border); }
+    .ui-muted { color: var(--ui-muted); }
+    .ui-accent-btn { background-color: var(--ui-accent); color: var(--ui-accent-fg); }
+    .canvas-layer { transition: box-shadow 0.15s ease; }
+    .canvas-layer.is-selected { outline: 2px solid #0d99ff !important; outline-offset: 2px; }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden select-none">
+
+  <!-- 1. TOP UNIFIED STUDIO HEADER (Identical Shell to CV, Web, Poster & Chart!) -->
+  <header class="h-13 ui-panel border-b px-4 py-2 flex items-center justify-between z-30 gap-2 text-xs">
+    <div class="flex items-center gap-2.5">
+      <a href="../../../../index.html" class="px-2.5 py-1 rounded-lg border ui-border hover:opacity-80 font-semibold">← Bộ 5 Studio</a>
+      <span class="font-bold text-sm">P07 — Spatial Statistics & Satellite Map Studio</span>
+    </div>
+
+    <!-- 3 Map Use-Case Modes -->
+    <div class="ui-subpanel border p-0.5 rounded-xl flex items-center font-semibold gap-0.5">
+      <button onclick="setMapScenario('stats')" class="px-2.5 py-1 rounded-lg ui-accent-btn">📊 1. Thống kê Phân bổ (DB)</button>
+      <button onclick="setMapScenario('tracking')" class="px-2.5 py-1 rounded-lg ui-muted">🛰 2. Vệ tinh & Phần tử Di chuyển</button>
+      <button onclick="setMapScenario('geofence')" class="px-2.5 py-1 rounded-lg ui-muted">⬠ 3. Vùng Quy hoạch</button>
+    </div>
+
+    <!-- Switcher: Mẫu 1 (Canva Daylight) vs Mẫu 2 (Figma Graphite) -->
+    <div class="flex items-center gap-2 font-semibold">
+      <div class="ui-subpanel border p-0.5 rounded-xl flex items-center">
+        <button onclick="setStudioTheme('daylight')" class="px-2.5 py-1 rounded-lg bg-zinc-900 text-white">☀ Mẫu 1 (Canva)</button>
+        <button onclick="setStudioTheme('graphite')" class="px-2.5 py-1 rounded-lg ui-muted">☾ Mẫu 2 (Figma)</button>
+      </div>
+      <button onclick="document.getElementById('map-embed-modal').classList.remove('hidden')" class="px-3.5 py-1.5 rounded-lg ui-accent-btn">
+        &lt;/&gt; Thẻ Nhúng Web / Xuất Ảnh
+      </button>
+    </div>
+  </header>
+
+  <!-- 2. SHARED CONTEXTUAL FORMATTING RIBBON -->
+  <div class="h-11 ui-panel border-b px-4 flex items-center justify-between text-xs z-20 gap-2 overflow-x-auto">
+    <div class="flex items-center gap-2">
+      <span id="active-layer-badge" class="px-2.5 py-1 rounded-md ui-subpanel border font-semibold">Đang chọn: Hộp Chú Giải Bản Đồ (Legend)</span>
+      <select onchange="if(selectedEl) selectedEl.style.fontFamily=this.value" class="px-2 py-1 rounded-md border ui-border ui-subpanel font-medium outline-none">
+        <option value="'Playfair Display', serif">Playfair Display (Editorial)</option>
+        <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans (Modern)</option>
+        <option value="'Space Grotesk', sans-serif">Space Grotesk (Tech)</option>
+      </select>
+      <div class="flex items-center gap-1 px-2 py-1 rounded-md border ui-border ui-subpanel">
+        <span class="ui-muted">Hòa trộn (16 PS):</span>
+        <select onchange="if(selectedEl) selectedEl.style.mixBlendMode=this.value" class="bg-transparent font-semibold outline-none">
+          <option value="normal">Normal</option>
+          <option value="multiply">Multiply</option>
+          <option value="screen">Screen</option>
+          <option value="overlay">Overlay</option>
+          <option value="difference">Difference</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md border ui-border ui-subpanel">
+        <span class="ui-muted">Opacity:</span>
+        <input type="range" min="20" max="100" value="95" oninput="if(selectedEl) selectedEl.style.opacity=this.value/100" class="w-16 accent-sky-500" />
+      </div>
+    </div>
+    <div class="flex items-center gap-1.5 shrink-0">
+      <button onclick="spawnMapCallout()" class="px-2.5 py-1 rounded border ui-border font-semibold">+ Thêm Nhãn Thống Kê Nổi</button>
+    </div>
+  </div>
+
+  <!-- 3. MAIN WORKSPACE: 8-TAB LEFT RAIL + ARTBOARD + FIGMA INSPECTOR -->
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- 3A. LEFT ICON RAIL (8 TABS) -->
+    <nav class="w-[72px] ui-panel border-r flex flex-col items-center py-2.5 gap-1 text-[10px] font-semibold z-20 overflow-y-auto">
+      <button onclick="switchLeftTab('maptools')" id="lbtn-maptools" class="w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-accent-btn">
+        <span class="text-base">🛰</span><span>Bản đồ</span>
+      </button>
+      <button onclick="switchLeftTab('motion')" id="lbtn-motion" class="w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-muted hover:opacity-100">
+        <span class="text-base">🎬</span><span>Animation</span>
+      </button>
+      <button onclick="switchLeftTab('layers')" id="lbtn-layers" class="w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-muted hover:opacity-100">
+        <span class="text-base">🥞</span><span>Lớp PS & FX</span>
+      </button>
+      <button onclick="switchLeftTab('databinds')" id="lbtn-databinds" class="w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-muted hover:opacity-100">
+        <span class="text-base">🔌</span><span>DB & Tĩnh</span>
+      </button>
+      <button onclick="switchLeftTab('fonts')" id="lbtn-fonts" class="w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-muted hover:opacity-100">
+        <span class="text-base">🔤</span><span>Font & Chữ</span>
+      </button>
+      <button onclick="switchLeftTab('colors')" id="lbtn-colors" class="w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-muted hover:opacity-100">
+        <span class="text-base">🎨</span><span>Bảng màu</span>
+      </button>
+      <button onclick="switchLeftTab('shapes')" id="lbtn-shapes" class="w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-muted hover:opacity-100">
+        <span class="text-base">❖</span><span>Hình khối</span>
+      </button>
+      <button onclick="switchLeftTab('effects')" id="lbtn-effects" class="w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-muted hover:opacity-100">
+        <span class="text-base">✨</span><span>Bộ lọc</span>
+      </button>
+    </nav>
+
+    <!-- 3B. LEFT EXPANDABLE STUDIO DRAWER (345px) -->
+    <aside class="w-[345px] ui-panel border-r p-4 overflow-y-auto space-y-4 text-xs z-10">
+
+      <div id="ltab-maptools" class="space-y-4">
+        <div>
+          <h3 class="font-bold text-sm">1. Nền Bản Đồ (Google / Apple / Bing / Vệ tinh)</h3>
+          <div class="grid grid-cols-2 gap-1.5 mt-2">
+            <button onclick="switchTileLayer('satellite')" class="p-2.5 rounded-xl border ui-border hover:border-sky-500 text-left font-semibold">🛰 Vệ tinh Esri</button>
+            <button onclick="switchTileLayer('voyager')" class="p-2.5 rounded-xl border ui-border hover:border-sky-500 text-left font-semibold">🗺 Google / Voyager</button>
+            <button onclick="switchTileLayer('positron')" class="p-2.5 rounded-xl border ui-border hover:border-sky-500 text-left font-semibold">🍎 Apple Clean Light</button>
+            <button onclick="switchTileLayer('dark')" class="p-2.5 rounded-xl border ui-border hover:border-sky-500 text-left font-semibold">🌙 Bing Dark</button>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-xl ui-subpanel border space-y-2">
+          <div class="font-semibold text-indigo-600">🔌 Liên kết DB Phân bổ Vùng (`{{db.region_stats}}`)</div>
+          <div class="space-y-1.5">
+            <div class="flex justify-between items-center"><span>🔵 Hà Nội Hub</span><input id="stat-hn" type="number" value="920" oninput="updateStatCircles()" class="w-20 px-2 py-0.5 rounded border ui-border bg-transparent text-right font-mono" /></div>
+            <div class="flex justify-between items-center"><span>🟣 Đà Nẵng Hub</span><input id="stat-dn" type="number" value="540" oninput="updateStatCircles()" class="w-20 px-2 py-0.5 rounded border ui-border bg-transparent text-right font-mono" /></div>
+            <div class="flex justify-between items-center"><span>🟢 TP.HCM Hub</span><input id="stat-hcm" type="number" value="1250" oninput="updateStatCircles()" class="w-20 px-2 py-0.5 rounded border ui-border bg-transparent text-right font-mono" /></div>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-xl ui-subpanel border space-y-2">
+          <div class="flex justify-between items-center"><span class="font-semibold text-amber-600">🛰 Theo dõi Phần tử Di chuyển</span><span class="text-[10px] font-bold text-emerald-600">● LIVE GPS</span></div>
+          <div class="font-mono text-[11px] p-2 rounded border ui-border">
+            <div>Tàu: #VN-OCEAN-01</div>
+            <div id="gps-readout" class="text-indigo-600 font-bold">16.0544°N, 108.2022°E</div>
+          </div>
+          <button onclick="simRunning=!simRunning" class="w-full py-1.5 rounded-lg ui-accent-btn font-semibold">⏸ Tạm dừng / Tiếp tục Chuyển động</button>
+        </div>
+      </div>
+
+      <!-- Shared Core Tabs 2..8 -->
+      <div id="ltab-motion" class="hidden space-y-3"><h3 class="font-bold text-sm">2. Chuyển động Bản đồ & Khung</h3><button onclick="setMapScenario('tracking')" class="w-full py-2 rounded-xl ui-accent-btn font-semibold">▶ Bay Camera tới Vùng Vệ Tinh (FlyTo)</button></div>
+      <div id="ltab-layers" class="hidden space-y-3"><h3 class="font-bold text-sm">3. Lớp Photoshop & Nhãn Nổi</h3><button onclick="spawnMapCallout()" class="w-full py-2 rounded-xl bg-indigo-600 text-white font-semibold">+ Thêm Thẻ Callout Kính Mờ Đè Lên Bản Đồ</button></div>
+      <div id="ltab-databinds" class="hidden space-y-3"><h3 class="font-bold text-sm">4. Nguồn Dữ liệu DB & Stream</h3><p class="ui-muted">Hỗ trợ cả bảng thống kê vùng lẫn Redis Stream GPS thời gian thực.</p></div>
+      <div id="ltab-fonts" class="hidden space-y-3"><h3 class="font-bold text-sm">5. Font Chữ Khung Bản Đồ</h3></div>
+      <div id="ltab-colors" class="hidden space-y-3"><h3 class="font-bold text-sm">6. Bảng màu Vòng tròn Thống kê</h3></div>
+      <div id="ltab-shapes" class="hidden space-y-3"><h3 class="font-bold text-sm">7. Hình Khối & Huy Hiệu Bản Đồ</h3></div>
+      <div id="ltab-effects" class="hidden space-y-3"><h3 class="font-bold text-sm">8. Bộ Lọc Màu Bản Đồ</h3></div>
+
+    </aside>
+
+    <!-- 3C. CENTER MAP ARTBOARD CARD (Warm Daylight Editorial Frame matching CV/Chart/Web!) -->
+    <main class="flex-1 flex items-center justify-center p-6 overflow-y-auto">
+      <div class="w-full max-w-4xl bg-[#FAF8F5] text-zinc-900 rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.14)] border border-stone-200/90 p-6 space-y-3 relative">
+
+        <!-- STATIC TEMPLATE HEADER -->
+        <div class="flex items-center justify-between border-b border-stone-200 pb-2 text-[11px] text-stone-500">
+          <span contenteditable="true" class="font-bold uppercase tracking-widest text-amber-800 outline-none">📌 KHỐI LOGO MẪU TĨNH • GEOSPATIAL & TELEMETRY REPORT</span>
+          <span class="font-mono px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-semibold">🔌 Bound: `{{db.region_stats}}` + `GPS Stream`</span>
+        </div>
+
+        <!-- Map Canvas Wrapper -->
+        <div class="w-full h-[460px] rounded-xl overflow-hidden border border-stone-300 relative">
+          <div id="leaflet-map" class="w-full h-full z-10"></div>
+
+          <!-- Draggable Glass Legend Overlay -->
+          <div id="map-legend-card" onclick="selectLayer(this, 'Hộp Chú Giải Bản Đồ (Legend)')" class="canvas-layer is-selected absolute top-3 left-14 z-20 bg-white/90 backdrop-blur-md text-zinc-900 p-4 rounded-xl border border-stone-200 shadow-lg max-w-xs space-y-1.5 cursor-pointer">
+            <div class="text-[10px] font-bold uppercase tracking-widest text-indigo-600">Bản đồ Thống kê & Vệ tinh</div>
+            <h2 contenteditable="true" style="font-family: 'Playfair Display', serif" class="font-bold text-base outline-none">Mạng lưới Phân bổ & Hải trình 2026</h2>
+            <div class="flex gap-3 text-[11px] text-stone-600 pt-1">
+              <span>🔵 Sản lượng DB</span>
+              <span>🟠 Tàu đang di chuyển</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- STATIC TEMPLATE FOOTER -->
+        <div class="pt-1 flex items-center justify-between text-[11px] text-stone-500">
+          <span contenteditable="true" class="outline-none">📌 Chân trang Mẫu cố định (Static Footer): Hệ thống Địa không gian • Xuất thẻ nhúng `<vav-map-widget>` hoặc PDF</span>
+          <span class="font-mono text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-900">STATIC BLOCK</span>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- 3D. RIGHT SIDEBAR: FIGMA PRECISION INSPECTOR -->
+    <aside class="w-[255px] ui-panel border-l p-4 overflow-y-auto space-y-4 text-xs z-10">
+      <div class="font-bold text-sm border-b ui-border pb-2">Thuộc tính Lớp (Figma Inspector)</div>
+      <div class="space-y-1.5 pt-2">
+        <div class="font-semibold text-[11px] uppercase ui-muted">Chuyển sang Studio khác:</div>
+        <a href="../../01-universal-studio/v3-crafted-light/index.html" class="block px-2.5 py-1.5 rounded-lg ui-subpanel border hover:border-sky-500 font-medium">📄 P04B: CV Studio →</a>
+        <a href="../../04-website-studio/v1-responsive-cms/index.html" class="block px-2.5 py-1.5 rounded-lg ui-subpanel border hover:border-sky-500 font-medium">🌐 P06: Website Studio →</a>
+        <a href="../../06-poster-catalog-studio/v1-3d-flipbook/index.html" class="block px-2.5 py-1.5 rounded-lg ui-subpanel border hover:border-sky-500 font-medium">📖 P08: Poster & Catalog 3D →</a>
+        <a href="../../03-chart-studio/v1-12-chart-types/index.html" class="block px-2.5 py-1.5 rounded-lg ui-subpanel border hover:border-sky-500 font-medium">📊 P05: Chart Thống kê →</a>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- EMBED MODAL -->
+  <div id="map-embed-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+    <div class="bg-white text-zinc-900 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl border text-xs">
+      <div class="flex justify-between"><h3 class="font-bold text-base">Mã Thẻ Nhúng Bản Đồ Web & Xuất Ảnh</h3><button onclick="document.getElementById('map-embed-modal').classList.add('hidden')">✕</button></div>
+      <pre class="p-3 rounded-xl bg-zinc-900 text-sky-300 font-mono text-[11px] overflow-x-auto">&lt;vav-map-widget document-id="doc-map-2026" provider="satellite-hybrid" telemetry-stream="redis:editor:p07:fleet_gps" /&gt;</pre>
+      <div class="flex justify-end"><button onclick="document.getElementById('map-embed-modal').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-zinc-900 text-white font-semibold">Đóng</button></div>
+    </div>
+  </div>
+
+  <script>
+    let selectedEl = document.getElementById('map-legend-card');
+    function selectLayer(el, name) {
+      document.querySelectorAll('.canvas-layer').forEach(n => n.classList.remove('is-selected'));
+      selectedEl = el; el.classList.add('is-selected');
+      document.getElementById('active-layer-badge').textContent = 'Đang chọn: ' + name;
+    }
+    function setStudioTheme(m) { document.body.classList.toggle('mode-graphite', m === 'graphite'); }
+
+    const tabs = ['maptools', 'motion', 'layers', 'databinds', 'fonts', 'colors', 'shapes', 'effects'];
+    function switchLeftTab(tab) {
+      tabs.forEach(t => {
+        document.getElementById('ltab-' + t).classList.toggle('hidden', t !== tab);
+        document.getElementById('lbtn-' + t).className = (t === tab)
+          ? 'w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-accent-btn'
+          : 'w-14 py-2 rounded-xl flex flex-col items-center gap-0.5 ui-muted hover:opacity-100';
+      });
+    }
+
+    const map = L.map('leaflet-map').setView([16.2, 106.8], 5);
+    const tileUrls = {
+      voyager: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      positron: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+      dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+    };
+    let currentTile = L.tileLayer(tileUrls.voyager, { maxZoom: 18 }).addTo(map);
+    function switchTileLayer(k) { map.removeLayer(currentTile); currentTile = L.tileLayer(tileUrls[k], { maxZoom: 18 }).addTo(map); }
+
+    const cHN = L.circle([21.0285, 105.8542], { color: '#4f46e5', fillColor: '#6366f1', fillOpacity: 0.45, radius: 92000 }).addTo(map);
+    const cDN = L.circle([16.0544, 108.2022], { color: '#9333ea', fillColor: '#a855f7', fillOpacity: 0.45, radius: 54000 }).addTo(map);
+    const cHCM = L.circle([10.8231, 106.6297], { color: '#059669', fillColor: '#10b981', fillOpacity: 0.45, radius: 125000 }).addTo(map);
+    function updateStatCircles() {
+      cHN.setRadius(Number(document.getElementById('stat-hn').value) * 100);
+      cDN.setRadius(Number(document.getElementById('stat-dn').value) * 100);
+      cHCM.setRadius(Number(document.getElementById('stat-hcm').value) * 100);
+    }
+
+    const waypoints = [[20.84,106.68],[19.80,105.78],[18.35,105.90],[16.05,108.20],[13.78,109.21],[12.23,109.19],[10.34,107.08]];
+    L.polyline(waypoints, { color: '#f59e0b', weight: 3, dashArray: '8, 6' }).addTo(map);
+    const vessel = L.circleMarker(waypoints[0], { radius: 8, color: '#fff', weight: 2, fillColor: '#f59e0b', fillOpacity: 1 }).addTo(map);
+    let idx = 0, prog = 0, simRunning = true;
+    setInterval(() => {
+      if (!simRunning) return;
+      const p1 = waypoints[idx], p2 = waypoints[(idx + 1) % waypoints.length];
+      prog += 0.05;
+      if (prog >= 1) { prog = 0; idx = (idx + 1) % (waypoints.length - 1); }
+      const lat = p1[0] + (p2[0] - p1[0]) * prog, lng = p1[1] + (p2[1] - p1[1]) * prog;
+      vessel.setLatLng([lat, lng]);
+      document.getElementById('gps-readout').textContent = `${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E`;
+    }, 180);
+
+    function setMapScenario(m) {
+      if (m === 'tracking') { switchTileLayer('satellite'); map.flyTo([15.5, 108.5], 6, { duration: 1 }); }
+      else if (m === 'geofence') { switchTileLayer('dark'); map.flyTo([21.0285, 105.8542], 8, { duration: 1 }); }
+      else { switchTileLayer('voyager'); map.flyTo([16.2, 106.8], 5, { duration: 1 }); }
+    }
+    function spawnMapCallout() {
+      L.popup().setLatLng([16.0544, 108.2022]).setContent('<b>📍 Điểm Giám sát Mới</b><br>Click để chỉnh sửa thông tin').openOn(map);
+    }
+  </script>
+</body>
+</html>

@@ -1,4 +1,135 @@
 {
-  "updated_at": "2026-11-18T11:10:19+07:00",
-  "projects": []
+  "updated_at": "2026-11-18T11:28:12+07:00",
+  "projects": [
+    {
+      "slug": "editor-platform",
+      "features": [
+        {
+          "slug": "01-universal-studio",
+          "title": "Universal Block-Layer Studio (CV & Document)",
+          "domain": "04-creative-editor",
+          "persona": "creator-builder",
+          "approved_version": "",
+          "promoted_to": "",
+          "versions": [
+            {
+              "version": "v1-cv-baseline",
+              "created_at": "2026-11-18T11:26:43+07:00",
+              "notes": "v1.0 — Bản Baseline P04B CV Editor Module ban đầu"
+            },
+            {
+              "version": "v2.5-figma-graphite",
+              "created_at": "2026-11-18T11:26:43+07:00",
+              "notes": "v2.5 Mẫu 2 — Giao diện Graphite thuần kiểu Figma/Framer"
+            },
+            {
+              "version": "v2.5-warm-atelier",
+              "created_at": "2026-11-18T11:26:44+07:00",
+              "notes": "v2.5 Mẫu 3 — Bản giấy kem nghệ thuật với thanh Floating Dock bên dưới"
+            },
+            {
+              "version": "v2a-canva-hybrid",
+              "created_at": "2026-11-18T11:26:43+07:00",
+              "notes": "v2.0 Style A — Canva Studio + 4 nút đổi Theme ứng dụng chủ + Kho Template"
+            },
+            {
+              "version": "v2b-direct-canvas",
+              "created_at": "2026-11-18T11:26:43+07:00",
+              "notes": "v2.0 Style B — Direct Canvas tương tác trực tiếp với thanh công cụ nổi"
+            },
+            {
+              "version": "v3-crafted-light",
+              "created_at": "2026-11-18T11:26:44+07:00",
+              "notes": "v3.0 — Mẫu 1 & 2 Hợp Nhất: 7 tab công cụ + 16 PS Blend Modes + Import Font/SVG"
+            },
+            {
+              "version": "v4-commercial-full-ux",
+              "created_at": "2026-11-18T11:26:44+07:00",
+              "notes": "v4.0 — Kéo thả & Co giãn 8 hướng mọi Block, Section DB, Khổ giấy A4/A5/Slide & Zoom"
+            },
+            {
+              "version": "v5-icon-clean-studio",
+              "created_at": "2026-11-18T11:26:44+07:00",
+              "notes": "v5.0 — Thanh công cụ Icon 32x32px, Đổi kiểu từng Section, Bg Alpha & 4 Mẫu bố cục"
+            }
+          ]
+        },
+        {
+          "slug": "02-sdk-host-shell",
+          "title": "P03: SDK Host Application Shell",
+          "domain": "04-creative-editor",
+          "persona": "creator-builder",
+          "approved_version": "",
+          "promoted_to": "",
+          "versions": [
+            {
+              "version": "v1-baseline",
+              "created_at": "2026-11-18T11:26:44+07:00",
+              "notes": "v1.0 — Giao diện khung ứng dụng chủ nhúng Editor SDK"
+            }
+          ]
+        },
+        {
+          "slug": "03-chart-studio",
+          "title": "P05: Chart & Data Visualization Studio",
+          "domain": "04-creative-editor",
+          "persona": "creator-builder",
+          "approved_version": "",
+          "promoted_to": "",
+          "versions": [
+            {
+              "version": "v1-12-chart-types",
+              "created_at": "2026-11-18T11:26:44+07:00",
+              "notes": "v1.0 — 12 mẫu biểu đồ thống kê (Treemap, Funnel, Waterfall, Boxplot, Heatmap, Gauge) & DB"
+            }
+          ]
+        },
+        {
+          "slug": "04-website-studio",
+          "title": "P06: Website & Landing Page Studio",
+          "domain": "04-creative-editor",
+          "persona": "creator-builder",
+          "approved_version": "",
+          "promoted_to": "",
+          "versions": [
+            {
+              "version": "v1-responsive-cms",
+              "created_at": "2026-11-18T11:26:44+07:00",
+              "notes": "v1.0 — 14+ Khối Web, Responsive Desktop/Tablet/Mobile & CMS DB"
+            }
+          ]
+        },
+        {
+          "slug": "05-map-studio",
+          "title": "P07: Map Vệ tinh & Live GPS Studio",
+          "domain": "04-creative-editor",
+          "persona": "creator-builder",
+          "approved_version": "",
+          "promoted_to": "",
+          "versions": [
+            {
+              "version": "v1-satellite-gps",
+              "created_at": "2026-11-18T11:26:44+07:00",
+              "notes": "v1.0 — Bản đồ Vệ tinh Esri, Google/Apple/Bing & Tàu di chuyển GPS sống"
+            }
+          ]
+        },
+        {
+          "slug": "06-poster-catalog-studio",
+          "title": "P08: Catalog 3D, Thiệp, Email & Poster Studio",
+          "domain": "04-creative-editor",
+          "persona": "creator-builder",
+          "approved_version": "",
+          "promoted_to": "",
+          "versions": [
+            {
+              "version": "v1-3d-flipbook",
+              "created_at": "2026-11-18T11:26:44+07:00",
+              "notes": "v1.0 — 5 định dạng ấn phẩm + Lật trang sách 3D & Mở phong bì"
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }
