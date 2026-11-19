@@ -35,5 +35,5 @@
 ---
 
 ## 5. Nhật ký Tích luỹ Kinh nghiệm (Accumulated Learnings)
-*(Khu vực này được cập nhật tự động qua lệnh `proto learn --domain 01-education` sau mỗi dự án)*
-- Luôn hiển thị rõ "Bài tiếp theo" và thời lượng ước tính (`~12 phút`) để giảm tâm lý ngại bắt đầu của học viên.
+*(Ghi bằng `proto learn` — không sửa tay định dạng dòng. ✅ áp dụng · ⏳ ứng viên (1 dự án, DESIGN-CONTEXT dự án được ghi đè) · ⛔ đã bị thay thế, bỏ qua)*
+- **[D01-001]** ✅ · 2026-11-18 · nguồn: tri-thức-nền — Luôn hiển thị rõ "Bài tiếp theo" và thời lượng ước tính (`~12 phút`) để giảm tâm lý ngại bắt đầu của học viên.

@@ -25,6 +25,8 @@
 ## 3. Mẫu tham chiếu thực tế (Mobbin / Web)
 - **Quản trị & Vận hành**: Linear, Stripe Dashboard, Retool, Attio CRM, Cal.com, Ghost CMS Admin, Payload CMS.
 
-- **[2026-11-19]** Mọi màn hình quản lý mặc định phải có đủ CRUD (Thêm/Xem/Sửa/Xóa), ô Tìm kiếm (Search), Bộ lọc (Filter) và Phân trang (Pagination) + Global Quick Search (Cmd+K). Với màn hình POS/Catalog nhiều sản phẩm, bắt buộc hỗ trợ chuyển đổi Card Grid (có ảnh để tư vấn) và Compact List/Barcode Mode (khi danh mục hàng trăm/nghìn mã).
+---
 
-- **[2026-11-19]** Thiết kế thẩm mỹ mềm mại, hiện đại (Sidebar xanh đậm/tối sắc nét với SVG icon đồng bộ, nền xám ấm nhẹ, thẻ KPI có thanh nhấn viền trái, bo góc 10px, font Be Vietnam Pro/Inter), tránh dùng ký tự Unicode khô cứng. Khi hệ thống có nhiều vai trò chuyên môn (Owner, POS, KTV Khúc xạ, KTV Lab), phải áp dụng Role-specific UX: mỗi vai có màn hình & ngữ cảnh tác nghiệp riêng (VD: KTV Khúc xạ phải thấy ngay lịch sử đo mắt trước đó + biểu đồ độ cận song song khi đo mới).
+## 4. Nhật ký Tích luỹ Kinh nghiệm
+*(Ghi bằng `proto learn` — không sửa tay định dạng dòng. ✅ áp dụng · ⏳ ứng viên (1 dự án, DESIGN-CONTEXT dự án được ghi đè) · ⛔ đã bị thay thế, bỏ qua)*
+*(Chỉ ghi ở đây bài học đúng với persona này **bất kể domain**. Bài học gắn với một loại sản phẩm → ghi vào domain; gắn với một dự án → DESIGN-CONTEXT dự án.)*

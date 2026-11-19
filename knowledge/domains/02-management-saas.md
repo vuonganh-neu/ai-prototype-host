@@ -33,8 +33,10 @@
 ---
 
 ## 5. Nhật ký Tích luỹ Kinh nghiệm (Accumulated Learnings)
-*(Khu vực này được cập nhật tự động qua lệnh `proto learn --domain 02-management-saas` sau mỗi dự án)*
-- Mọi con số tiền tệ, số lượng, phần trăm trong bảng bắt buộc căn phải (`text-align: right`) và thẳng hàng chữ số (`tabular-nums`).
-- Không dùng Modal nhỏ giữa màn hình cho các biểu mẫu quá 5 trường; hãy dùng **Slide-over Drawer bên phải** để vừa nhìn được danh sách bên trái vừa đối chiếu.
-- **[2026-11-19]** Mọi màn hình quản lý mặc định phải có đủ CRUD (Thêm/Xem/Sửa/Xóa), ô Tìm kiếm (Search), Bộ lọc (Filter) và Phân trang (Pagination) + Global Quick Search (Cmd+K). Với màn hình POS/Catalog nhiều sản phẩm, bắt buộc hỗ trợ chuyển đổi Card Grid (có ảnh để tư vấn) và Compact List/Barcode Mode (khi danh mục hàng trăm/nghìn mã).
-- **[2026-11-19]** Thiết kế thẩm mỹ mềm mại, hiện đại (Sidebar xanh đậm/tối sắc nét với SVG icon đồng bộ, nền xám ấm nhẹ, thẻ KPI có thanh nhấn viền trái, bo góc 10px, font Be Vietnam Pro/Inter), tránh dùng ký tự Unicode khô cứng. Khi hệ thống có nhiều vai trò chuyên môn (Owner, POS, KTV Khúc xạ, KTV Lab), phải áp dụng Role-specific UX: mỗi vai có màn hình & ngữ cảnh tác nghiệp riêng (VD: KTV Khúc xạ phải thấy ngay lịch sử đo mắt trước đó + biểu đồ độ cận song song khi đo mới).
+*(Ghi bằng `proto learn` — không sửa tay định dạng dòng. ✅ áp dụng · ⏳ ứng viên (1 dự án, DESIGN-CONTEXT dự án được ghi đè) · ⛔ đã bị thay thế, bỏ qua)*
+- **[D02-001]** ✅ · 2026-11-18 · nguồn: tri-thức-nền — Mọi con số tiền tệ, số lượng, phần trăm trong bảng bắt buộc căn phải (`text-align: right`) và thẳng hàng chữ số (`tabular-nums`).
+- **[D02-002]** ✅ · 2026-11-18 · nguồn: tri-thức-nền — Không dùng Modal nhỏ giữa màn hình cho các biểu mẫu quá 5 trường; hãy dùng **Slide-over Drawer bên phải** để vừa nhìn được danh sách bên trái vừa đối chiếu.
+- **[D02-003]** ⏳ · 2026-11-19 · nguồn: optic-shop/00-full-mvp@v2-optical-suite — Màn hình danh sách nghiệp vụ mặc định có đủ Thêm/Xem/Sửa/Xóa, ô Tìm kiếm, Bộ lọc, Phân trang; ứng dụng có nhiều phân hệ thêm Tìm kiếm toàn cục (`⌘K`).
+- **[D02-004]** ⏳ · 2026-11-19 · nguồn: optic-shop/00-full-mvp@v2-optical-suite — Danh mục sản phẩm lớn (hàng trăm mã trở lên) cần chuyển đổi được giữa Lưới thẻ có ảnh (để tư vấn) và Danh sách gọn / chế độ quét mã vạch (để thao tác nhanh).
+- **[D02-005]** ⏳ · 2026-11-19 · nguồn: optic-shop/00-full-mvp@v2-optical-suite — Khi hệ thống có nhiều vai trò chuyên môn, mỗi vai có màn hình làm việc riêng chứa đúng dữ liệu ngữ cảnh vai đó cần khi tác nghiệp (ví dụ lịch sử của chính khách hàng/hồ sơ đang xử lý đặt cạnh form nhập mới), thay vì một màn hình chung cho mọi vai.
+- **[D02-006]** ⏳ · 2026-11-19 · nguồn: optic-shop/00-full-mvp@v2-optical-suite — Dùng bộ icon SVG đồng bộ (Lucide hoặc tương đương) cho điều hướng và hành động; không dùng ký tự Unicode/emoji làm icon.
