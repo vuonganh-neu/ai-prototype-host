@@ -1,7 +1,7 @@
 {
   "project": "optic-shop",
   "slug": "00-full-mvp",
-  "title": "Kính Mắt Minh Quang — v2 Optical Suite (Full CRUD, Role UX, Try-On & AI)",
+  "title": "Kính Mắt Minh Quang — v3 Complete Platform (Fixed Collapsible Sidebar, Scroll POS, Split Inventory/Product, Settings, CMS & AI Budget Planner)",
   "domain": "02-management-saas",
   "persona": "operator-admin",
   "approved_version": "",
@@ -19,6 +19,13 @@
       "notes": "Phiên bản nâng cấp toàn diện từ phản hồi v1: Sidebar xanh ngọc trầm + Lucide SVG + Be Vietnam Pro; đủ CRUD + Search + Filter + Pagination trên mọi màn hình + Global Search; POS hỗ trợ Card Grid & Compact List/Barcode cho danh mục lớn; Split-view KTV Khúc xạ xem lịch sử & biểu đồ độ cận; CRM Automation; Mobile Responsive chuẩn 390px; Website có Thử kính trực tuyến (Virtual Try-On), xem đa góc cạnh, Biểu đồ thị lực & Trợ lý AI.",
       "phase": "P00A",
       "stage": "mvp"
+    },
+    {
+      "version": "v3-complete-platform",
+      "created_at": "2026-11-19T16:08:48+07:00",
+      "phase": "",
+      "stage": "",
+      "notes": "Khắc phục triệt để lỗi fixed sidebar (thêm nút thu gọn/mở rộng) và thêm Footer đầy đủ; POS & Website dùng phân trang dạng scroll (Load-more) + lọc khoảng giá & sắp xếp tên/giá; tách riêng Kho hàng và Sản phẩm (ảnh góc cạnh/video/hiển thị web); thêm Cài đặt hệ thống (User, RBAC, Store info/Logo), Quản trị Website (trang tĩnh), và tính năng Lập kế hoạch Ngân sách & Gợi ý Combo AI cho cả Khách hàng lẫn Nhân viên POS."
     }
   ]
 }

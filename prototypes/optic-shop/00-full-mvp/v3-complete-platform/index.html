@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kính Mắt Minh Quang — Optical Platform v3 (Complete MVP)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- Compact Fixed Prototype Switcher Bar -->
+  <div class="proto-bar no-print">
+    <div class="proto-bar-inner">
+      <div class="proto-switch-group" role="tablist">
+        <button class="proto-switch-btn active" data-surface="store" role="tab">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          <span>Quản lý Cửa hàng &amp; Lab</span>
+        </button>
+        <button class="proto-switch-btn" data-surface="public" role="tab">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span>Website &amp; Sổ Kính</span>
+        </button>
+      </div>
+      <div class="proto-bar-meta">
+        <span class="proto-ver-pill">P00A · v3-complete-platform</span>
+        <button class="proto-reset-btn" id="resetDemoBtn" title="Khôi phục dữ liệu mẫu ban đầu">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          <span>Reset</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SURFACE 1: STORE OPERATIONS & LAB ==================== -->
+  <div id="storeSurface" class="app-layout">
+    <aside class="sidebar no-print" id="storeSidebar">
+      <div class="sidebar-top">
+        <div class="sidebar-brand">
+          <div class="sidebar-logo" id="sidebarLogoWrap">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6.5" cy="13" r="4"/><circle cx="17.5" cy="13" r="4"/><path d="M10.5 13h3M2.5 13l1-5h2M21.5 13l-1-5h-2"/></svg>
+          </div>
+          <div class="sidebar-brand-text">
+            <div class="sidebar-brand-name" id="sidebarStoreName">Minh Quang</div>
+            <div class="sidebar-brand-sub">Quản lý cửa hàng kính</div>
+          </div>
+        </div>
+        <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Thu gọn / Mở rộng menu">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav" id="sidebarNav"></nav>
+
+      <div class="sidebar-bottom-meta">
+        <div class="sidebar-version-tag">v3.0 · Single Store</div>
+      </div>
+    </aside>
+
+    <div class="app-body" id="appBody">
+      <header class="app-header no-print">
+        <div class="app-header-left">
+          <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Mở menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+          </button>
+          <span class="header-crumb" id="headerCrumb">Tổng quan</span>
+        </div>
+
+        <div class="app-header-center">
+          <button class="global-search-trigger" id="globalSearchTrigger" title="Tìm nhanh khách hàng, SĐT, đơn hàng, SKU (⌘K)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <span>Tra cứu nhanh khách, SĐT, đơn hàng, mã kính...</span>
+            <kbd>⌘K</kbd>
+          </button>
+        </div>
+
+        <div class="app-header-right">
+          <button class="btn btn-primary btn-sm" id="headerNewOrderBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Đơn mới</span>
+          </button>
+
+          <button class="header-zalo-btn" id="openZaloBtn" title="Zalo OA Outbox">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span class="header-zalo-count" id="zaloCountBadge">0</span>
+          </button>
+
+          <div class="role-switcher-box">
+            <div class="role-avatar" id="roleAvatar">Q</div>
+            <select id="roleSelect" class="header-role-select" aria-label="Chọn vai trò nhân viên">
+              <option value="OWNER_ADMIN">Chủ cửa hàng · ADMIN</option>
+              <option value="SALES_CASHIER">Thu ngân / Tư vấn · POS</option>
+              <option value="OPTOMETRIST">KTV Khúc xạ · ĐO MẮT</option>
+              <option value="LAB_TECHNICIAN">KTV Gia công · LAB</option>
+            </select>
+          </div>
+        </div>
+      </header>
+
+      <main class="app-main" id="storeMain"></main>
+
+      <footer class="app-footer no-print">
+        <div id="storeFooterLeft">© 2026 Kính Mắt Minh Quang · 148 Xã Đàn, Đống Đa, Hà Nội</div>
+        <div class="muted-xs">Nền tảng Quản lý Cửa hàng Quang học &amp; Phòng Lab Nội bộ · Dữ liệu lưu cục bộ trên trình duyệt (P00A Prototype)</div>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Mobile sidebar backdrop -->
+  <div id="sidebarBackdrop" class="drawer-backdrop hidden no-print"></div>
+
+  <!-- ==================== SURFACE 2: PUBLIC WEBSITE & CUSTOMER PORTAL ==================== -->
+  <div id="publicSurface" class="public-shell hidden">
+    <header class="pub-header no-print">
+      <div class="pub-container pub-header-top">
+        <div class="pub-brand">
+          <div class="pub-logo-mark" id="pubLogoWrap">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6.5" cy="13" r="4"/><circle cx="17.5" cy="13" r="4"/><path d="M10.5 13h3"/></svg>
+          </div>
+          <div>
+            <span class="pub-brand-name" id="pubStoreName">Minh Quang</span>
+            <span class="pub-brand-sub" id="pubStoreSub">OPTICAL STUDIO · 148 XÃ ĐÀN</span>
+          </div>
+        </div>
+
+        <div class="pub-customer-box">
+          <span class="pub-cust-label">Khách hàng:</span>
+          <select id="portalCustomerSelect" class="pub-cust-select" aria-label="Chọn khách hàng xem cổng"></select>
+        </div>
+      </div>
+
+      <div class="pub-nav-strip">
+        <div class="pub-container pub-nav-scroll">
+          <button class="pub-nav-pill active" data-pubview="storefront">Sản phẩm &amp; Bộ sưu tập</button>
+          <button class="pub-nav-pill" data-pubview="budget">Lập kế hoạch ngân sách AI</button>
+          <button class="pub-nav-pill" data-pubview="tryon">Thử kính Online (Try-On)</button>
+          <button class="pub-nav-pill" data-pubview="booking">Đặt lịch đo mắt</button>
+          <button class="pub-nav-pill" data-pubview="eyebook">Sổ Kính &amp; Biểu đồ mắt</button>
+          <button class="pub-nav-pill" data-pubview="about">Giới thiệu &amp; Chính sách</button>
+        </div>
+      </div>
+    </header>
+
+    <main id="publicMain" class="pub-main"></main>
+
+    <!-- Public Website Footer (Synced with CMS Pages & Store Settings) -->
+    <footer class="pub-footer no-print" id="pubFooter"></footer>
+
+    <!-- Floating AI Optical Assistant Button & Chat Panel -->
+    <button class="ai-fab no-print" id="aiFabBtn" aria-label="Mở Trợ lý AI Quang học">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/><path d="M19 3v4M21 5h-4"/></svg>
+      <span>Trợ lý AI Kính mắt</span>
+    </button>
+
+    <div class="ai-chat-panel hidden no-print" id="aiChatPanel">
+      <div class="ai-chat-head">
+        <div>
+          <div style="font-weight:700;font-size:14px">Trợ lý AI Quang học</div>
+          <div style="font-size:11.5px;opacity:0.85">Tư vấn gọng, lập ngân sách &amp; giải thích độ mắt</div>
+        </div>
+        <button class="icon-close-btn light" id="closeAiChatBtn">✕</button>
+      </div>
+      <div class="ai-chat-messages" id="aiChatMessages"></div>
+      <div class="ai-quick-prompts">
+        <button class="ai-chip" data-aichip="Lập kế hoạch combo kính dưới 2 triệu">Combo &lt; 2tr</button>
+        <button class="ai-chip" data-aichip="Giải thích chỉ số SPH, CYL, AXIS và PD">Hiểu độ mắt</button>
+        <button class="ai-chip" data-aichip="Nên chọn chiết suất tròng 1.60 hay 1.67?">Tròng 1.60 vs 1.67</button>
+      </div>
+      <form class="ai-chat-form" id="aiChatForm">
+        <input id="aiChatInput" class="input" placeholder="Hỏi về dáng mặt, ngân sách, độ cận..." autocomplete="off" />
+        <button type="submit" class="btn btn-primary btn-sm">Gửi</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Global Quick Search Palette (Cmd+K) -->
+  <div id="cmdkBackdrop" class="modal-backdrop hidden no-print">
+    <div class="cmdk-card">
+      <div class="cmdk-input-row">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="cmdkInput" placeholder="Gõ tên khách, SĐT, mã đơn (ORD...), mã phiếu Lab (JOB...) hoặc SKU..." autocomplete="off" />
+        <button class="icon-close-btn" id="closeCmdkBtn">Esc</button>
+      </div>
+      <div class="cmdk-results" id="cmdkResults"></div>
+    </div>
+  </div>
+
+  <!-- Slide-over Drawer -->
+  <div id="drawerBackdrop" class="drawer-backdrop hidden no-print"></div>
+  <aside id="sideDrawer" class="side-drawer hidden no-print" aria-hidden="true">
+    <div class="drawer-header">
+      <div>
+        <div class="drawer-eyebrow" id="drawerEyebrow">CHI TIẾT</div>
+        <h2 class="drawer-title" id="drawerTitle">Tiêu đề</h2>
+      </div>
+      <button class="icon-close-btn" id="closeDrawerBtn" aria-label="Đóng">✕</button>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+  </aside>
+
+  <!-- Modal -->
+  <div id="modalBackdrop" class="modal-backdrop hidden">
+    <div class="modal-card" id="modalCard">
+      <div class="modal-header no-print">
+        <h3 id="modalTitle">Modal</h3>
+        <button class="icon-close-btn" id="closeModalBtn" aria-label="Đóng">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toastContainer" class="toast-container no-print"></div>
+
+  <script src="./data.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
