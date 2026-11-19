@@ -23,8 +23,8 @@
     {
       "version": "v3-complete-platform",
       "created_at": "2026-11-19T16:08:48+07:00",
-      "phase": "",
-      "stage": "",
+      "phase": "P00A",
+      "stage": "mvp",
       "notes": "Khắc phục triệt để lỗi fixed sidebar (thêm nút thu gọn/mở rộng) và thêm Footer đầy đủ; POS & Website dùng phân trang dạng scroll (Load-more) + lọc khoảng giá & sắp xếp tên/giá; tách riêng Kho hàng và Sản phẩm (ảnh góc cạnh/video/hiển thị web); thêm Cài đặt hệ thống (User, RBAC, Store info/Logo), Quản trị Website (trang tĩnh), và tính năng Lập kế hoạch Ngân sách & Gợi ý Combo AI cho cả Khách hàng lẫn Nhân viên POS."
     }
   ],
