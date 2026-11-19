@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-19T16:17:46+07:00",
+  "updated_at": "2026-11-19T16:26:48+07:00",
   "projects": [
     {
       "slug": "editor-platform",
@@ -264,8 +264,8 @@
           "title": "Kính Mắt Minh Quang — v3 Complete Platform (Fixed Collapsible Sidebar, Scroll POS, Split Inventory/Product, Settings, CMS & AI Budget Planner)",
           "domain": "02-management-saas",
           "persona": "operator-admin",
-          "approved_version": "",
-          "promoted_to": "",
+          "approved_version": "v3-complete-platform",
+          "promoted_to": "/Users/vuonganhvu/Desktop/workspace/optic-shop",
           "phases": [
             "P00A"
           ],
