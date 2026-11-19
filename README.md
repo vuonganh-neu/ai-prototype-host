@@ -65,8 +65,23 @@ Kho lưu trữ tập trung, quản lý lịch sử phiên bản bất biến (`v
      --to /Users/vuonganhvu/Desktop/workspace/editor-platform \
      --notes "Chốt bản v2 vì tối ưu diện tích dọc trên màn hình MacBook 14 inch"
    ```
-5. **Tích luỹ bài học UI/UX mới sau mỗi lần review**:
+5. **Tích luỹ bài học UI/UX mới** — mỗi bài học ghi vào **đúng MỘT nơi**, mặc định là dự án:
    ```bash
-   ./bin/proto learn --domain 04-creative-editor --persona creator-builder \
-     --rule "Nhãn toạ độ X/Y/W/H phải đặt bên trong ô input thay vì đặt phía trên"
+   # Quy tắc riêng dự án (mặc định) → <project>/docs/02-mockups/DESIGN-CONTEXT.md
+   ./bin/proto learn --project optic-shop --rule "Thẻ KPI có thanh nhấn viền trái"
+
+   # Quy tắc chung cho loại sản phẩm → knowledge/domains/*.md
+   # (1 dự án trong --source → ⏳ ứng viên; ≥ 2 dự án → ✅ áp dụng)
+   ./bin/proto learn --scope domain --domain 04-creative-editor \
+     --source editor-platform/01-universal-studio@v7 \
+     --rule "Nhãn toạ độ X/Y/W/H đặt bên trong ô input thay vì phía trên"
+
+   # Dự án thứ 2 xác nhận ứng viên → ✅
+   ./bin/proto confirm-rule D04-003 --source video-studio-mvp
+
+   # Bài học mới thay thế quy tắc cũ
+   ./bin/proto learn --scope core --source a --source b --supersedes CORE-002 --rule "..."
+
+   # Kiểm tra trùng lặp, ID, định dạng cũ, quy tắc nhắc tên dự án nằm sai chỗ
+   ./bin/proto lint-knowledge
    ```

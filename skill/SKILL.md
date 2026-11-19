@@ -80,11 +80,18 @@ Hệ thống này được đặt tại `/Users/vuonganhvu/Desktop/workspace/moc
      --notes "<Ghi chú lý do chọn và lưu ý khi code thật>"
    ```
    Lệnh này sẽ đánh dấu `approved` trên Hub và chép bản sạch sẽ vào `<project>/docs/02-mockups/<feature-slug>/`.
-2. **Khi rút ra bài học UI/UX mới từ phản hồi của người dùng**:
-   Lưu lại ngay vào kho tri thức để các dự án sau không lặp lại lỗi cũ:
-   ```bash
-   /Users/vuonganhvu/Desktop/workspace/mockup/bin/proto learn \
-     --domain "<domain-id>" \
-     --persona "<persona-id>" \
-     --rule "<Bài học UI/UX cụ thể cần ghi nhớ>"
-   ```
+2. **Khi rút ra bài học UI/UX mới từ phản hồi của người dùng** — chọn **đúng MỘT phạm vi**:
+   | Bài học đúng cho… | Phạm vi | Lệnh |
+   | :--- | :--- | :--- |
+   | Chỉ dự án này (màu, font, bo góc, luồng nghiệp vụ riêng, tên vai trò riêng) | `project` (**mặc định**) | `proto learn --project <slug> --rule "..."` |
+   | Mọi sản phẩm cùng loại (vd mọi app quản lý) | `domain` | `proto learn --scope domain --domain <id> --source <dự-án>[/feature@ver] --rule "..."` |
+   | Một kiểu người dùng, bất kể loại sản phẩm | `persona` | `proto learn --scope persona --persona <id> --source ... --rule "..."` |
+   | Mọi mockup (quy chuẩn kỹ thuật / review) | `core` | `proto learn --scope core --source ... --rule "..."` |
+
+   Quy tắc bắt buộc:
+   - **Phân vân → chọn `project`.** Không đưa tên dự án, mã màu, font hay tên vai trò riêng vào domain/persona/core.
+   - Viết quy tắc ở dạng **tổng quát hoá** khi ghi lên tầng chung (bỏ ví dụ riêng của dự án).
+   - Tầng chung chỉ thành ✅ khi có **≥ 2 dự án** trong nguồn; ít hơn là ⏳ ứng viên. Khi dự án khác xác nhận: `proto confirm-rule <ID> --source <dự-án>`.
+   - Bài học mới mâu thuẫn quy tắc cũ → dùng `--supersedes <ID-cũ>` thay vì để hai quy tắc đá nhau.
+   - Chạy `proto lint-knowledge` sau khi ghi; lint phải sạch lỗi.
+3. **Thứ tự ưu tiên khi đọc tri thức**: DESIGN-CONTEXT dự án > persona > domain > core (xem mục 4 của `core-anti-ai-slop.md`). Bỏ qua quy tắc ⛔; ⏳ áp dụng mềm.

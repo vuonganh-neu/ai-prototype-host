@@ -22,4 +22,5 @@
 - **Độ bo góc (Corner Radius)**: `4px–8px` (Sắc nét, chuyên nghiệp)
 
 ## 4. Quy tắc Riêng Đã Chốt qua các Vòng Review
+*(Ghi bằng `proto learn --project {{PROJECT_SLUG}} --rule "..."` — không sửa tay định dạng dòng. Quy tắc ở đây ưu tiên cao nhất, ghi đè domain/persona/core.)*
 - *(Cập nhật các quyết định thiết kế riêng của dự án này tại đây)*

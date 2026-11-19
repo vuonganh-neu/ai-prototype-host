@@ -18,3 +18,9 @@
 
 ## 3. Mẫu tham chiếu thực tế (Mobbin / Web)
 - **Analytics & Management**: Stripe Dashboard, Mercury Bank, Ramp, PostHog, Plausible Analytics, Linear Insights.
+
+---
+
+## 4. Nhật ký Tích luỹ Kinh nghiệm
+*(Ghi bằng `proto learn` — không sửa tay định dạng dòng. ✅ áp dụng · ⏳ ứng viên (1 dự án, DESIGN-CONTEXT dự án được ghi đè) · ⛔ đã bị thay thế, bỏ qua)*
+*(Chỉ ghi ở đây bài học đúng với persona này **bất kể domain**. Bài học gắn với một loại sản phẩm → ghi vào domain; gắn với một dự án → DESIGN-CONTEXT dự án.)*

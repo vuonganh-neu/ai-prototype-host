@@ -24,4 +24,8 @@
 - **Đọc bài & Xuất bản**: Substack, Medium, Readwise Reader, NYTimes, Stripe Press, Vercel Blog.
 - **Học tập (Learner)**: Brilliant.org, Duolingo, MasterClass, Coursera (màn hình bài học), Notion Learning.
 
-- **[2026-11-19]** Bắt buộc kiểm tra hiển thị Mobile 390px không vỡ topbar/navbar, không tràn bảng; trang thương mại/dịch vụ chuyên biệt cần tích hợp trải nghiệm tương tác cao (xem nhiều góc cạnh sản phẩm, thử sản phẩm trực tuyến, biểu đồ theo dõi cá nhân, trợ lý AI tư vấn nhanh).
+---
+
+## 4. Nhật ký Tích luỹ Kinh nghiệm
+*(Ghi bằng `proto learn` — không sửa tay định dạng dòng. ✅ áp dụng · ⏳ ứng viên (1 dự án, DESIGN-CONTEXT dự án được ghi đè) · ⛔ đã bị thay thế, bỏ qua)*
+*(Chỉ ghi ở đây bài học đúng với persona này **bất kể domain**. Bài học gắn với một loại sản phẩm → ghi vào domain; gắn với một dự án → DESIGN-CONTEXT dự án.)*

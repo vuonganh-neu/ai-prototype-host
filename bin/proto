@@ -4,10 +4,13 @@ proto — CLI quản lý vòng đời Mockup & Prototype tập trung
 Vị trí: /Users/vuonganhvu/Desktop/workspace/mockup/bin/proto
 """
 
+from __future__ import annotations
+
 import argparse
 import datetime
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -329,27 +332,283 @@ def cmd_init_project(args: argparse.Namespace) -> None:
         print(f"[OK] Đã tạo {readme_file}")
 
 
+# ---------------------------------------------------------------------------
+# Tri thức: định dạng quy tắc có ID / trạng thái / nguồn
+#
+#   - **[D02-003]** ⏳ · 2026-11-19 · nguồn: optic-shop — Nội dung quy tắc
+#   - **[D04-003]** ⛔ thay bởi CORE-002 · 2026-11-18 · nguồn: editor-platform — Nội dung cũ
+#
+#   ✅ áp dụng (đã đúng ở ≥ 2 dự án hoặc là tri thức nền)
+#   ⏳ ứng viên (mới thấy ở 1 dự án — áp dụng mềm, DESIGN-CONTEXT dự án được phép ghi đè)
+#   ⛔ đã bị thay thế — bỏ qua
+# ---------------------------------------------------------------------------
+
+STATUS_ACTIVE = "✅"
+STATUS_CANDIDATE = "⏳"
+STATUS_SUPERSEDED = "⛔"
+MIN_PROJECTS_FOR_ACTIVE = 2
+
+RULE_RE = re.compile(
+    r"^- \*\*\[(?P<id>[A-Z0-9]+-\d{3})\]\*\* "
+    r"(?P<status>✅|⏳|⛔)(?P<extra>[^·]*)· "
+    r"(?P<date>\d{4}-\d{2}-\d{2}) · nguồn: (?P<sources>.+?) — (?P<text>.+)$"
+)
+LEARN_HEADING = "## Nhật ký Tích luỹ Kinh nghiệm"
+LEARN_LEGEND = (
+    "*(Ghi bằng `proto learn` — không sửa tay định dạng dòng. "
+    "✅ áp dụng · ⏳ ứng viên (1 dự án, DESIGN-CONTEXT dự án được ghi đè) · ⛔ đã bị thay thế, bỏ qua)*"
+)
+PERSONA_PREFIX = {
+    "consumer-reader": "PCR",
+    "operator-admin": "POA",
+    "creator-builder": "PCB",
+    "executive-manager": "PEM",
+}
+
+
+def norm_text(s: str) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"[`*_~]", "", s)).strip().lower()
+
+
+def parse_sources(raw: str) -> list[str]:
+    return [s.strip() for s in raw.split(",") if s.strip()]
+
+
+def source_projects(sources: list[str]) -> set[str]:
+    """'optic-shop/00-full-mvp@v2' → 'optic-shop'."""
+    return {s.split("/")[0].split("@")[0].strip() for s in sources if s.strip()}
+
+
+def knowledge_target(scope: str, args: argparse.Namespace) -> tuple[Path, str]:
+    """Trả về (file đích, tiền tố ID) theo phạm vi."""
+    if scope == "core":
+        return KNOWLEDGE_DIR / "core-anti-ai-slop.md", "CORE"
+    if scope == "domain":
+        if not args.domain:
+            fail("--scope domain cần --domain (vd: 02-management-saas).")
+        d = args.domain.removesuffix(".md")
+        m = re.match(r"^(\d{2})-", d)
+        if not m:
+            fail(f"Mã domain không hợp lệ: {d}")
+        return KNOWLEDGE_DIR / "domains" / f"{d}.md", f"D{m.group(1)}"
+    if scope == "persona":
+        if not args.persona:
+            fail("--scope persona cần --persona (vd: operator-admin).")
+        p = args.persona.removesuffix(".md")
+        if p not in PERSONA_PREFIX:
+            fail(f"Persona không hợp lệ: {p}. Chọn một trong: {', '.join(PERSONA_PREFIX)}")
+        return KNOWLEDGE_DIR / "personas" / f"{p}.md", PERSONA_PREFIX[p]
+    # scope == "project"
+    return resolve_project_context(args), "PRJ"
+
+
+def resolve_project_context(args: argparse.Namespace) -> Path:
+    if args.project_path:
+        base = Path(args.project_path).expanduser().resolve()
+    elif args.project:
+        base = (ROOT_DIR.parent / args.project).resolve()
+    else:
+        fail(
+            "Mặc định bài học thuộc phạm vi DỰ ÁN — cần --project <slug> hoặc --project-path <đường-dẫn>.\n"
+            "Chỉ dùng --scope domain|persona|core khi bài học đúng cho mọi dự án cùng loại."
+        )
+    ctx = base / "docs" / "02-mockups" / "DESIGN-CONTEXT.md"
+    if not ctx.is_file():
+        fail(f"Không thấy {ctx}. Chạy trước: proto init-project {base} --domain <mã-domain>")
+    return ctx
+
+
+def fail(msg: str) -> None:
+    print(f"[LỖI] {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def iter_knowledge_files(include_projects: bool = True) -> list[Path]:
+    files = [KNOWLEDGE_DIR / "core-anti-ai-slop.md"]
+    files += sorted((KNOWLEDGE_DIR / "domains").glob("*.md"))
+    files += sorted((KNOWLEDGE_DIR / "personas").glob("*.md"))
+    if include_projects:
+        for proj in sorted(PROTOTYPES_DIR.iterdir()) if PROTOTYPES_DIR.is_dir() else []:
+            ctx = ROOT_DIR.parent / proj.name / "docs" / "02-mockups" / "DESIGN-CONTEXT.md"
+            if proj.is_dir() and ctx.is_file():
+                files.append(ctx)
+    return [f for f in files if f.is_file()]
+
+
+def iter_rules(files: list[Path]):
+    for f in files:
+        for i, line in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
+            m = RULE_RE.match(line)
+            if m:
+                yield f, i, m
+
+
+def next_rule_id(path: Path, prefix: str) -> str:
+    nums = [
+        int(m.group("id").split("-")[1])
+        for _, _, m in iter_rules([path])
+        if m.group("id").startswith(prefix + "-")
+    ]
+    return f"{prefix}-{(max(nums) + 1 if nums else 1):03d}"
+
+
+def append_rule(path: Path, line: str) -> None:
+    content = path.read_text(encoding="utf-8")
+    placeholder = "- *(Cập nhật các quyết định thiết kế riêng của dự án này tại đây)*"
+    if placeholder in content:
+        content = content.replace(placeholder + "\n", "").replace(placeholder, "")
+    if "Nhật ký Tích luỹ Kinh nghiệm" not in content and "## 4. Quy tắc Riêng Đã Chốt" not in content:
+        content = content.rstrip("\n") + f"\n\n---\n\n{LEARN_HEADING}\n{LEARN_LEGEND}\n"
+    path.write_text(content.rstrip("\n") + "\n" + line + "\n", encoding="utf-8")
+
+
+def mark_superseded(old_id: str, new_id: str, prefer: Path | None = None) -> Path | None:
+    files = iter_knowledge_files()
+    if old_id.startswith("PRJ-"):
+        files = [prefer] if prefer else []  # PRJ-xxx chỉ có nghĩa trong dự án đang ghi
+    for f in files:
+        lines = f.read_text(encoding="utf-8").splitlines()
+        for idx, line in enumerate(lines):
+            m = RULE_RE.match(line)
+            if m and m.group("id") == old_id:
+                lines[idx] = (
+                    f"- **[{old_id}]** {STATUS_SUPERSEDED} thay bởi {new_id} · {m.group('date')} · "
+                    f"nguồn: {m.group('sources')} — {m.group('text')}"
+                )
+                f.write_text("\n".join(lines) + "\n", encoding="utf-8")
+                return f
+    return None
+
+
 def cmd_learn(args: argparse.Namespace) -> None:
-    stamp = today_str()
-    rule_line = f"- **[{stamp}]** {args.rule.strip()}\n"
+    scope = args.scope
+    if args.domain and args.persona and scope != "project":
+        fail("Mỗi bài học chỉ ghi vào MỘT nơi. Chọn --scope domain HOẶC --scope persona.")
 
-    if args.domain:
-        domain_file = KNOWLEDGE_DIR / "domains" / f"{args.domain.removesuffix('.md')}.md"
-        if not domain_file.is_file():
-            print(f"[LỖI] Không tìm thấy file domain: {domain_file}", file=sys.stderr)
-            sys.exit(1)
-        with domain_file.open("a", encoding="utf-8") as f:
-            f.write(rule_line)
-        print(f"[OK] Đã tích luỹ bài học mới vào Lĩnh vực: {domain_file.name}")
+    rule_text = " ".join(args.rule.split())
+    sources = [s.strip() for s in (args.source or []) if s.strip()]
+    if scope == "project" and not sources:
+        sources = [args.project or Path(args.project_path or ".").name]
+    if not sources:
+        fail("Cần --source <dự-án[/feature@version]> để biết bài học đến từ đâu (lặp lại cờ cho nhiều dự án).")
 
-    if args.persona:
-        persona_file = KNOWLEDGE_DIR / "personas" / f"{args.persona.removesuffix('.md')}.md"
-        if not persona_file.is_file():
-            print(f"[LỖI] Không tìm thấy file persona: {persona_file}", file=sys.stderr)
-            sys.exit(1)
-        with persona_file.open("a", encoding="utf-8") as f:
-            f.write(f"\n{rule_line}")
-        print(f"[OK] Đã tích luỹ bài học mới vào Đối tượng: {persona_file.name}")
+    target, prefix = knowledge_target(scope, args)
+
+    # Chặn trùng lặp ở bất kỳ đâu trong tri thức chung + DESIGN-CONTEXT các dự án
+    key = norm_text(rule_text)
+    for f, ln, m in iter_rules(iter_knowledge_files() + [target]):
+        if m.group("status") != STATUS_SUPERSEDED and norm_text(m.group("text")) == key:
+            fail(f"Bài học đã tồn tại: {m.group('id')} ({f}:{ln}). Dùng 'proto confirm-rule {m.group('id')} --source <dự-án>' để bổ sung nguồn.")
+
+    if scope == "project":
+        status = STATUS_ACTIVE
+    else:
+        n = len(source_projects(sources))
+        status = STATUS_ACTIVE if n >= MIN_PROJECTS_FOR_ACTIVE else STATUS_CANDIDATE
+
+    new_id = next_rule_id(target, prefix)
+    line = f"- **[{new_id}]** {status} · {today_str()} · nguồn: {', '.join(sources)} — {rule_text}"
+    append_rule(target, line)
+    print(f"[OK] {new_id} {status} → {target}")
+    if status == STATUS_CANDIDATE:
+        print(
+            f"  ⏳ Ứng viên: mới có {len(source_projects(sources))} dự án. Khi dự án thứ {MIN_PROJECTS_FOR_ACTIVE} xác nhận, "
+            f"chạy: proto confirm-rule {new_id} --source <dự-án>"
+        )
+
+    if args.supersedes:
+        for old in args.supersedes:
+            f = mark_superseded(old.strip(), new_id, prefer=target)
+            print(f"[OK] {old} → ⛔ thay bởi {new_id} ({f})" if f else f"[CẢNH BÁO] Không tìm thấy {old}")
+
+
+def cmd_confirm_rule(args: argparse.Namespace) -> None:
+    rid = args.rule_id.strip()
+    for f in iter_knowledge_files():
+        lines = f.read_text(encoding="utf-8").splitlines()
+        for idx, line in enumerate(lines):
+            m = RULE_RE.match(line)
+            if not m or m.group("id") != rid:
+                continue
+            if m.group("status") == STATUS_SUPERSEDED:
+                fail(f"{rid} đã bị thay thế, không thể xác nhận.")
+            sources = parse_sources(m.group("sources"))
+            for s in args.source:
+                if s.strip() and s.strip() not in sources:
+                    sources.append(s.strip())
+            status = m.group("status")
+            if rid.startswith("PRJ-") or len(source_projects(sources)) >= MIN_PROJECTS_FOR_ACTIVE:
+                status = STATUS_ACTIVE
+            lines[idx] = f"- **[{rid}]** {status} · {m.group('date')} · nguồn: {', '.join(sources)} — {m.group('text')}"
+            f.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            print(f"[OK] {rid} {status} · nguồn: {', '.join(sources)} ({f})")
+            return
+    fail(f"Không tìm thấy quy tắc {rid}.")
+
+
+def cmd_lint_knowledge(_args: argparse.Namespace) -> None:
+    errors: list[str] = []
+    warnings: list[str] = []
+    files = iter_knowledge_files()
+    shared = [f for f in files if KNOWLEDGE_DIR in f.parents]
+    project_slugs = {p.name for p in PROTOTYPES_DIR.iterdir() if p.is_dir()} if PROTOTYPES_DIR.is_dir() else set()
+
+    def rel(p: Path) -> str:
+        try:
+            return str(p.relative_to(ROOT_DIR))
+        except ValueError:
+            return str(p)
+
+    ids: dict[str, str] = {}
+    texts: dict[str, str] = {}
+    candidates = 0
+    def id_key(f: Path, rid: str) -> str:
+        # PRJ-xxx chỉ cần duy nhất trong từng dự án
+        return f"{f}::{rid}" if rid.startswith("PRJ-") else rid
+
+    for f, ln, m in iter_rules(files):
+        rid, where = m.group("id"), f"{rel(f)}:{ln}"
+        if id_key(f, rid) in ids:
+            errors.append(f"ID trùng {rid}: {ids[id_key(f, rid)]} và {where}")
+        ids[id_key(f, rid)] = where
+        if m.group("status") == STATUS_SUPERSEDED:
+            ref = re.search(r"thay bởi ([A-Z0-9]+-\d{3})", m.group("extra"))
+            if not ref:
+                errors.append(f"{where} ⛔ nhưng thiếu 'thay bởi <ID>'")
+            continue
+        if m.group("status") == STATUS_CANDIDATE:
+            candidates += 1
+        key = norm_text(m.group("text"))
+        if key in texts:
+            errors.append(f"Trùng nội dung: {texts[key]} và {where}")
+        texts[key] = where
+        if f in shared:
+            low = m.group("text").lower()
+            leaked = [s for s in project_slugs if s.lower() in low]
+            if leaked:
+                warnings.append(f"{where} {rid} nhắc tên dự án {leaked} — có vẻ là quy tắc riêng dự án")
+
+    for f, ln, m in iter_rules(files):
+        ref = re.search(r"thay bởi ([A-Z0-9]+-\d{3})", m.group("extra"))
+        if ref and id_key(f, ref.group(1)) not in ids:
+            errors.append(f"{rel(f)}:{ln} trỏ tới {ref.group(1)} không tồn tại")
+
+    # Dòng bài học kiểu cũ (không ID) trong tri thức chung
+    for f in shared:
+        for ln, line in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
+            if re.match(r"^- \*\*\[\d{4}-\d{2}-\d{2}\]\*\*", line):
+                errors.append(f"{rel(f)}:{ln} bài học định dạng cũ (không có ID/nguồn)")
+
+    for e in errors:
+        print(f"[LỖI] {e}")
+    for w in warnings:
+        print(f"[CẢNH BÁO] {w}")
+    print(
+        f"[TỔNG KẾT] {len(ids)} quy tắc · {candidates} ứng viên ⏳ · "
+        f"{len(errors)} lỗi · {len(warnings)} cảnh báo · {len(files)} file"
+    )
+    if errors:
+        sys.exit(1)
 
 
 def cmd_publish(args: argparse.Namespace) -> None:
@@ -476,11 +735,33 @@ def main() -> None:
     p_init_proj.add_argument("--force", action="store_true", help="Ghi đè DESIGN-CONTEXT.md nếu đã có")
     p_init_proj.set_defaults(func=cmd_init_project)
 
-    p_learn = sub.add_parser("learn", help="Tích luỹ bài học UI/UX mới vào Ma trận Tri thức")
-    p_learn.add_argument("--domain", help="Mã domain (vd: 04-creative-editor)")
-    p_learn.add_argument("--persona", help="Mã persona (vd: creator-builder)")
+    p_learn = sub.add_parser(
+        "learn",
+        help="Ghi MỘT bài học vào đúng MỘT nơi (mặc định: DESIGN-CONTEXT của dự án)",
+        description=(
+            "Phạm vi mặc định là project. Chỉ dùng domain/persona/core khi bài học đúng cho mọi dự án "
+            "cùng loại; khi đó cần ≥2 dự án trong --source để thành ✅, nếu không sẽ là ⏳ ứng viên."
+        ),
+    )
     p_learn.add_argument("--rule", required=True, help="Nội dung bài học/quy tắc thiết kế cần ghi nhớ")
+    p_learn.add_argument("--scope", choices=["project", "domain", "persona", "core"], default="project",
+                         help="Nơi ghi bài học (mặc định: project)")
+    p_learn.add_argument("--project", help="Slug dự án (thư mục cùng cấp với kho mockup), dùng cho --scope project")
+    p_learn.add_argument("--project-path", help="Đường dẫn dự án nếu không nằm cạnh kho mockup")
+    p_learn.add_argument("--domain", help="Mã domain (vd: 04-creative-editor), dùng cho --scope domain")
+    p_learn.add_argument("--persona", help="Mã persona (vd: creator-builder), dùng cho --scope persona")
+    p_learn.add_argument("--source", action="append",
+                         help="Nguồn bằng chứng: <dự-án>[/<feature>@<version>]. Lặp lại cờ cho nhiều dự án")
+    p_learn.add_argument("--supersedes", action="append", help="ID quy tắc cũ bị bài học này thay thế")
     p_learn.set_defaults(func=cmd_learn)
+
+    p_confirm = sub.add_parser("confirm-rule", help="Bổ sung nguồn cho quy tắc; đủ 2 dự án thì ⏳ → ✅")
+    p_confirm.add_argument("rule_id", help="ID quy tắc (vd: D02-003)")
+    p_confirm.add_argument("--source", action="append", required=True, help="Dự án xác nhận thêm")
+    p_confirm.set_defaults(func=cmd_confirm_rule)
+
+    p_lint = sub.add_parser("lint-knowledge", help="Kiểm tra trùng lặp, ID, định dạng cũ, quy tắc rò rỉ tên dự án")
+    p_lint.set_defaults(func=cmd_lint_knowledge)
 
     p_pub = sub.add_parser("publish", help="Build manifest, commit và đẩy lên GitHub Pages")
     p_pub.add_argument("-m", "--message", help="Commit message")

@@ -49,7 +49,25 @@ Trước khi viết bất kỳ dòng code HTML/CSS nào cho một màn hình:
 
 ## 4. Cơ chế Tích luỹ Tri thức (Continuous Learning)
 
-Sau mỗi dự án hoặc mỗi lần người dùng phản hồi sửa đổi UI/UX:
-- Những quy tắc thuộc về **riêng dự án đó** → Ghi vào `<project>/docs/02-mockups/DESIGN-CONTEXT.md`.
-- Những bài học có giá trị **tái sử dụng cho cùng lĩnh vực hoặc cùng đối tượng người dùng** → Chạy lệnh `proto learn` (hoặc cập nhật vào `knowledge/domains/*.md` và `knowledge/personas/*.md` tại kho `mockup` này).
-- Nhờ vậy, dự án sau thuộc cùng lĩnh vực sẽ thừa hưởng ngay gu thẩm mỹ và quy chuẩn UX đã được tinh chỉnh từ các dự án trước.
+Mỗi bài học được ghi vào **đúng MỘT nơi** bằng `proto learn` (không sửa tay):
+
+| Tầng | Nơi ghi | Tiền tố ID | Khi nào |
+| :--- | :--- | :--- | :--- |
+| Dự án (**mặc định**) | `<project>/docs/02-mockups/DESIGN-CONTEXT.md` | `PRJ-` | Bản sắc / luồng / thuật ngữ riêng của dự án |
+| Domain | `knowledge/domains/*.md` | `D01-`…`D04-` | Đúng với mọi sản phẩm cùng loại |
+| Persona | `knowledge/personas/*.md` | `PCR-` `POA-` `PCB-` `PEM-` | Đúng với một kiểu người dùng bất kể loại sản phẩm |
+| Core | `knowledge/core-anti-ai-slop.md` | `CORE-` | Quy chuẩn mọi mockup |
+
+Định dạng mỗi dòng:
+
+```text
+- **[D02-003]** ⏳ · 2026-11-19 · nguồn: optic-shop/00-full-mvp@v2 — Nội dung quy tắc
+```
+
+- ✅ **áp dụng**: tầng chung cần nguồn từ **≥ 2 dự án** (hoặc là tri thức nền ban đầu).
+- ⏳ **ứng viên**: mới thấy ở 1 dự án — áp dụng mềm, DESIGN-CONTEXT dự án được ghi đè. `proto confirm-rule <ID> --source <dự-án>` để bổ sung nguồn.
+- ⛔ **thay bởi <ID>**: đã bị thay thế, AI bỏ qua. Tạo bằng `proto learn ... --supersedes <ID>`.
+
+**Thứ tự ưu tiên khi mâu thuẫn**: DESIGN-CONTEXT dự án > Persona > Domain > Core (chi tiết: mục 4 của `core-anti-ai-slop.md`).
+
+**Kiểm tra sức khoẻ tri thức**: `proto lint-knowledge` báo ID trùng, nội dung trùng, dòng định dạng cũ, tham chiếu ⛔ gãy, và quy tắc ở tầng chung có nhắc tên dự án (dấu hiệu ghi nhầm tầng).

@@ -18,7 +18,8 @@ Mọi prototype sinh ra trong hệ thống này **BẮT BUỘC** tuân thủ cá
 4. **Cấm bố cục "3 hộp tính năng kèm icon tròn ở giữa" cho ứng dụng phần mềm**:
    - Đừng biến màn hình làm việc (Workspace/App) thành trang quảng cáo (Marketing Landing Page). Màn hình làm việc phải đi thẳng vào dữ liệu và công cụ thao tác.
 5. **Cấm dùng duy nhất font hệ thống nhàm chán mà không phân cấp**:
-   - Phải nạp Google Fonts phù hợp với Domain (kết hợp rõ giữa Sans-serif cho UI, Serif cho bài đọc/tiêu đề biên tập, và Monospace cho con số/mã/thông số kỹ thuật).
+   - Phải nạp Google Fonts có chủ đích và phân cấp rõ: **1 font UI (Sans)** + **con số/mã/thông số** dùng Monospace hoặc `font-variant-numeric: tabular-nums`.
+   - **Serif chỉ thêm khi màn hình có nội dung đọc dài / tiêu đề biên tập** (domain 01, 03, trang khách hàng). Công cụ làm việc (domain 02, 04) không bắt buộc Serif; dự án có thể chốt "1 font UI duy nhất" trong DESIGN-CONTEXT.
 
 ---
 
@@ -40,7 +41,7 @@ Mọi prototype sinh ra trong hệ thống này **BẮT BUỘC** tuân thủ cá
 4. **Đa trạng thái (State Switcher nội bộ khi cần)**:
    - Một màn hình tốt nên cho phép người review bấm thử các trạng thái quan trọng: *Đầy đủ dữ liệu (Populated)*, *Trống (Empty state)*, *Đang chọn phần tử (Selected/Active)*, hoặc *Lỗi/Cảnh báo*.
 5. **Đa thiết bị (Responsive)**:
-   - Mọi màn hình dành cho người dùng cuối (`consumer-reader`, `executive-manager`) bắt buộc phải hiển thị chuẩn trên cả Desktop (`1440px`), Tablet (`768px`) và iPhone (`390px`).
+   - Mọi màn hình dành cho người dùng cuối (`consumer-reader`, `executive-manager`) bắt buộc phải hiển thị chuẩn trên cả Desktop (`1440px`), Tablet (`768px`) và iPhone (`390px`): tại `390px` thanh topbar/navbar không vỡ, bảng không tràn ngang trang (cuộn trong khung hoặc chuyển thành danh sách thẻ).
    - Màn hình chuyên dụng Desktop (`creator-builder` như Canvas Editor) phải xử lý gọn gàng trên màn hình MacBook 13"–16" (`1280px`–`1728px`) mà không bị vỡ thanh công cụ.
 
 ---
@@ -52,3 +53,22 @@ Mọi prototype sinh ra trong hệ thống này **BẮT BUỘC** tuân thủ cá
 2. **Khi người dùng phản hồi chỉnh sửa**:
    - **Tuyệt đối không ghi đè** lên phiên bản cũ (`v1`).
    - Luôn tạo phiên bản mới (`v2`, `v3`...) để người dùng dùng thanh **Version Switcher** trên trang Preview đối chiếu trực tiếp trước/sau.
+
+---
+
+## 4. Thứ tự Ưu tiên khi Quy tắc Mâu thuẫn
+
+1. **DESIGN-CONTEXT.md của dự án** (bản sắc riêng, quyết định đã chốt qua review) — cao nhất.
+2. **Persona** (`knowledge/personas/`) — hành vi người dùng.
+3. **Domain** (`knowledge/domains/`) — quy chuẩn loại sản phẩm.
+4. **Core** (file này) — mặc định chung. Riêng các mục *Cấm* ở phần 1 chỉ được dự án ghi đè khi DESIGN-CONTEXT nêu rõ lý do (vd: màu thương hiệu).
+
+Trong cùng một tầng: ✅ thắng ⏳; ⛔ luôn bỏ qua. Nếu vẫn mâu thuẫn → hỏi người dùng, rồi ghi kết quả vào DESIGN-CONTEXT dự án.
+
+---
+
+## 5. Nhật ký Tích luỹ Kinh nghiệm
+*(Ghi bằng `proto learn` — không sửa tay định dạng dòng. ✅ áp dụng · ⏳ ứng viên (1 dự án, DESIGN-CONTEXT dự án được ghi đè) · ⛔ đã bị thay thế, bỏ qua)*
+- **[CORE-001]** ⏳ · 2026-11-18 · nguồn: editor-platform/01-universal-studio@v7-clean-gdocs-studio — Không hiển thị số mục tài liệu đặc tả (5.1, 4.2…) trên giao diện mockup; lưu trong thuộc tính `data-spec-ref` và chỉ hiện nhãn tra cứu khi người review nhấn giữ phím `Alt`.
+- **[CORE-002]** ⏳ · 2026-11-18 · nguồn: editor-platform/01-universal-studio@v7-clean-gdocs-studio — Toàn bộ nhãn giao diện dùng một ngôn ngữ thống nhất theo ngôn ngữ của dự án (không trộn nhãn tiếng Anh và tiếng Việt).
+- **[CORE-003]** ⏳ · 2026-11-18 · nguồn: editor-platform/01-universal-studio@v7-clean-gdocs-studio — Nút, pill và tab dùng `white-space: nowrap` để nhãn không bao giờ rớt dòng làm biến dạng nút.
