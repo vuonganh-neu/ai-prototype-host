@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kính Mắt Minh Quang — Interactive Product Prototype (P00A)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- Global Prototype Bar (Surface Switcher + Role + Zalo Sandbox + Reset) -->
+  <header class="proto-topbar no-print">
+    <div class="proto-topbar-left">
+      <div class="brand-mark">
+        <span class="brand-dot"></span>
+        <span class="brand-name">Minh Quang Optical</span>
+        <span class="proto-tag">P00A · Interactive MVP</span>
+      </div>
+      <div class="surface-switcher" role="tablist" aria-label="Chuyển bề mặt ứng dụng">
+        <button class="surface-btn active" data-surface="store" role="tab" aria-selected="true">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          Cửa hàng &amp; Lab (POS / Admin)
+        </button>
+        <button class="surface-btn" data-surface="public" role="tab" aria-selected="false">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Website &amp; Sổ Kính Khách hàng
+        </button>
+      </div>
+    </div>
+
+    <div class="proto-topbar-right">
+      <div class="role-control" id="roleControlWrap">
+        <label for="roleSelect" class="sr-only">Vai trò nhân viên</label>
+        <span class="role-label">Vai trò:</span>
+        <select id="roleSelect" class="role-select">
+          <option value="OWNER_ADMIN">Chủ cửa hàng (Owner)</option>
+          <option value="SALES_CASHIER">Thu ngân &amp; Tư vấn (POS)</option>
+          <option value="OPTOMETRIST">KTV Khúc xạ (Đo mắt)</option>
+          <option value="LAB_TECHNICIAN">KTV Gia công (Lab/QC)</option>
+        </select>
+      </div>
+
+      <button class="topbar-icon-btn" id="openZaloBtn" title="Zalo OA Outbox Sandbox">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>Zalo OA</span>
+        <span class="zalo-badge" id="zaloCountBadge">0</span>
+      </button>
+
+      <button class="topbar-ghost-btn" id="resetDemoBtn" title="Khôi phục dữ liệu mẫu ban đầu">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        Reset Demo
+      </button>
+    </div>
+  </header>
+
+  <!-- SURFACE 1: STORE OPERATIONS & OPTICAL LAB (Desktop-first) -->
+  <div id="storeSurface" class="store-shell">
+    <aside class="store-sidebar no-print">
+      <div class="sidebar-section">
+        <div class="sidebar-group-title">Vận hành Bán lẻ</div>
+        <button class="nav-item active" data-view="pos">
+          <span class="nav-icon">⊞</span>
+          <span>Bán hàng POS</span>
+          <span class="nav-shortcut">F1</span>
+        </button>
+        <button class="nav-item" data-view="inventory">
+          <span class="nav-icon">◫</span>
+          <span>Kho &amp; Sổ giao dịch</span>
+          <span class="nav-count" id="navLowStockCount"></span>
+        </button>
+        <button class="nav-item" data-view="appointments">
+          <span class="nav-icon">◷</span>
+          <span>Lịch hẹn &amp; Yêu cầu Online</span>
+          <span class="nav-count" id="navPendingInquiryCount"></span>
+        </button>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-group-title">Nghiệp vụ Quang học</div>
+        <button class="nav-item" data-view="exam">
+          <span class="nav-icon">◎</span>
+          <span>Đo mắt &amp; Đơn kính</span>
+        </button>
+        <button class="nav-item" data-view="lab">
+          <span class="nav-icon">⚙</span>
+          <span>Gia công Lab &amp; QC</span>
+          <span class="nav-count accent" id="navActiveLabCount"></span>
+        </button>
+        <button class="nav-item" data-view="warranty">
+          <span class="nav-icon">✦</span>
+          <span>Bảo hành &amp; Sửa chữa</span>
+        </button>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-group-title">Khách hàng &amp; Quản trị</div>
+        <button class="nav-item" data-view="customers">
+          <span class="nav-icon">◉</span>
+          <span>Khách hàng &amp; CRM 360°</span>
+        </button>
+        <button class="nav-item" data-view="reports">
+          <span class="nav-icon">▤</span>
+          <span>Báo cáo &amp; Zalo Outbox</span>
+        </button>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="assumption-pill">
+          <strong>Giả định P00A:</strong> Cọc Lab 30–50%, Thu ngân CK tối đa 10%, Vật tư nhỏ xuất lô.
+        </div>
+      </div>
+    </aside>
+
+    <main class="store-main" id="storeMain"></main>
+  </div>
+
+  <!-- SURFACE 2: PUBLIC WEBSITE & CUSTOMER PORTAL ("SỔ KÍNH / EYE BOOK") -->
+  <div id="publicSurface" class="public-shell hidden">
+    <nav class="public-nav no-print">
+      <div class="public-container public-nav-inner">
+        <div class="public-brand">
+          <span class="public-brand-title">Minh Quang</span>
+          <span class="public-brand-sub">OPTICAL STUDIO · 148 XÃ ĐÀN</span>
+        </div>
+        <div class="public-tabs">
+          <button class="pub-tab active" data-pubview="storefront">Cửa hàng &amp; Sản phẩm</button>
+          <button class="pub-tab" data-pubview="booking">Đặt lịch đo mắt</button>
+          <button class="pub-tab" data-pubview="eyebook">
+            Sổ Kính của tôi (Eye Book)
+          </button>
+        </div>
+        <div class="public-customer-picker">
+          <span class="muted-xs">Khách đang xem:</span>
+          <select id="portalCustomerSelect" class="portal-select"></select>
+        </div>
+      </div>
+    </nav>
+    <main id="publicMain"></main>
+  </div>
+
+  <!-- Slide-over Drawer (Used for Lab Job Detail/QC, Customer 360, Inventory Inbound, Zalo Sandbox) -->
+  <div id="drawerBackdrop" class="drawer-backdrop hidden no-print"></div>
+  <aside id="sideDrawer" class="side-drawer hidden no-print" aria-hidden="true">
+    <div class="drawer-header">
+      <div>
+        <div class="drawer-eyebrow" id="drawerEyebrow">CHI TIẾT</div>
+        <h2 class="drawer-title" id="drawerTitle">Tiêu đề</h2>
+      </div>
+      <button class="icon-close-btn" id="closeDrawerBtn" aria-label="Đóng">✕</button>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+  </aside>
+
+  <!-- Modal (Used for Print Receipt / Lab Ticket, Quick Inquiry, Quick Payment) -->
+  <div id="modalBackdrop" class="modal-backdrop hidden">
+    <div class="modal-card" id="modalCard">
+      <div class="modal-header no-print">
+        <h3 id="modalTitle">Modal</h3>
+        <button class="icon-close-btn" id="closeModalBtn" aria-label="Đóng">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container no-print"></div>
+
+  <script src="./data.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

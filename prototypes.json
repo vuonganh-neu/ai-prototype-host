@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-18T13:29:51+07:00",
+  "updated_at": "2026-11-19T11:46:44+07:00",
   "projects": [
     {
       "slug": "editor-platform",
@@ -176,6 +176,26 @@
               "version": "v7-clean-gdocs-poster",
               "created_at": "2026-11-18T13:29:50+07:00",
               "notes": "v7.0 — Giao diện 100% Tiếng Việt chuẩn Google Docs/Word, ẩn số mục (giữ Alt để xem), thanh chân trang cố định, chèn Ảnh/Video thật & Vùng xén lề in 3mm"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "optic-shop",
+      "features": [
+        {
+          "slug": "00-full-mvp",
+          "title": "Kính Mắt Minh Quang — Full Interactive MVP (POS, Optical Lab & Customer Eye Book)",
+          "domain": "02-management-saas",
+          "persona": "operator-admin",
+          "approved_version": "",
+          "promoted_to": "",
+          "versions": [
+            {
+              "version": "v1-workbench",
+              "created_at": "2026-11-19T11:21:28+07:00",
+              "notes": "P00A Interactive Functional Prototype: Frontend-only + localStorage state covering Store Operations (POS, Eye Exam/Rx/Lens Config, Lab Kanban/QC, Inventory Ledger, Customer 360/CRM, Warranty, Appointments, Reports/Zalo Sandbox) synced live with Public Website & Customer Eye Book Portal."
             }
           ]
         }
