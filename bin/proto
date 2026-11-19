@@ -54,7 +54,33 @@ def get_pages_base_url() -> str:
     return ""
 
 
-def build_manifest() -> dict:
+def phase_sort_key(phase: str) -> tuple:
+    """P00 < P00A < P01 < … < P10 < F01 (fix)."""
+    m = re.match(r"^([A-Z]+)(\d+)([A-Z]*)$", phase or "")
+    if not m:
+        return ("~", 0, phase)
+    return (m.group(1), int(m.group(2)), m.group(3))
+
+
+def normalize_phase(raw: str | None) -> str:
+    if not raw:
+        return ""
+    ph = raw.strip().upper()
+    if not re.match(r"^[A-Z]+\d+[A-Z]*$", ph):
+        fail(f"Mã phase không hợp lệ: '{raw}'. Dạng hợp lệ: P00, P00A, P03, F01…")
+    return ph
+
+
+def warn_unknown_phase(proj_slug: str, phase: str) -> None:
+    """Cảnh báo (không chặn) nếu dự án có docs/03-phases mà không thấy thư mục phase tương ứng."""
+    phases_dir = ROOT_DIR.parent / proj_slug / "docs" / "03-phases"
+    if phase and phases_dir.is_dir():
+        names = [d.name for d in phases_dir.iterdir() if d.is_dir()]
+        if not any(n == phase or n.startswith(phase + "-") for n in names):
+            print(f"[CẢNH BÁO] Không thấy {phases_dir}/{phase}-* — kiểm tra lại mã phase.", file=sys.stderr)
+
+
+def build_manifest_data() -> dict:
     PROTOTYPES_DIR.mkdir(parents=True, exist_ok=True)
     projects_list = []
 
@@ -87,7 +113,9 @@ def build_manifest() -> dict:
                 v_info = recorded_versions.get(v_slug, {})
                 versions.append({
                     "version": v_slug,
-                    "created_at": v_info.get("created_at", today_str()),
+                    "created_at": v_info.get("created_at", ""),
+                    "phase": v_info.get("phase", ""),
+                    "stage": v_info.get("stage", ""),
                     "notes": v_info.get("notes", ""),
                 })
 
@@ -101,6 +129,7 @@ def build_manifest() -> dict:
                 "persona": meta.get("persona", ""),
                 "approved_version": meta.get("approved_version", ""),
                 "promoted_to": meta.get("promoted_to", ""),
+                "phases": sorted({v["phase"] for v in versions if v["phase"]}, key=phase_sort_key),
                 "versions": versions,
             }
             features_list.append(feat_entry)
@@ -108,13 +137,18 @@ def build_manifest() -> dict:
         if features_list:
             projects_list.append({
                 "slug": proj_dir.name,
+                "phases": sorted({ph for f in features_list for ph in f["phases"]}, key=phase_sort_key),
                 "features": features_list,
             })
 
-    manifest = {
+    return {
         "updated_at": now_iso(),
         "projects": projects_list,
     }
+
+
+def build_manifest() -> dict:
+    manifest = build_manifest_data()
     MANIFEST_FILE.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return manifest
 
@@ -168,10 +202,18 @@ def cmd_new(args: argparse.Namespace) -> None:
     if args.persona:
         meta["persona"] = args.persona
 
+    phase = normalize_phase(args.phase)
+    stage = args.stage or ("phase" if phase else "")
+    if not phase:
+        print("[CẢNH BÁO] Chưa gắn --phase: phiên bản sẽ nằm ở mục 'Chưa gắn phase' trên Hub.", file=sys.stderr)
+    warn_unknown_phase(proj_slug, phase)
+
     versions = [v for v in meta.get("versions", []) if v.get("version") != ver_slug]
     versions.append({
         "version": ver_slug,
         "created_at": now_iso(),
+        "phase": phase,
+        "stage": stage,
         "notes": args.notes or "",
     })
     meta["versions"] = versions
@@ -331,6 +373,9 @@ def cmd_init_project(args: argparse.Namespace) -> None:
         update_project_mockups_readme(mockups_root, proj_slug, get_pages_base_url())
         print(f"[OK] Đã tạo {readme_file}")
 
+    link_stable_root()
+    upsert_agent_block(target_dir, proj_slug)
+
 
 # ---------------------------------------------------------------------------
 # Tri thức: định dạng quy tắc có ID / trạng thái / nguồn
@@ -478,6 +523,173 @@ def mark_superseded(old_id: str, new_id: str, prefer: Path | None = None) -> Pat
                 f.write_text("\n".join(lines) + "\n", encoding="utf-8")
                 return f
     return None
+
+
+# ---------------------------------------------------------------------------
+# Tích hợp dự án ↔ agent (Claude / Cursor / Antigravity)
+# ---------------------------------------------------------------------------
+
+STABLE_ROOT = Path.home() / ".config" / "mockup" / "root"
+STABLE_ROOT_DISPLAY = "~/.config/mockup/root"
+BLOCK_BEGIN = "<!-- mockup:begin"
+BLOCK_END = "<!-- mockup:end -->"
+
+
+def link_stable_root() -> None:
+    """~/.config/mockup/root → kho mockup: dự án/hook/rule gọi qua đây, không ghi cứng đường dẫn máy."""
+    try:
+        STABLE_ROOT.parent.mkdir(parents=True, exist_ok=True)
+        if STABLE_ROOT.is_symlink() or STABLE_ROOT.exists():
+            if STABLE_ROOT.resolve() == ROOT_DIR:
+                return
+            STABLE_ROOT.unlink()
+        STABLE_ROOT.symlink_to(ROOT_DIR)
+        print(f"[OK] {STABLE_ROOT_DISPLAY} → {ROOT_DIR}")
+    except OSError as e:
+        print(f"[CẢNH BÁO] Không tạo được {STABLE_ROOT_DISPLAY}: {e}", file=sys.stderr)
+
+
+def agent_block(proj_slug: str) -> str:
+    base = get_pages_base_url()
+    hub = (
+        f"- Hub tổng quan: {base}/?project={proj_slug} · theo phase: {base}/?project={proj_slug}&phase=<Pxx>\n"
+        if base else ""
+    )
+    return (
+        f"{BLOCK_BEGIN} — sinh bởi `proto init-project`, sửa ở kho mockup rồi chạy lại lệnh; không sửa tay -->\n"
+        "## Thiết kế UI/UX (Mockup)\n"
+        "- Bối cảnh thiết kế: `docs/02-mockups/DESIGN-CONTEXT.md` · bản chốt: `docs/02-mockups/<màn-hình>/` (+ `SPEC-NOTES.md`).\n"
+        f"- **Khi design** (tạo/sửa mockup, review UI): đọc `{STABLE_ROOT_DISPLAY}/skill/SKILL.md` và làm theo. "
+        "Bản nháp KHÔNG đặt trong repo này mà ở kho mockup: "
+        f"`{STABLE_ROOT_DISPLAY}/bin/proto new {proj_slug} <màn-hình> <version> --phase <Pxx>`.\n"
+        "- **Khi code UI**: bám bản chốt trong `docs/02-mockups/` mà phase doc chỉ định; không tự sáng tác giao diện; "
+        "chỗ nào lệch mockup → ghi lý do trong phase doc.\n"
+        f"- Trạng thái design: `{STABLE_ROOT_DISPLAY}/bin/proto status --project {proj_slug} [--phase <Pxx>]`\n"
+        f"{hub}"
+        f"{BLOCK_END}\n"
+    )
+
+
+def upsert_agent_block(target_dir: Path, proj_slug: str) -> None:
+    """Chèn/cập nhật khối mockup vào AGENTS.md (Cursor, Antigravity, Codex…) và CLAUDE.md (Claude Code)."""
+    block = agent_block(proj_slug)
+    files = [target_dir / "AGENTS.md", target_dir / "CLAUDE.md"]
+    if not any(f.is_file() for f in files):
+        files = [target_dir / "AGENTS.md"]
+    for f in files:
+        if not f.is_file() and f.name == "CLAUDE.md":
+            continue
+        content = f.read_text(encoding="utf-8") if f.is_file() else ""
+        if BLOCK_BEGIN in content and BLOCK_END in content:
+            start = content.index(BLOCK_BEGIN)
+            end = content.index(BLOCK_END) + len(BLOCK_END)
+            new = content[:start] + block.rstrip("\n") + content[end:]
+        else:
+            new = (content.rstrip("\n") + "\n\n" if content.strip() else "") + block
+        if new != content:
+            f.write_text(new, encoding="utf-8")
+            print(f"[OK] Đã cập nhật khối mockup trong {f}")
+        else:
+            print(f"[INFO] Khối mockup trong {f} đã mới nhất")
+
+
+def project_slug_from_path(path: Path) -> str:
+    ctx = path / "docs" / "02-mockups" / "DESIGN-CONTEXT.md"
+    if ctx.is_file():
+        m = re.search(r"Project Slug\*\*:\s*`([^`]+)`", ctx.read_text(encoding="utf-8"))
+        if m:
+            return m.group(1).strip()
+    return path.name
+
+
+def load_feature_meta(proj_slug: str) -> list[dict]:
+    manifest = build_manifest_data()
+    for p in manifest["projects"]:
+        if p["slug"] == proj_slug:
+            return p["features"]
+    return []
+
+
+def cmd_set_phase(args: argparse.Namespace) -> None:
+    feat_dir = PROTOTYPES_DIR / args.project / args.feature
+    meta_path = feat_dir / "meta.json"
+    if not meta_path.is_file():
+        fail(f"Không thấy {meta_path}")
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    phase = normalize_phase(args.phase)
+    warn_unknown_phase(args.project, phase)
+    targets = set(args.versions)
+    known = {v.get("version") for v in meta.get("versions", [])}
+    for v in sorted(targets - known):
+        if not (feat_dir / v / "index.html").is_file():
+            fail(f"Không có phiên bản {v} trong {feat_dir}")
+        meta.setdefault("versions", []).append({"version": v, "created_at": "", "notes": ""})
+    for v in meta["versions"]:
+        if v.get("version") in targets:
+            v["phase"] = phase
+            v["stage"] = args.stage or v.get("stage") or ("phase" if phase else "")
+            print(f"[OK] {args.project}/{args.feature}/{v['version']} → phase={phase or '∅'} stage={v['stage'] or '∅'}")
+    meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    build_manifest()
+
+
+def feature_status(feat: dict, phase: str = "") -> dict | None:
+    versions = feat.get("versions", [])
+    if phase:
+        versions = [v for v in versions if v.get("phase") == phase]
+        if not versions:
+            return None
+    latest = versions[-1] if versions else {}
+    approved = feat.get("approved_version", "")
+    pending = bool(latest) and latest.get("version") != approved and not (
+        phase and any(v["version"] == approved for v in versions)
+    )
+    return {"latest": latest, "approved": approved, "pending": pending, "count": len(versions)}
+
+
+def cmd_status(args: argparse.Namespace) -> None:
+    if args.project:
+        slug = args.project
+    else:
+        slug = project_slug_from_path(Path(args.project_path or ".").expanduser().resolve())
+    phase = normalize_phase(args.phase)
+    feats = load_feature_meta(slug)
+    base = get_pages_base_url()
+
+    rows = []
+    for f in feats:
+        st = feature_status(f, phase)
+        if st:
+            rows.append((f, st))
+    pending = [f["slug"] for f, st in rows if st["pending"]]
+    approved = [f["slug"] for f, st in rows if st["approved"] and not st["pending"]]
+    all_phases = sorted({ph for f in feats for ph in f.get("phases", [])}, key=phase_sort_key)
+    hub = f"{base}/?project={slug}" + (f"&phase={phase}" if phase else "") if base else ""
+
+    if args.brief:
+        if not feats:
+            print(f"[mockup] {slug}: chưa có mockup nào ở kho. Design màn hình đầu tiên → skill thiết kế (proto new … --phase <Pxx>).")
+            return
+        scope = f"phase {phase}" if phase else f"{len(feats)} màn hình, phase: {', '.join(all_phases) or 'chưa gắn'}"
+        msg = f"[mockup] {slug} ({scope}): {len(approved)} đã chốt · {len(pending)} chờ review"
+        if pending:
+            msg += f" ({', '.join(pending[:4])}{'…' if len(pending) > 4 else ''})"
+        print(msg + (f" · Hub: {hub}" if hub else ""))
+        return
+
+    if not rows:
+        print(f"[INFO] {slug}: không có màn hình nào" + (f" trong phase {phase}." if phase else "."))
+        return
+    print(f"Dự án {slug}" + (f" · phase {phase}" if phase else f" · các phase: {', '.join(all_phases) or 'chưa gắn'}"))
+    for f, st in rows:
+        latest = st["latest"]
+        state = "⏳ chờ review" if st["pending"] else ("✅ đã chốt" if st["approved"] else "· nháp")
+        print(
+            f"  {f['slug']:<28} {state:<14} mới nhất: {latest.get('version','-')} "
+            f"[{latest.get('phase') or '∅'}] · bản chốt: {st['approved'] or '—'} · {st['count']} phiên bản"
+        )
+    if hub:
+        print(f"Hub: {hub}")
 
 
 def cmd_learn(args: argparse.Namespace) -> None:
@@ -717,6 +929,8 @@ def main() -> None:
     p_new.add_argument("--domain", help="Mã lĩnh vực (vd: 04-creative-editor)")
     p_new.add_argument("--persona", help="Mã đối tượng sử dụng (vd: creator-builder)")
     p_new.add_argument("--notes", help="Ghi chú điểm chính của phiên bản này")
+    p_new.add_argument("--phase", help="Phase đang design (vd: P00A, P03) — khớp docs/03-phases của dự án")
+    p_new.add_argument("--stage", choices=["mvp", "phase"], help="Giai đoạn: mvp (bản nền tổng thể) | phase (mặc định khi có --phase)")
     p_new.add_argument("--force", action="store_true", help="Cho phép ghi đè nếu thực sự cần")
     p_new.set_defaults(func=cmd_new)
 
@@ -734,6 +948,21 @@ def main() -> None:
     p_init_proj.add_argument("--domain", help="Mã lĩnh vực mặc định (vd: 04-creative-editor)")
     p_init_proj.add_argument("--force", action="store_true", help="Ghi đè DESIGN-CONTEXT.md nếu đã có")
     p_init_proj.set_defaults(func=cmd_init_project)
+
+    p_set = sub.add_parser("set-phase", help="Gắn phase/stage cho phiên bản đã có (chỉ sửa meta, không đụng nội dung)")
+    p_set.add_argument("project")
+    p_set.add_argument("feature")
+    p_set.add_argument("versions", nargs="+", help="Một hoặc nhiều slug phiên bản")
+    p_set.add_argument("--phase", required=True, help="Mã phase (vd: P00A); chuỗi rỗng '' để gỡ")
+    p_set.add_argument("--stage", choices=["mvp", "phase"])
+    p_set.set_defaults(func=cmd_set_phase)
+
+    p_status = sub.add_parser("status", help="Trạng thái design của một dự án (tổng quan hoặc theo phase)")
+    p_status.add_argument("--project", help="Slug dự án")
+    p_status.add_argument("--project-path", help="Đường dẫn dự án (mặc định: thư mục hiện tại)")
+    p_status.add_argument("--phase", help="Chỉ xem một phase")
+    p_status.add_argument("--brief", action="store_true", help="1 dòng tóm tắt (dùng cho hook đầu phiên)")
+    p_status.set_defaults(func=cmd_status)
 
     p_learn = sub.add_parser(
         "learn",

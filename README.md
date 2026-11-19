@@ -41,9 +41,20 @@ Kho lưu trữ tập trung, quản lý lịch sử phiên bản bất biến (`v
 
 ---
 
+## Hub: hai góc nhìn
+- **Tổng quan dự án** `?project=<slug>`: bảng mọi màn hình — bản chốt hiện hành, bản mới nhất, phase, trạng thái (chờ review / đã chốt).
+- **Cục bộ theo phase** `?project=<slug>&phase=<Pxx>`: chỉ màn hình thiết kế cho phase đó; bản chốt hiện hành hiện mờ để đối chiếu. Viewer giữ bộ lọc phase, mặc định so sánh với bản chốt.
+
+## Tích hợp agent
+| Agent | Cách thấy mockup |
+| :--- | :--- |
+| Claude Code | Plugin `dev-playbook`: skill `dev-playbook:design` + hook đầu phiên in trạng thái design (`proto status --brief`) |
+| Cursor | Khối mockup trong `AGENTS.md` + rule `ui-from-mockup.mdc` (adapter cursor của dev-playbook) — chỉ thực thi theo bản chốt |
+| Antigravity | `proto install-skill` (THIN-SKILL) + khối mockup trong `AGENTS.md` |
+
 ## 2. Các Lệnh CLI Thường Dùng (`./bin/proto`)
 
-1. **Khởi tạo cấu hình thiết kế cho một dự án mới**:
+1. **Khởi tạo / nối dự án với kho mockup** (idempotent — tạo DESIGN-CONTEXT nếu thiếu, chèn khối "Thiết kế UI/UX" vào `AGENTS.md` + `CLAUDE.md`, symlink `~/.config/mockup/root`):
    ```bash
    ./bin/proto init-project /Users/vuonganhvu/Desktop/workspace/editor-platform --domain 04-creative-editor
    ```
@@ -55,6 +66,9 @@ Kho lưu trữ tập trung, quản lý lịch sử phiên bản bất biến (`v
      --persona creator-builder \
      --notes "Phương án 1: Thanh công cụ nổi ở cạnh dưới + Inspector gọn 260px"
    ```
+   - Thêm `--phase P03` (phase mà UI này là đầu vào), `--stage mvp` cho prototype tổng thể giai đoạn MVP.
+   - Gắn bù phase cho bản cũ: `./bin/proto set-phase <project> <feature> <version…> --phase P03`.
+   - Trạng thái design: `./bin/proto status --project editor-platform [--phase P05] [--brief]`.
 3. **Đẩy lên GitHub Pages để xem trên Mac / iPhone / iPad**:
    ```bash
    ./bin/proto publish -m "feat(editor-platform): add 01-canvas-toolbar v1 & v2"

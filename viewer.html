@@ -122,6 +122,25 @@
       gap: 3px;
     }
 
+    .phase-chip {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #A1A1AA;
+      white-space: nowrap;
+    }
+
+    .phase-chip.is-mvp {
+      background: rgba(251, 191, 36, 0.16);
+      color: #FCD34D;
+    }
+
+    .scope-btn {
+      white-space: nowrap;
+    }
+
     .ver-btn {
       appearance: none;
       border: none;
@@ -400,7 +419,7 @@
   <div class="app-shell" id="appShell">
     <header class="review-bar">
       <div class="bar-left">
-        <a href="./index.html" class="back-btn">← Hub</a>
+        <a href="./index.html" class="back-btn" id="backHubBtn">← Hub</a>
         <div class="breadcrumb" id="breadcrumb">
           <span class="muted">loading...</span>
         </div>
@@ -475,9 +494,25 @@
       version: params.get('version') || '',
       compareVersion: params.get('compare') || '',
       splitMode: Boolean(params.get('compare')),
+      phase: (params.get('phase') || '').toUpperCase(),
       viewport: 'full',
       featureData: null
     };
+
+    // Phiên bản hiển thị trên thanh chuyển: theo phase (nếu có) + bản chốt hiện hành để đối chiếu
+    function visibleVersions() {
+      const feat = state.featureData;
+      if (!feat) return [];
+      if (!state.phase) return feat.versions;
+      const inPhase = feat.versions.filter((v) => v.phase === state.phase);
+      if (!inPhase.length) return feat.versions;
+      return feat.versions.filter((v) => v.phase === state.phase || v.version === feat.approved_version);
+    }
+
+    function phaseChip(v) {
+      if (!v || !v.phase) return '';
+      return `<span class="phase-chip ${v.stage === 'mvp' ? 'is-mvp' : ''}">${v.phase}${v.stage === 'mvp' ? '·MVP' : ''}</span>`;
+    }
 
     function getProtoUrl(ver) {
       return `./prototypes/${encodeURIComponent(state.project)}/${encodeURIComponent(state.feature)}/${encodeURIComponent(ver)}/index.html`;
@@ -518,8 +553,16 @@
           state.version = feat.approved_version || feat.versions[feat.versions.length - 1].version;
         }
 
+        if (state.phase && !feat.versions.some((v) => v.phase === state.phase)) {
+          state.phase = '';
+        }
+
         if (!state.compareVersion) {
-          const other = feat.versions.find((v) => v.version !== state.version);
+          // Mặc định đối chiếu với bản chốt hiện hành (nếu có), không thì bản khác gần nhất
+          const approvedOther = feat.approved_version && feat.approved_version !== state.version ? feat.approved_version : '';
+          const other = approvedOther
+            ? { version: approvedOther }
+            : visibleVersions().slice().reverse().find((v) => v.version !== state.version);
           state.compareVersion = other ? other.version : state.version;
         }
 
@@ -536,10 +579,14 @@
       next.set('project', state.project);
       next.set('feature', state.feature);
       next.set('version', state.version);
+      if (state.phase) next.set('phase', state.phase);
       if (state.splitMode && state.compareVersion) {
         next.set('compare', state.compareVersion);
       }
       window.history.replaceState({}, '', `${window.location.pathname}?${next.toString()}`);
+      const hub = new URLSearchParams({ project: state.project });
+      if (state.phase) hub.set('phase', state.phase);
+      document.getElementById('backHubBtn').href = `./index.html?${hub.toString()}`;
     }
 
     function renderHeader() {
@@ -554,12 +601,31 @@
 
       const switcher = document.getElementById('versionSwitcher');
       switcher.innerHTML = '';
-      feat.versions.forEach((v, idx) => {
+      const hasPhases = feat.versions.some((v) => v.phase);
+      if (hasPhases) {
+        const phases = [...new Set(feat.versions.map((v) => v.phase).filter(Boolean))];
+        const scope = document.createElement('select');
+        scope.className = 'compare-select scope-btn';
+        scope.title = 'Lọc phiên bản theo phase';
+        scope.innerHTML = `<option value="">Mọi phase</option>` +
+          phases.map((ph) => `<option value="${ph}" ${ph === state.phase ? 'selected' : ''}>${ph}</option>`).join('');
+        scope.onchange = (e) => {
+          state.phase = e.target.value;
+          const vis = visibleVersions();
+          if (!vis.some((v) => v.version === state.version)) state.version = vis[vis.length - 1].version;
+          updateUrl();
+          renderHeader();
+          renderStage();
+        };
+        switcher.appendChild(scope);
+      }
+      visibleVersions().forEach((v, idx) => {
         const btn = document.createElement('button');
         btn.className = 'ver-btn' + (v.version === state.version ? ' active' : '');
         const isApp = approved === v.version;
         btn.innerHTML = `
           <span>${idx + 1}. ${v.version}</span>
+          ${phaseChip(v)}
           ${isApp ? '<span class="dot-approved" title="Bản đã chốt"></span>' : ''}
         `;
         btn.onclick = () => {
@@ -576,6 +642,7 @@
       document.getElementById('versionNoteText').innerHTML = `
         <span>
           <strong>[${state.version}]</strong>
+          ${currVerObj.phase ? `<span style="color:#A1A1AA;">${currVerObj.stage === 'mvp' ? 'MVP · ' : ''}${currVerObj.phase} ·</span>` : ''}
           ${isCurrApproved ? '<span style="color:#4ADE80;font-weight:600;"> (BẢN ĐÃ CHỐT)</span> ' : ''}
           ${currVerObj.notes || 'Không có ghi chú thêm.'}
         </span>
@@ -602,11 +669,12 @@
           </div>
         `;
       } else {
+        const label = (v) => `${v.version}${v.phase ? ` [${v.phase}]` : ''}${v.version === feat.approved_version ? ' ✓ chốt' : ''}`;
         const optionsA = feat.versions
-          .map((v) => `<option value="${v.version}" ${v.version === state.version ? 'selected' : ''}>${v.version}</option>`)
+          .map((v) => `<option value="${v.version}" ${v.version === state.version ? 'selected' : ''}>${label(v)}</option>`)
           .join('');
         const optionsB = feat.versions
-          .map((v) => `<option value="${v.version}" ${v.version === state.compareVersion ? 'selected' : ''}>${v.version}</option>`)
+          .map((v) => `<option value="${v.version}" ${v.version === state.compareVersion ? 'selected' : ''}>${label(v)}</option>`)
           .join('');
 
         stage.innerHTML = `
@@ -704,8 +772,9 @@
         renderStage();
       } else if (/^[1-9]$/.test(e.key) && state.featureData) {
         const idx = parseInt(e.key, 10) - 1;
-        if (state.featureData.versions[idx]) {
-          state.version = state.featureData.versions[idx].version;
+        const vis = visibleVersions();
+        if (vis[idx]) {
+          state.version = vis[idx].version;
           updateUrl();
           renderHeader();
           renderStage();

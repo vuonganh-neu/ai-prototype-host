@@ -9,12 +9,16 @@
     {
       "version": "v1-workbench",
       "created_at": "2026-11-19T11:21:28+07:00",
-      "notes": "P00A Interactive Functional Prototype: Frontend-only + localStorage state covering Store Operations (POS, Eye Exam/Rx/Lens Config, Lab Kanban/QC, Inventory Ledger, Customer 360/CRM, Warranty, Appointments, Reports/Zalo Sandbox) synced live with Public Website & Customer Eye Book Portal."
+      "notes": "P00A Interactive Functional Prototype: Frontend-only + localStorage state covering Store Operations (POS, Eye Exam/Rx/Lens Config, Lab Kanban/QC, Inventory Ledger, Customer 360/CRM, Warranty, Appointments, Reports/Zalo Sandbox) synced live with Public Website & Customer Eye Book Portal.",
+      "phase": "P00A",
+      "stage": "mvp"
     },
     {
       "version": "v2-optical-suite",
       "created_at": "2026-11-19T13:34:28+07:00",
-      "notes": "Phiên bản nâng cấp toàn diện từ phản hồi v1: Sidebar xanh ngọc trầm + Lucide SVG + Be Vietnam Pro; đủ CRUD + Search + Filter + Pagination trên mọi màn hình + Global Search; POS hỗ trợ Card Grid & Compact List/Barcode cho danh mục lớn; Split-view KTV Khúc xạ xem lịch sử & biểu đồ độ cận; CRM Automation; Mobile Responsive chuẩn 390px; Website có Thử kính trực tuyến (Virtual Try-On), xem đa góc cạnh, Biểu đồ thị lực & Trợ lý AI."
+      "notes": "Phiên bản nâng cấp toàn diện từ phản hồi v1: Sidebar xanh ngọc trầm + Lucide SVG + Be Vietnam Pro; đủ CRUD + Search + Filter + Pagination trên mọi màn hình + Global Search; POS hỗ trợ Card Grid & Compact List/Barcode cho danh mục lớn; Split-view KTV Khúc xạ xem lịch sử & biểu đồ độ cận; CRM Automation; Mobile Responsive chuẩn 390px; Website có Thử kính trực tuyến (Virtual Try-On), xem đa góc cạnh, Biểu đồ thị lực & Trợ lý AI.",
+      "phase": "P00A",
+      "stage": "mvp"
     }
   ]
 }

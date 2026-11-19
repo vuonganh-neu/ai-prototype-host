@@ -28,3 +28,7 @@ Skill này là điểm vào toàn cục (Global Entrypoint) áp dụng cho **t�
      - Ứng dụng Quản lý / SaaS / Tài chính: [02-management-saas.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/domains/02-management-saas.md)
      - Trang giới thiệu / Blog / Tin tức: [03-editorial-showcase.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/domains/03-editorial-showcase.md)
      - Trình quản lý thiết kế (Editor Platform): [04-creative-editor.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/domains/04-creative-editor.md)
+
+## Quy ước phase (bắt buộc)
+- Mỗi phiên bản gắn `--phase <Pxx>` = phase mà UI đó là đầu vào thiết kế; prototype tổng thể MVP thêm `--stage mvp`.
+- Gửi người review link Hub theo phase: `proto status --project <slug> --phase <Pxx>` in sẵn link.

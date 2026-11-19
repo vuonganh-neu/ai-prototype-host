@@ -16,7 +16,7 @@ Hệ thống này được đặt tại `/Users/vuonganhvu/Desktop/workspace/moc
 
 1. **Làm việc tại Workspace Dự án, Nháp tại Kho Mockup**:
    - Bạn đọc tài liệu đặc tả (`docs/`) trực tiếp tại workspace dự án đang mở (ví dụ: `editor-platform`).
-   - Nếu dự án chưa có file `docs/02-mockups/DESIGN-CONTEXT.md`, hãy khởi tạo nó bằng lệnh:
+   - Nếu dự án chưa có file `docs/02-mockups/DESIGN-CONTEXT.md` (hoặc chưa có khối "Thiết kế UI/UX (Mockup)" trong `AGENTS.md`/`CLAUDE.md`), hãy khởi tạo bằng lệnh dưới. Lệnh idempotent: tạo DESIGN-CONTEXT nếu thiếu, chèn/cập nhật khối mockup cho mọi agent, tạo symlink `~/.config/mockup/root`. Domain + persona tự suy từ đặc tả dự án; chỉ hỏi người dùng khi không suy được:
      ```bash
      /Users/vuonganhvu/Desktop/workspace/mockup/bin/proto init-project "<đường-dẫn-dự-án>" --domain "<mã-domain>"
      ```
@@ -56,8 +56,12 @@ Hệ thống này được đặt tại `/Users/vuonganhvu/Desktop/workspace/moc
     --title "<Tên màn hình>" \
     --domain "<domain-id>" \
     --persona "<persona-id>" \
-    --notes "<Tóm tắt hướng tiếp cận của phiên bản này>"
+    --notes "<Tóm tắt hướng tiếp cận của phiên bản này>" \
+    --phase "<Pxx>"            # phase mà UI này là đầu vào thiết kế (khớp docs/03-phases của dự án)
+    # --stage mvp              # chỉ cho prototype tổng thể giai đoạn MVP
   ```
+- **Màn hình là đơn vị sống lâu, phase là thời điểm**: phase sau tinh chỉnh màn hình cũ → tạo phiên bản mới của **cùng** `<feature-slug>` với `--phase` mới, không tạo màn hình mới. Bản nền MVP (nhiều màn hình trong 1 prototype) dùng `--stage mvp`; phase chi tiết design theo từng màn hình.
+- Phiên bản cũ chưa gắn phase: `proto set-phase <project> <feature> <version…> --phase <Pxx>`.
 - Ở vòng đầu tiên của một tính năng quan trọng, khuyến khích tạo 2 phương án có cá tính rõ rệt (ví dụ `v1-floating` và `v2-docked`) hoặc tách theo đối tượng sử dụng (`01-reader-home/v1` và `02-publisher-cms/v1`).
 
 ### Bước 4: Xây dựng Giao diện HTML/CSS/JS Tương tác Cao & Publish
@@ -67,6 +71,7 @@ Hệ thống này được đặt tại `/Users/vuonganhvu/Desktop/workspace/moc
   /Users/vuonganhvu/Desktop/workspace/mockup/bin/proto publish -m "feat(<project>): add <feature> <version>"
   ```
 - Gửi cho người dùng:
+  0. **Link Hub theo phase** `<hub>/?project=<project>&phase=<Pxx>` (người review chỉ thấy màn hình của phase đang design) — `proto status --project <project> --phase <Pxx>` in sẵn link. Tổng quan cả dự án: `<hub>/?project=<project>`.
   1. **Link Xem & So sánh các phiên bản (Comparison Viewer URL)**
   2. **Link Trực tiếp (Raw URL)**
   3. Điểm khác biệt chính giữa các phương án để người dùng đánh giá nhanh.
