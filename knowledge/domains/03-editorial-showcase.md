@@ -37,3 +37,4 @@ Mục tiêu cốt lõi là **nghệ thuật sắp đặt chữ (Editorial Typogr
 ## 5. Nhật ký Tích luỹ Kinh nghiệm (Accumulated Learnings)
 *(Khu vực này được cập nhật tự động qua lệnh `proto learn --domain 03-editorial-showcase` sau mỗi dự án)*
 - Luôn tách 2 mockup riêng biệt khi thiết kế hệ thống tin tức/blog: (1) Giao diện Độc giả (`reader-view`) và (2) Giao diện Quản trị/Đăng bài (`publisher-cms`), không dùng chung một kiểu khung sidebar cho cả hai.
+- **[2026-11-19]** Bắt buộc kiểm tra hiển thị Mobile 390px không vỡ topbar/navbar, không tràn bảng; trang thương mại/dịch vụ chuyên biệt cần tích hợp trải nghiệm tương tác cao (xem nhiều góc cạnh sản phẩm, thử sản phẩm trực tuyến, biểu đồ theo dõi cá nhân, trợ lý AI tư vấn nhanh).
