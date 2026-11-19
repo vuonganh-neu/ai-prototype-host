@@ -9,52 +9,72 @@
     {
       "version": "v1-cv-baseline",
       "created_at": "2026-11-18T11:26:43+07:00",
-      "notes": "v1.0 — Bản Baseline P04B CV Editor Module ban đầu"
+      "notes": "v1.0 — Bản Baseline P04B CV Editor Module ban đầu",
+      "phase": "P04B",
+      "stage": "phase"
     },
     {
       "version": "v2a-canva-hybrid",
       "created_at": "2026-11-18T11:26:43+07:00",
-      "notes": "v2.0 Style A — Canva Studio + 4 nút đổi Theme ứng dụng chủ + Kho Template"
+      "notes": "v2.0 Style A — Canva Studio + 4 nút đổi Theme ứng dụng chủ + Kho Template",
+      "phase": "P04B",
+      "stage": "phase"
     },
     {
       "version": "v2b-direct-canvas",
       "created_at": "2026-11-18T11:26:43+07:00",
-      "notes": "v2.0 Style B — Direct Canvas tương tác trực tiếp với thanh công cụ nổi"
+      "notes": "v2.0 Style B — Direct Canvas tương tác trực tiếp với thanh công cụ nổi",
+      "phase": "P04B",
+      "stage": "phase"
     },
     {
       "version": "v2.5-figma-graphite",
       "created_at": "2026-11-18T11:26:43+07:00",
-      "notes": "v2.5 Mẫu 2 — Giao diện Graphite thuần kiểu Figma/Framer"
+      "notes": "v2.5 Mẫu 2 — Giao diện Graphite thuần kiểu Figma/Framer",
+      "phase": "P04B",
+      "stage": "phase"
     },
     {
       "version": "v2.5-warm-atelier",
       "created_at": "2026-11-18T11:26:44+07:00",
-      "notes": "v2.5 Mẫu 3 — Bản giấy kem nghệ thuật với thanh Floating Dock bên dưới"
+      "notes": "v2.5 Mẫu 3 — Bản giấy kem nghệ thuật với thanh Floating Dock bên dưới",
+      "phase": "P04B",
+      "stage": "phase"
     },
     {
       "version": "v3-crafted-light",
       "created_at": "2026-11-18T11:26:44+07:00",
-      "notes": "v3.0 — Mẫu 1 & 2 Hợp Nhất: 7 tab công cụ + 16 PS Blend Modes + Import Font/SVG"
+      "notes": "v3.0 — Mẫu 1 & 2 Hợp Nhất: 7 tab công cụ + 16 PS Blend Modes + Import Font/SVG",
+      "phase": "P04B",
+      "stage": "phase"
     },
     {
       "version": "v4-commercial-full-ux",
       "created_at": "2026-11-18T11:26:44+07:00",
-      "notes": "v4.0 — Kéo thả & Co giãn 8 hướng mọi Block, Section DB, Khổ giấy A4/A5/Slide & Zoom"
+      "notes": "v4.0 — Kéo thả & Co giãn 8 hướng mọi Block, Section DB, Khổ giấy A4/A5/Slide & Zoom",
+      "phase": "P04B",
+      "stage": "phase"
     },
     {
       "version": "v5-icon-clean-studio",
       "created_at": "2026-11-18T11:26:44+07:00",
-      "notes": "v5.0 — Thanh công cụ Icon 32x32px, Đổi kiểu từng Section, Bg Alpha & 4 Mẫu bố cục"
+      "notes": "v5.0 — Thanh công cụ Icon 32x32px, Đổi kiểu từng Section, Bg Alpha & 4 Mẫu bố cục",
+      "phase": "P04B",
+      "stage": "phase"
     },
     {
       "version": "v6-master-toolkit-studio",
       "created_at": "2026-11-18T11:48:08+07:00",
-      "notes": "v6.0 — Đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12): Đa miền (CV, Poster, Banner, Catalog, Web, Chart, Map, Motion), Rulers/Bleed/SafeArea, Vector Pen & Boolean, Hierarchical Layer Tree, Precision Inspector (X/Y/W/H/CMYK/Stroke/Effects), Motion Timeline & Export Preflight QA"
+      "notes": "v6.0 — Đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12): Đa miền (CV, Poster, Banner, Catalog, Web, Chart, Map, Motion), Rulers/Bleed/SafeArea, Vector Pen & Boolean, Hierarchical Layer Tree, Precision Inspector (X/Y/W/H/CMYK/Stroke/Effects), Motion Timeline & Export Preflight QA",
+      "phase": "P04B",
+      "stage": "phase"
     },
     {
       "version": "v7-clean-gdocs-studio",
       "created_at": "2026-11-18T13:29:50+07:00",
-      "notes": "v7.0 — Kế thừa đầy đủ 12 nhóm Toolkit v6: Ẩn số mục (chỉ hiện khi bấm giữ Alt), Đồng nhất 1 font Inter & 100% Tiếng Việt, Thanh công cụ viên thuốc Google Docs + Chân trang cố định kiểu Word, Nút đóng/mở ngăn công cụ cố định không bị mất, Kho chèn Ảnh & Video thật"
+      "notes": "v7.0 — Kế thừa đầy đủ 12 nhóm Toolkit v6: Ẩn số mục (chỉ hiện khi bấm giữ Alt), Đồng nhất 1 font Inter & 100% Tiếng Việt, Thanh công cụ viên thuốc Google Docs + Chân trang cố định kiểu Word, Nút đóng/mở ngăn công cụ cố định không bị mất, Kho chèn Ảnh & Video thật",
+      "phase": "P04B",
+      "stage": "phase"
     }
   ]
 }

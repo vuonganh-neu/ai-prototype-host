@@ -192,6 +192,102 @@
       border-color: var(--text-primary);
     }
 
+    /* Phase filter + overview */
+    .phase-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      margin: -8px 0 20px;
+    }
+
+    .phase-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      background: var(--bg-surface);
+      white-space: nowrap;
+    }
+
+    .phase-tag.is-mvp {
+      color: #92400E;
+      background: #FEF3C7;
+      border-color: #FDE68A;
+    }
+
+    .overview {
+      margin-bottom: 28px;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface);
+      overflow-x: auto;
+    }
+
+    .overview-head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .overview-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .overview-sum {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .overview table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .overview th,
+    .overview td {
+      text-align: left;
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border-subtle);
+      white-space: nowrap;
+    }
+
+    .overview th {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .overview tr:last-child td {
+      border-bottom: none;
+    }
+
+    .overview code {
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    .st-pending { color: #B45309; font-weight: 600; }
+    .st-approved { color: #166534; font-weight: 600; }
+    .st-draft { color: var(--text-muted); }
+
+    .version-item.is-dimmed {
+      opacity: 0.55;
+    }
+
     /* Project Section */
     .project-block {
       margin-bottom: 36px;
@@ -652,6 +748,8 @@
       </div>
     </section>
 
+    <div class="phase-row" id="phaseFilters" hidden></div>
+    <div id="overviewRoot"></div>
     <div id="galleryRoot"></div>
 
     <section class="matrix-section">
@@ -712,9 +810,12 @@
   </div>
 
   <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const NO_PHASE = '__none';
     const state = {
       manifest: null,
-      selectedProject: 'all',
+      selectedProject: urlParams.get('project') || 'all',
+      selectedPhase: urlParams.get('phase') || 'all',
       query: '',
       qrModal: {
         title: '',
@@ -778,6 +879,149 @@
       document.getElementById('qrBackdrop').classList.remove('open');
     }
 
+    function syncUrl() {
+      const next = new URLSearchParams();
+      if (state.selectedProject !== 'all') next.set('project', state.selectedProject);
+      if (state.selectedProject !== 'all' && state.selectedPhase !== 'all') next.set('phase', state.selectedPhase);
+      const qs = next.toString();
+      window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : ''));
+    }
+
+    function selectProject(slug) {
+      state.selectedProject = slug;
+      state.selectedPhase = 'all';
+      syncUrl();
+      renderAll();
+    }
+
+    function selectPhase(phase) {
+      state.selectedPhase = phase;
+      syncUrl();
+      renderAll();
+    }
+
+    function renderAll() {
+      renderFilters();
+      renderPhaseFilters();
+      renderOverview();
+      renderGallery();
+    }
+
+    function versionInPhase(v) {
+      if (state.selectedPhase === 'all') return true;
+      if (state.selectedPhase === NO_PHASE) return !v.phase;
+      return v.phase === state.selectedPhase;
+    }
+
+    function phaseTag(v) {
+      if (!v.phase) return '';
+      return `<span class="phase-tag ${v.stage === 'mvp' ? 'is-mvp' : ''}" title="${v.stage === 'mvp' ? 'Bản nền MVP' : 'Phase'} ${v.phase}">${v.phase}${v.stage === 'mvp' ? ' · MVP' : ''}</span>`;
+    }
+
+    function viewerHref(proj, feat, ver) {
+      const q = new URLSearchParams({ project: proj, feature: feat, version: ver });
+      if (state.selectedPhase !== 'all' && state.selectedPhase !== NO_PHASE) q.set('phase', state.selectedPhase);
+      return `./viewer.html?${q.toString()}`;
+    }
+
+    function featureStatus(feat) {
+      const versions = (feat.versions || []).filter(versionInPhase);
+      if (!versions.length) return null;
+      const latest = versions[versions.length - 1];
+      const approved = feat.approved_version || '';
+      const approvedInScope = versions.some((v) => v.version === approved);
+      const pending = latest.version !== approved && !(state.selectedPhase !== 'all' && approvedInScope);
+      return { versions, latest, approved, pending };
+    }
+
+    function currentProject() {
+      const projects = (state.manifest && state.manifest.projects) || [];
+      return projects.find((p) => p.slug === state.selectedProject) || null;
+    }
+
+    function renderPhaseFilters() {
+      const row = document.getElementById('phaseFilters');
+      const proj = currentProject();
+      if (!proj) {
+        row.hidden = true;
+        row.innerHTML = '';
+        return;
+      }
+      const feats = proj.features || [];
+      const phases = proj.phases || [];
+      const countFor = (ph) => feats.filter((f) => (f.versions || []).some((v) => (ph === NO_PHASE ? !v.phase : v.phase === ph))).length;
+      const untagged = countFor(NO_PHASE);
+      row.hidden = false;
+      row.innerHTML = `<span class="filter-label">Phase:</span>`;
+      const mk = (label, value, count, title) => {
+        const btn = document.createElement('button');
+        btn.className = 'pill-btn' + (state.selectedPhase === value ? ' active' : '');
+        btn.innerHTML = `${label} <span class="pill-count">${count}</span>`;
+        if (title) btn.title = title;
+        btn.onclick = () => selectPhase(value);
+        row.appendChild(btn);
+      };
+      mk('Tổng quan dự án', 'all', feats.length, 'Bản chốt hiện hành của mọi màn hình');
+      phases.forEach((ph) => mk(ph, ph, countFor(ph), `Chỉ các màn hình được thiết kế cho ${ph}`));
+      if (untagged) mk('Chưa gắn phase', NO_PHASE, untagged);
+    }
+
+    function renderOverview() {
+      const root = document.getElementById('overviewRoot');
+      const proj = currentProject();
+      if (!proj) {
+        root.innerHTML = '';
+        return;
+      }
+      const rows = (proj.features || [])
+        .map((f) => ({ f, st: featureStatus(f) }))
+        .filter((r) => r.st);
+      const pending = rows.filter((r) => r.st.pending).length;
+      const approved = rows.filter((r) => r.st.approved && !r.st.pending).length;
+      const isPhase = state.selectedPhase !== 'all';
+      const scopeLabel = !isPhase
+        ? 'Tổng quan dự án — UI hiện hành của từng màn hình'
+        : state.selectedPhase === NO_PHASE
+          ? 'Màn hình chưa gắn phase'
+          : `Phase ${state.selectedPhase} — các màn hình đang thiết kế cho phase này`;
+
+      const body = rows
+        .map(({ f, st }) => {
+          const statusHtml = st.pending
+            ? '<span class="st-pending">Chờ review</span>'
+            : st.approved
+              ? '<span class="st-approved">Đã chốt</span>'
+              : '<span class="st-draft">Nháp</span>';
+          const showVer = st.approved && !st.pending ? st.approved : st.latest.version;
+          return `
+            <tr>
+              <td><strong>${f.title || f.slug}</strong><br><code>${f.slug}</code></td>
+              <td>${f.persona ? `<code>${f.persona}</code>` : '—'}</td>
+              <td>${statusHtml}</td>
+              <td>${st.approved ? `<code>${st.approved}</code>` : '—'}</td>
+              <td><code>${st.latest.version}</code> ${phaseTag(st.latest)}</td>
+              <td>${(f.phases || []).map((ph) => `<span class="phase-tag">${ph}</span>`).join(' ') || '—'}</td>
+              <td><a class="btn-link primary" href="${viewerHref(proj.slug, f.slug, showVer)}">Xem</a></td>
+            </tr>`;
+        })
+        .join('');
+
+      root.innerHTML = `
+        <section class="overview">
+          <div class="overview-head">
+            <span class="overview-title">${scopeLabel}</span>
+            <span class="overview-sum">${rows.length} màn hình · ${approved} đã chốt · ${pending} chờ review</span>
+          </div>
+          ${rows.length ? `
+          <table>
+            <thead>
+              <tr><th>Màn hình</th><th>Persona</th><th>Trạng thái</th><th>Bản chốt</th><th>Bản mới nhất</th><th>Phase</th><th></th></tr>
+            </thead>
+            <tbody>${body}</tbody>
+          </table>` : ''}
+        </section>`;
+    }
+
     async function loadManifest() {
       try {
         const res = await fetch('./prototypes.json?t=' + Date.now());
@@ -786,8 +1030,12 @@
       } catch (err) {
         state.manifest = { updated_at: null, projects: [] };
       }
-      renderFilters();
-      renderGallery();
+      if (state.selectedProject !== 'all' && !currentProject()) {
+        state.selectedProject = 'all';
+        state.selectedPhase = 'all';
+        syncUrl();
+      }
+      renderAll();
     }
 
     function renderFilters() {
@@ -807,22 +1055,14 @@
       const allBtn = document.createElement('button');
       allBtn.className = 'pill-btn' + (state.selectedProject === 'all' ? ' active' : '');
       allBtn.innerHTML = `Tất cả <span class="pill-count">${totalFeatures}</span>`;
-      allBtn.onclick = () => {
-        state.selectedProject = 'all';
-        renderFilters();
-        renderGallery();
-      };
+      allBtn.onclick = () => selectProject('all');
       container.appendChild(allBtn);
 
       projects.forEach((proj) => {
         const btn = document.createElement('button');
         btn.className = 'pill-btn' + (state.selectedProject === proj.slug ? ' active' : '');
         btn.innerHTML = `${proj.slug} <span class="pill-count">${(proj.features || []).length}</span>`;
-        btn.onclick = () => {
-          state.selectedProject = proj.slug;
-          renderFilters();
-          renderGallery();
-        };
+        btn.onclick = () => selectProject(proj.slug);
         container.appendChild(btn);
       });
     }
@@ -836,6 +1076,7 @@
         .filter((p) => state.selectedProject === 'all' || p.slug === state.selectedProject)
         .map((p) => {
           const features = (p.features || []).filter((f) => {
+            if (!(f.versions || []).some(versionInPhase)) return false;
             if (!q) return true;
             const haystack = [
               p.slug,
@@ -843,7 +1084,7 @@
               f.title || '',
               f.domain || '',
               f.persona || '',
-              ...(f.versions || []).map((v) => `${v.version} ${v.notes || ''}`)
+              ...(f.versions || []).map((v) => `${v.version} ${v.phase || ''} ${v.notes || ''}`)
             ]
               .join(' ')
               .toLowerCase();
@@ -871,21 +1112,24 @@
               const versions = feat.versions || [];
               const approvedVer = feat.approved_version || '';
               const defaultVer = approvedVer || (versions.length ? versions[versions.length - 1].version : '');
-              const defaultViewerRel = `./viewer.html?project=${encodeURIComponent(proj.slug)}&feature=${encodeURIComponent(feat.slug)}&version=${encodeURIComponent(defaultVer)}`;
+              const defaultViewerRel = viewerHref(proj.slug, feat.slug, defaultVer);
               const defaultRawRel = `./prototypes/${encodeURIComponent(proj.slug)}/${encodeURIComponent(feat.slug)}/${encodeURIComponent(defaultVer)}/index.html`;
 
               const versionRows = versions
+                .filter((v) => versionInPhase(v) || v.version === approvedVer)
                 .map((v) => {
                   const isApproved = approvedVer === v.version;
-                  const viewerRel = `./viewer.html?project=${encodeURIComponent(proj.slug)}&feature=${encodeURIComponent(feat.slug)}&version=${encodeURIComponent(v.version)}`;
+                  const isOutOfScope = !versionInPhase(v);
+                  const viewerRel = viewerHref(proj.slug, feat.slug, v.version);
                   const rawRel = `./prototypes/${encodeURIComponent(proj.slug)}/${encodeURIComponent(feat.slug)}/${encodeURIComponent(v.version)}/index.html`;
 
                   return `
-                    <div class="version-item ${isApproved ? 'is-approved' : ''}">
+                    <div class="version-item ${isApproved ? 'is-approved' : ''} ${isOutOfScope ? 'is-dimmed' : ''}">
                       <div class="version-info">
                         <div class="version-id-row">
                           <span class="version-id">${v.version}</span>
-                          ${isApproved ? '<span class="badge-approved">BẢN CHỐT</span>' : ''}
+                          ${phaseTag(v)}
+                          ${isApproved ? `<span class="badge-approved">${isOutOfScope ? 'BẢN CHỐT HIỆN HÀNH' : 'BẢN CHỐT'}</span>` : ''}
                         </div>
                         ${v.notes ? `<div class="version-note">${v.notes}</div>` : ''}
                       </div>
