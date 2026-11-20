@@ -1,0 +1,19 @@
+{
+  "id": "pos-transfer-unconfirmed",
+  "title": "POS: khách chuyển khoản nhưng chưa xác nhận tiền vào",
+  "kind": "error",
+  "steps": [
+    { "do": "reset" },
+    { "use": "asCashier" },
+    { "use": "addProduct", "args": { "cat": "SUNGLASSES", "id": "PRD-09" }, "say": "Khách mua kính mát Polarized 1.290.000đ" },
+    { "do": "expectText", "target": "pos.orderType", "contains": "Bán lẻ", "say": "Hàng có sẵn → đơn bán lẻ, không qua Lab" },
+    { "do": "type", "target": "pos.transfer", "value": "1290000", "say": "Khách báo đã chuyển khoản đủ" },
+    { "do": "click", "target": "pos.submit", "say": "Thu ngân bấm chốt đơn khi chưa kiểm tra tài khoản" },
+    { "do": "expectText", "target": "shell.toast", "contains": "Cần tích xác nhận", "say": "Hệ thống chặn: phải xác nhận tiền đã vào tài khoản" },
+    { "do": "expectHidden", "target": "shell.modal", "say": "Không tạo đơn, không in biên nhận" },
+    { "do": "click", "target": "pos.transferOk", "say": "Kiểm tra app ngân hàng xong, tích xác nhận" },
+    { "do": "click", "target": "pos.submit", "say": "Chốt đơn lại" },
+    { "do": "expectText", "target": "shell.modalTitle", "contains": "ORD-2611-004", "say": "Lần này đơn được tạo" },
+    { "do": "expectHidden", "target": "receipt.labJob", "say": "Đơn bán lẻ nên không sinh phiếu Lab" }
+  ]
+}

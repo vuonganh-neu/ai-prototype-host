@@ -1,0 +1,32 @@
+{
+  "asCashier": {
+    "steps": [
+      { "do": "click", "target": "shell.surface.store", "say": "Mở phần mềm quản lý cửa hàng" },
+      { "do": "select", "target": "shell.role", "value": "SALES_CASHIER", "say": "Đăng nhập với vai trò Thu ngân" },
+      { "do": "expectVisible", "target": "pos.screen" }
+    ]
+  },
+  "addProduct": {
+    "params": ["cat", "id"],
+    "steps": [
+      { "do": "click", "target": "pos.cat.${cat}", "say": "Lọc theo nhóm hàng" },
+      { "do": "click", "target": "pos.product.${id}", "say": "Chọn sản phẩm cho khách" },
+      { "do": "expectVisible", "target": "pos.cart.${id}" }
+    ]
+  },
+  "openWeb": {
+    "params": ["page"],
+    "steps": [
+      { "do": "click", "target": "shell.surface.public", "say": "Chuyển sang website của cửa hàng (góc nhìn khách)" },
+      { "do": "click", "target": "web.nav.${page}" }
+    ]
+  },
+  "openAppointmentsAsOwner": {
+    "steps": [
+      { "do": "click", "target": "shell.surface.store", "say": "Quay lại phần mềm cửa hàng" },
+      { "do": "select", "target": "shell.role", "value": "OWNER_ADMIN", "say": "Chủ cửa hàng đăng nhập" },
+      { "do": "click", "target": "store.nav.appointments", "say": "Mở Lịch hẹn & Yêu cầu từ website" },
+      { "do": "expectVisible", "target": "apt.screen" }
+    ]
+  }
+}

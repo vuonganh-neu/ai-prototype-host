@@ -1,0 +1,20 @@
+{
+  "id": "pos-glasses-deposit",
+  "title": "POS: bán gọng + tròng cắt kính, khách cọc 50%",
+  "kind": "happy",
+  "steps": [
+    { "do": "reset" },
+    { "use": "asCashier", "say": "Thu ngân mở màn POS" },
+    { "use": "addProduct", "args": { "cat": "FRAME", "id": "PRD-01" }, "say": "Khách chọn gọng Titanium 1.450.000đ" },
+    { "use": "addProduct", "args": { "cat": "LENS_BLANK", "id": "PRD-13" }, "say": "Thêm tròng Essilor 1.60 lọc ánh sáng xanh" },
+    { "do": "expectText", "target": "pos.orderType", "contains": "Kính gia công Lab", "say": "Có gọng + tròng → đơn tự chuyển thành kính gia công, cần toa" },
+    { "do": "expectText", "target": "pos.remaining", "contains": "3.100.000", "say": "Tổng cần thu 3.100.000đ" },
+    { "do": "click", "target": "pos.deposit50", "say": "Khách cọc trước 50%" },
+    { "do": "expectText", "target": "pos.remaining", "contains": "1.550.000", "say": "Còn nợ 1.550.000đ, thu nốt khi nhận kính" },
+    { "do": "click", "target": "pos.submit", "say": "Chốt đơn & in phiếu" },
+    { "do": "expectText", "target": "shell.modalTitle", "contains": "ORD-2611-004", "say": "Hệ thống tạo biên nhận đơn mới" },
+    { "do": "expectText", "target": "receipt.labJob", "contains": "JOB-2611-004", "say": "Kèm phiếu Lab có sẵn số độ từ toa gần nhất của khách" },
+    { "do": "wait", "ms": 1200, "say": "Thu ngân in phiếu, đưa biên nhận cho khách" },
+    { "do": "click", "target": "shell.modalClose", "say": "Đóng biên nhận" }
+  ]
+}

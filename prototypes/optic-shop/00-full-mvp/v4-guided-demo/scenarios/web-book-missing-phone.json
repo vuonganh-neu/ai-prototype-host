@@ -1,0 +1,16 @@
+{
+  "id": "web-book-missing-phone",
+  "title": "Website: khách bỏ trống số điện thoại khi đặt lịch",
+  "kind": "edge",
+  "steps": [
+    { "do": "reset" },
+    { "use": "openWeb", "args": { "page": "booking" }, "say": "Khách mở trang Đặt lịch đo mắt" },
+    { "do": "type", "target": "web.booking.name", "value": "Khách vãng lai", "say": "Chỉ điền tên" },
+    { "do": "type", "target": "web.booking.phone", "value": "", "say": "Xoá trống số điện thoại" },
+    { "do": "click", "target": "web.booking.submit", "say": "Bấm xác nhận đặt lịch" },
+    { "do": "expectVisible", "target": "web.booking.form", "say": "Trình duyệt yêu cầu nhập SĐT, form vẫn ở lại" },
+    { "use": "openAppointmentsAsOwner", "say": "Kiểm tra phía cửa hàng" },
+    { "do": "expectVisible", "target": "apt.row.APT-002" },
+    { "do": "expectHidden", "target": "apt.row.APT-003", "say": "Không có lịch hẹn rác nào được tạo" }
+  ]
+}

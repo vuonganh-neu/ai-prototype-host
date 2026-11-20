@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-19T16:29:33+07:00",
+  "updated_at": "2026-11-20T17:51:57+07:00",
   "projects": [
     {
       "slug": "editor-platform",
@@ -264,7 +264,7 @@
           "title": "Kính Mắt Minh Quang — v3 Complete Platform (Fixed Collapsible Sidebar, Scroll POS, Split Inventory/Product, Settings, CMS & AI Budget Planner)",
           "domain": "02-management-saas",
           "persona": "operator-admin",
-          "approved_version": "v3-complete-platform",
+          "approved_version": "v4-guided-demo",
           "promoted_to": "/Users/vuonganhvu/Desktop/workspace/optic-shop",
           "phases": [
             "P00A"
@@ -290,6 +290,13 @@
               "phase": "P00A",
               "stage": "mvp",
               "notes": "Khắc phục triệt để lỗi fixed sidebar (thêm nút thu gọn/mở rộng) và thêm Footer đầy đủ; POS & Website dùng phân trang dạng scroll (Load-more) + lọc khoảng giá & sắp xếp tên/giá; tách riêng Kho hàng và Sản phẩm (ảnh góc cạnh/video/hiển thị web); thêm Cài đặt hệ thống (User, RBAC, Store info/Logo), Quản trị Website (trang tĩnh), và tính năng Lập kế hoạch Ngân sách & Gợi ý Combo AI cho cả Khách hàng lẫn Nhân viên POS."
+            },
+            {
+              "version": "v4-guided-demo",
+              "created_at": "2026-11-20T17:49:08+07:00",
+              "phase": "P00A",
+              "stage": "mvp",
+              "notes": "Giữ nguyên UI/UX của v3-complete-platform; thêm lớp demo có hướng dẫn: 4 kịch bản tự chạy (POS bán gọng + tròng cọc 50%, POS chuyển khoản chưa xác nhận, Website đặt lịch → cửa hàng xác nhận, Website bỏ trống SĐT), teleport tới từng bước, thuyết minh giọng tiếng Việt (chọn giọng + từ điển phát âm), tiếng click và nhạc nền bật/tắt riêng. Chỉ giả lập: không latency/mạng, phân quyền là đổi vai trò trên header, SĐT chỉ kiểm bắt buộc nhập (không kiểm định dạng), Zalo chỉ ghi outbox."
             }
           ]
         }

@@ -1,0 +1,21 @@
+{
+  "id": "web-book-eye-exam",
+  "title": "Website: khách đặt lịch đo mắt → cửa hàng xác nhận",
+  "kind": "happy",
+  "steps": [
+    { "do": "reset" },
+    { "use": "openWeb", "args": { "page": "booking" }, "say": "Khách vào website, mở trang Đặt lịch đo mắt" },
+    { "do": "expectVisible", "target": "web.booking.form" },
+    { "do": "type", "target": "web.booking.name", "value": "Lê Gia Hân", "say": "Khách điền họ tên" },
+    { "do": "type", "target": "web.booking.phone", "value": "0904555128", "say": "Điền số điện thoại" },
+    { "do": "type", "target": "web.booking.when", "value": "2026-11-22 09:00", "say": "Chọn giờ hẹn sáng thứ Bảy" },
+    { "do": "select", "target": "web.booking.service", "value": "Tái khám mắt định kỳ 6 tháng", "say": "Chọn dịch vụ tái khám" },
+    { "do": "click", "target": "web.booking.submit", "say": "Xác nhận đặt lịch" },
+    { "do": "expectText", "target": "shell.toast", "contains": "Đặt lịch thành công", "say": "Website báo đặt lịch thành công" },
+    { "use": "openAppointmentsAsOwner", "say": "Phía cửa hàng: chủ cửa hàng xem yêu cầu mới" },
+    { "do": "expectText", "target": "apt.row.APT-003", "contains": "Lê Gia Hân", "say": "Lịch hẹn của khách xuất hiện ngay, trạng thái chờ" },
+    { "do": "expectText", "target": "apt.status.APT-003", "contains": "PENDING" },
+    { "do": "click", "target": "apt.confirm.APT-003", "say": "Chủ cửa hàng xác nhận lịch hẹn" },
+    { "do": "expectText", "target": "apt.status.APT-003", "contains": "CONFIRMED", "say": "Đã xác nhận, hệ thống gửi Zalo báo khách" }
+  ]
+}
