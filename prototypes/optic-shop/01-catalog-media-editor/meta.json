@@ -1,0 +1,17 @@
+{
+  "project": "optic-shop",
+  "slug": "01-catalog-media-editor",
+  "title": "Quản lý Sản phẩm, Media Đa góc & Thông số Chuyên ngành",
+  "domain": "02-management-saas",
+  "persona": "operator-admin",
+  "approved_version": "",
+  "versions": [
+    {
+      "version": "v1-dynamic-studio",
+      "created_at": "2026-11-23T19:06:24+07:00",
+      "phase": "P01D",
+      "stage": "phase",
+      "notes": "Form động theo danh mục (Gọng/Kính mát/Tròng/Vật tư), upload ảnh từng góc + Video 360 player, Rich Text Editor mô tả Website & Xem trước trang chi tiết Website"
+    }
+  ]
+}

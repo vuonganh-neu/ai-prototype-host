@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-20T17:51:57+07:00",
+  "updated_at": "2026-11-23T19:20:36+07:00",
   "projects": [
     {
       "slug": "editor-platform",
@@ -256,7 +256,8 @@
     {
       "slug": "optic-shop",
       "phases": [
-        "P00A"
+        "P00A",
+        "P01D"
       ],
       "features": [
         {
@@ -297,6 +298,46 @@
               "phase": "P00A",
               "stage": "mvp",
               "notes": "Giữ nguyên UI/UX của v3-complete-platform; thêm lớp demo có hướng dẫn: 4 kịch bản tự chạy (POS bán gọng + tròng cọc 50%, POS chuyển khoản chưa xác nhận, Website đặt lịch → cửa hàng xác nhận, Website bỏ trống SĐT), teleport tới từng bước, thuyết minh giọng tiếng Việt (chọn giọng + từ điển phát âm), tiếng click và nhạc nền bật/tắt riêng. Chỉ giả lập: không latency/mạng, phân quyền là đổi vai trò trên header, SĐT chỉ kiểm bắt buộc nhập (không kiểm định dạng), Zalo chỉ ghi outbox."
+            }
+          ]
+        },
+        {
+          "slug": "01-catalog-media-editor",
+          "title": "Quản lý Sản phẩm, Media Đa góc & Thông số Chuyên ngành",
+          "domain": "02-management-saas",
+          "persona": "operator-admin",
+          "approved_version": "",
+          "promoted_to": "",
+          "phases": [
+            "P01D"
+          ],
+          "versions": [
+            {
+              "version": "v1-dynamic-studio",
+              "created_at": "2026-11-23T19:06:24+07:00",
+              "phase": "P01D",
+              "stage": "phase",
+              "notes": "Form động theo danh mục (Gọng/Kính mát/Tròng/Vật tư), upload ảnh từng góc + Video 360 player, Rich Text Editor mô tả Website & Xem trước trang chi tiết Website"
+            }
+          ]
+        },
+        {
+          "slug": "02-clinical-exam-rx",
+          "title": "Phòng Đo mắt & Kê toa Khúc xạ Chuẩn Nhãn khoa",
+          "domain": "02-management-saas",
+          "persona": "operator-admin",
+          "approved_version": "",
+          "promoted_to": "",
+          "phases": [
+            "P01D"
+          ],
+          "versions": [
+            {
+              "version": "v1-clinical-refraction",
+              "created_at": "2026-11-23T19:06:25+07:00",
+              "phase": "P01D",
+              "stage": "phase",
+              "notes": "Split-view đo mắt chuẩn nhãn khoa: SPH/CYL/ADD bước 0.25D hỗ trợ cận (-) & viễn (+), ràng buộc CYL-AXIS 1-180°, PRISM/BASE, PD từng mắt OD/OS, thị lực UCVA/BCVA, đo máy tự động và biểu đồ đa tật khúc xạ"
             }
           ]
         }
