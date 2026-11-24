@@ -29,6 +29,10 @@ Skill này là điểm vào toàn cục (Global Entrypoint) áp dụng cho **t�
      - Trang giới thiệu / Blog / Tin tức: [03-editorial-showcase.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/domains/03-editorial-showcase.md)
      - Trình quản lý thiết kế (Editor Platform): [04-creative-editor.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/domains/04-creative-editor.md)
 
+## Review độc lập (trước khi người dùng thật xem)
+- Sau mỗi version: chạy `proto review-prep <project> <feature> <version>`, rồi skill `ui-ux-review` (Tầng 1) và `business-review` (Tầng 2) trong **phiên mới**. Quy trình: [REVIEW.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/skill/REVIEW.md).
+- Trước khi design version kế tiếp: đọc brief `briefs/<project>/<feature>/<version-trước>.md`.
+
 ## Quy ước phase (bắt buộc)
 - Mỗi phiên bản gắn `--phase <Pxx>` = phase mà UI đó là đầu vào thiết kế; prototype tổng thể MVP thêm `--stage mvp`.
 - Gửi người review link Hub theo phase: `proto status --project <slug> --phase <Pxx>` in sẵn link.

@@ -31,6 +31,7 @@ Hệ thống này được đặt tại `/Users/vuonganhvu/Desktop/workspace/moc
 ## 2. Quy trình 5 Bước Khi Thiết kế Mockup Mới
 
 ### Bước 1: Đọc Ngữ cảnh Dự án & Phân loại Ma trận (Domain × Persona)
+0. **Nếu màn hình đã có version trước**: đọc brief `briefs/<project>/<feature>/<version-trước>.md` (kết quả review AI + phản hồi người dùng + ý tưởng) — là đầu vào bắt buộc; mục đã **Adopt** phải được làm, mục “Giữ nguyên” không được phá.
 1. Đọc tài liệu đặc tả của dự án và file `<project>/docs/02-mockups/DESIGN-CONTEXT.md`.
 2. Xác định rõ màn hình đang thiết kế thuộc **Lĩnh vực (Domain)** nào và phục vụ **Đối tượng sử dụng (Persona)** nào (Lưu ý: Cùng 1 dự án nhưng màn hình cho Người đọc và màn hình cho Quản trị viên phải dùng 2 Persona khác nhau!):
    - **Luật bắt buộc chung**: Đọc [core-anti-ai-slop.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/core-anti-ai-slop.md)
@@ -76,8 +77,17 @@ Hệ thống này được đặt tại `/Users/vuonganhvu/Desktop/workspace/moc
   2. **Link Trực tiếp (Raw URL)**
   3. Điểm khác biệt chính giữa các phương án để người dùng đánh giá nhanh.
 
+### Bước 4b: Review độc lập 3 tầng — TRƯỚC khi người dùng thật xem
+Chi tiết: [REVIEW.md](./REVIEW.md). Mọi review chạy trong **phiên mới** (không phải phiên vừa vẽ mockup).
+1. `proto review-prep <project> <feature> <version>` → lint tĩnh (Tầng 0) + packet + prompt cho reviewer.
+2. **Tầng 1** — skill [`ui-ux-review`](./ui-ux-review/SKILL.md): quy tắc chung của kho mockup; chạy sau **mỗi** version.
+3. **Tầng 2** — skill [`business-review`](./business-review/SKILL.md): nghiệp vụ/chuẩn ngành theo `<project>/docs/02-mockups/BUSINESS-REVIEW.md`, có tra cứu internet; bỏ qua nếu màn hình không có nghiệp vụ chuyên ngành.
+4. Còn BLOCKER → làm bản sửa trước. Sạch BLOCKER → gửi link Hub cho **người dùng thật (Tầng 3)**.
+5. `proto brief <project> <feature> <version> [--human "phản hồi"…]` → gom Tầng 1 + 2 + 3 + ý tưởng thành brief cho version kế tiếp.
+- Kết quả review ở `.ops/` (không commit); tri thức chuyên ngành thuộc repo dự án — **không chép vào kho mockup**; brief ở `briefs/` đã lược dữ liệu nhạy cảm.
+
 ### Bước 5: Chốt Phương án (Promote) & Tích luỹ Tri thức (Learn)
-1. **Khi người dùng duyệt bản chốt**:
+1. **Khi người dùng duyệt bản chốt** (`promote` chặn nếu chưa qua review Tầng 1/2 hoặc còn BLOCKER; bỏ qua có chủ đích bằng `--skip-review` + lý do trong `--notes`):
    ```bash
    /Users/vuonganhvu/Desktop/workspace/mockup/bin/proto promote \
      "<project-slug>" "<feature-slug>" "<version-slug>" \
@@ -85,7 +95,7 @@ Hệ thống này được đặt tại `/Users/vuonganhvu/Desktop/workspace/moc
      --notes "<Ghi chú lý do chọn và lưu ý khi code thật>"
    ```
    Lệnh này sẽ đánh dấu `approved` trên Hub và chép bản sạch sẽ vào `<project>/docs/02-mockups/<feature-slug>/`.
-2. **Khi rút ra bài học UI/UX mới từ phản hồi của người dùng** — chọn **đúng MỘT phạm vi**:
+2. **Khi rút ra bài học UI/UX mới từ phản hồi của người dùng** — chọn **đúng MỘT phạm vi** (chỉ bài học UI/UX *tổng quát*; kiến thức nghiệp vụ chuyên ngành → `BUSINESS-REVIEW.md` của dự án, không vào kho này):
    | Bài học đúng cho… | Phạm vi | Lệnh |
    | :--- | :--- | :--- |
    | Chỉ dự án này (màu, font, bo góc, luồng nghiệp vụ riêng, tên vai trò riêng) | `project` (**mặc định**) | `proto learn --project <slug> --rule "..."` |

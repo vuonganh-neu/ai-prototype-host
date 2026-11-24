@@ -1,0 +1,4 @@
+# Kết quả review độc lập (có thể chứa nghiệp vụ nhạy cảm), log run, dashboard — không commit, không publish
+# Giữ lại .ops/README.md (giống optic-shop)
+.ops/*
+!.ops/README.md
