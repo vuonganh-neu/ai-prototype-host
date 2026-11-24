@@ -1,7 +1,7 @@
 {
   "project": "optic-shop",
   "slug": "01-catalog-media-editor",
-  "title": "Quản lý Sản phẩm, Media Đa góc & Thông số Chuyên ngành",
+  "title": "Sản phẩm, Biến thể & Ma trận Tròng kính",
   "domain": "02-management-saas",
   "persona": "operator-admin",
   "approved_version": "",
@@ -12,6 +12,13 @@
       "phase": "P01D",
       "stage": "phase",
       "notes": "Form động theo danh mục (Gọng/Kính mát/Tròng/Vật tư), upload ảnh từng góc + Video 360 player, Rich Text Editor mô tả Website & Xem trước trang chi tiết Website"
+    },
+    {
+      "version": "v2-variants-lens-matrix",
+      "created_at": "2026-11-24T12:16:14+07:00",
+      "phase": "P01D",
+      "stage": "phase",
+      "notes": "v2: Giữ shell baseline; biến thể màu/size, tồn kho & giá tròng theo dải độ + phụ phí gia công, tách kiểu viền/dáng gọng, ED/DBL/trọng lượng, kính áp tròng & đọc sẵn độ, trình soạn thảo có schema + sanitize, undo xoá ảnh, validation, a11y & responsive."
     }
   ]
 }

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kính Mắt Minh Quang — Sản phẩm (Web &amp; Ảnh) · Biến thể &amp; Ma trận Tròng (P01D v2)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-layout" id="appLayout">
+    <!-- Baseline Sidebar (Exact Shell Continuity per CORE-004 / C-01..C-04) -->
+    <aside class="sidebar" id="storeSidebar" aria-label="Điều hướng chính">
+      <div class="sidebar-top">
+        <div class="sidebar-brand">
+          <div class="sidebar-logo" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6.5" cy="13" r="4"/><circle cx="17.5" cy="13" r="4"/><path d="M10.5 13h3M2.5 13l1-5h2M21.5 13l-1-5h-2"/></svg>
+          </div>
+          <div class="sidebar-brand-text">
+            <div class="sidebar-brand-name">Minh Quang</div>
+            <div class="sidebar-brand-sub">Quản lý cửa hàng kính</div>
+          </div>
+        </div>
+        <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Thu gọn hoặc mở rộng menu" title="Thu gọn / Mở rộng menu">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav" id="sidebarNav">
+        <button type="button" class="nav-item" data-nav="dashboard" title="Tổng quan">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span class="nav-label">Tổng quan</span>
+        </button>
+
+        <div class="sidebar-group-label">BÁN HÀNG</div>
+        <button type="button" class="nav-item" data-nav="pos" title="POS bán hàng">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+          <span class="nav-label">POS bán hàng</span>
+        </button>
+
+        <div class="sidebar-group-label">VẬN HÀNH KÍNH</div>
+        <button type="button" class="nav-item" data-nav="exam" title="Đo mắt &amp; Toa kính">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span class="nav-label">Đo mắt &amp; Toa kính</span>
+        </button>
+        <button type="button" class="nav-item" data-nav="lab" title="Sản xuất Lab &amp; QC">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          <span class="nav-label">Sản xuất Lab &amp; QC</span>
+        </button>
+        <button type="button" class="nav-item" data-nav="customers" title="Khách hàng">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span class="nav-label">Khách hàng</span>
+        </button>
+
+        <div class="sidebar-group-label">HÀNG HOÁ</div>
+        <button type="button" class="nav-item active" data-nav="catalog" aria-current="page" title="Sản phẩm (Web &amp; Ảnh)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+          <span class="nav-label">Sản phẩm (Web &amp; Ảnh)</span>
+        </button>
+        <button type="button" class="nav-item" data-nav="inventory" title="Kho hàng &amp; Giao dịch">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+          <span class="nav-label">Kho hàng &amp; Giao dịch</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-bottom-meta">
+        <div class="sidebar-version-tag">v3.0 · Single Store</div>
+      </div>
+    </aside>
+
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebarBackdrop" class="backdrop hidden" aria-hidden="true"></div>
+
+    <!-- Main Body -->
+    <div class="app-body">
+      <header class="app-header">
+        <div class="app-header-left">
+          <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Mở menu điều hướng">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+          </button>
+          <span class="header-crumb">Sản phẩm (Web &amp; Ảnh)</span>
+        </div>
+
+        <div class="app-header-center">
+          <button type="button" class="global-search-trigger" id="globalSearchTrigger" title="Tìm nhanh khách hàng, SĐT, đơn hàng, SKU (⌘K)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <span>Tra cứu nhanh khách, SĐT, đơn hàng, mã kính...</span>
+            <kbd>⌘K</kbd>
+          </button>
+        </div>
+
+        <div class="app-header-right">
+          <button type="button" class="btn btn-secondary btn-sm" id="quickDemoLensBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>
+            <span>Sửa mẫu Tròng kính</span>
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" id="addProductBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Thêm sản phẩm</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="app-main">
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">Sản phẩm (Thông số Quang học, Biến thể &amp; Media Website)</h1>
+            <p class="page-sub">Quản lý biến thể màu/size có ảnh &amp; tồn riêng, ma trận tồn kho &amp; giá tròng theo dải độ, thông số gọng chuẩn kỹ thuật (A · DBL · Càng · B · ED), kính áp tròng và trình biên tập mô tả an toàn.</p>
+          </div>
+          <div class="quick-demo-strip">
+            <button type="button" class="btn btn-secondary btn-sm" id="quickDemoContactBtn">Xem mẫu Kính áp tròng</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="quickDemoRimlessBtn">Xem mẫu Gọng không viền</button>
+          </div>
+        </div>
+
+        <!-- Category Filter Pills & Search -->
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="searchInput" class="input" aria-label="Tìm kiếm sản phẩm theo tên, SKU, thương hiệu, chiết suất hoặc váng phủ" placeholder="Tìm theo tên, SKU, thương hiệu, chiết suất, váng phủ..." />
+          </div>
+          <div class="pill-group" id="catFilterPills" role="group" aria-label="Lọc theo danh mục sản phẩm"></div>
+          <select id="webFilterSelect" class="select select-auto" aria-label="Lọc trạng thái hiển thị Website">
+            <option value="ALL">Mọi trạng thái Web</option>
+            <option value="WEB">Đang đăng Website</option>
+            <option value="HIDDEN">Chỉ bán tại quầy</option>
+          </select>
+        </div>
+
+        <!-- Product Table -->
+        <div class="card">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Sản phẩm &amp; SKU</th>
+                  <th>Danh mục</th>
+                  <th>Thông số chuyên ngành &amp; Biến thể</th>
+                  <th>Media &amp; Video</th>
+                  <th class="num">Giá bán</th>
+                  <th class="num">Tồn kho</th>
+                  <th>Website</th>
+                  <th class="num">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="productTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+
+      <footer class="app-footer">
+        <div>© 2026 Kính Mắt Minh Quang · 148 Xã Đàn, Đống Đa, Hà Nội</div>
+        <div class="muted-xs">Nền tảng Quản lý Cửa hàng Quang học &amp; Phòng Lab Nội bộ</div>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Slide-over Editor Drawer (Wide 940px per D02-002) -->
+  <div id="drawerBackdrop" class="backdrop hidden" aria-hidden="true"></div>
+  <aside id="editorDrawer" class="drawer hidden" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" aria-hidden="true">
+    <div class="drawer-head">
+      <div>
+        <div class="drawer-eyebrow" id="drawerEyebrow">CHỈNH SỬA SẢN PHẨM</div>
+        <h2 class="drawer-title" id="drawerTitle">Gọng Titanium Nhật Bản dáng tròn mảnh</h2>
+      </div>
+      <div class="drawer-head-actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="openWebPreviewBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span>Xem trước Website</span>
+        </button>
+        <button type="button" class="icon-btn" id="closeDrawerBtn" aria-label="Đóng khung chỉnh sửa">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Validation Summary Banner (C-07) -->
+    <div id="formErrorBanner" class="error-banner hidden" role="alert"></div>
+
+    <!-- Editor Section Tabs -->
+    <div class="drawer-tabs" role="tablist" aria-label="Các mục chỉnh sửa sản phẩm">
+      <button type="button" class="tab-btn active" role="tab" aria-selected="true" data-tab="specs">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        <span>1. Thông tin, Biến thể &amp; Thông số</span>
+      </button>
+      <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="media">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+        <span>2. Ảnh theo biến thể &amp; Video 360°</span>
+        <span class="tab-count" id="mediaCountBadge">0</span>
+      </button>
+      <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="webdesc">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+        <span>3. Mô tả Website (An toàn)</span>
+      </button>
+    </div>
+
+    <div class="drawer-body" id="drawerBody"></div>
+
+    <div class="drawer-foot">
+      <div class="drawer-foot-left">
+        <label class="toggle-inline" for="publishToggle">
+          <input type="checkbox" id="publishToggle" />
+          <span>Hiển thị công khai trên Website</span>
+        </label>
+        <span id="unsavedBadge" class="unsaved-pill hidden">Chưa lưu thay đổi</span>
+      </div>
+      <div class="drawer-foot-actions">
+        <button type="button" class="btn btn-secondary" id="cancelDrawerBtn">Hủy</button>
+        <button type="button" class="btn btn-primary" id="saveProductBtn">Lưu sản phẩm</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Public Website Product Detail Preview Modal -->
+  <div id="previewBackdrop" class="backdrop hidden" aria-hidden="true"></div>
+  <div id="previewModal" class="preview-modal hidden" role="dialog" aria-modal="true" aria-labelledby="previewModalTitle">
+    <div class="preview-head">
+      <div class="preview-head-left">
+        <span class="badge badge-teal" id="previewModalTitle">Xem trước trên Website Khách hàng</span>
+        <span class="muted-xs">Bộ chọn màu biến thể, ảnh đa góc, Video 360°, bảng thông số &amp; mô tả đã sanitize</span>
+      </div>
+      <button type="button" class="icon-btn" id="closePreviewBtn" aria-label="Đóng xem trước Website">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="preview-body" id="previewBody"></div>
+  </div>
+
+  <!-- Quick Search Modal (⌘K — Baseline Shell Control C-03) -->
+  <div id="cmdkBackdrop" class="backdrop hidden" aria-hidden="true"></div>
+  <div id="cmdkModal" class="cmdk-modal hidden" role="dialog" aria-modal="true" aria-label="Tra cứu nhanh">
+    <div class="cmdk-head">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="cmdkInput" class="cmdk-input" aria-label="Nhập từ khóa tìm kiếm nhanh" placeholder="Gõ tên sản phẩm, SKU, thương hiệu, biến thể..." autocomplete="off" />
+      <button type="button" class="btn btn-secondary btn-sm" id="closeCmdkBtn">Esc</button>
+    </div>
+    <div class="cmdk-results" id="cmdkResults"></div>
+  </div>
+
+  <!-- Toast with Optional Undo Action (C-06) -->
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

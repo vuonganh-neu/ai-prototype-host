@@ -1,7 +1,7 @@
 {
   "project": "optic-shop",
   "slug": "02-clinical-exam-rx",
-  "title": "Phòng Đo mắt & Kê toa Khúc xạ Chuẩn Nhãn khoa",
+  "title": "Đo mắt & Phiếu Khúc xạ Chuẩn Lâm sàng",
   "domain": "02-management-saas",
   "persona": "operator-admin",
   "approved_version": "",
@@ -12,6 +12,13 @@
       "phase": "P01D",
       "stage": "phase",
       "notes": "Split-view đo mắt chuẩn nhãn khoa: SPH/CYL/ADD bước 0.25D hỗ trợ cận (-) & viễn (+), ràng buộc CYL-AXIS 1-180°, PRISM/BASE, PD từng mắt OD/OS, thị lực UCVA/BCVA, đo máy tự động và biểu đồ đa tật khúc xạ"
+    },
+    {
+      "version": "v2-clinical-rx-sheet",
+      "created_at": "2026-11-24T12:16:18+07:00",
+      "phase": "P01D",
+      "stage": "phase",
+      "notes": "v2: Giữ shell baseline; chuyển dạng trụ song song, tách DV/trung gian/NV tự tính, người ký có chứng chỉ + cờ chuyển tuyến + disclaimer bản in, SE + phân loại + anisometropia + biểu đồ SE, thang VA đầy đủ, thông số đa tròng kiểm chéo gọng, vòng đời toa bất biến, biện minh lăng kính, sửa tràn ngang/a11y."
     }
   ]
 }
