@@ -31,6 +31,54 @@
     }
   };
 
+  Object.values(VA_SCALES).forEach((s) => s.lowSet.add('Không đo được'));
+
+  // Người ký = tài khoản đang đăng nhập có chứng chỉ khúc xạ (B-06)
+  const CURRENT_USER = CERTIFIED_SIGNERS[0];
+
+  // Khoảng hợp lệ (B-01). SPH lấy theo gói nghiệp vụ v1; các giới hạn còn lại là NGƯỠNG TẠM, chờ KTV chốt.
+  const LIMITS = {
+    sph: [-25, 20], cyl: [-10, 10], add: [0, 4], prism: [0, 15],
+    pdOd: [24, 40], pdOs: [24, 40], pdNear: [48, 76]
+  };
+  const SOFT_LIMITS = { sphAbs: 10, cylAbs: 6, addMin: 0.75, addMax: 3.5 };
+
+  // B-04: quy đổi thị lực giữa 3 thang (gần đúng, theo thị lực thập phân; mức đếm ngón/sáng tối theo nhóm tương đương)
+  const VA_SCALE_IDX = { DECIMAL_VN: 0, SNELLEN: 1, LOGMAR: 2 };
+  const VA_SPECIAL_GROUPS = [
+    ['ĐNT 3m', 'CF 3m', 'ĐNT 3m'],
+    ['ĐNT 1m', 'CF 1m', 'ĐNT 1m'],
+    ['ĐNT 0.5m', 'CF 1m', 'ĐNT 1m'],
+    ['BBT', 'HM', 'BBT'],
+    ['ST(+)', 'LP(+)', 'ST(+)'],
+    ['ST(−)', 'NLP', 'ST(−)'],
+    ['Không đo được', 'Không đo được', 'Không đo được']
+  ];
+  function vaToDecimal(scaleKey, v) {
+    const t = String(v);
+    if (scaleKey === 'DECIMAL_VN') { const m = t.match(/^(\d+)\/10$/); return m ? Number(m[1]) / 10 : null; }
+    if (scaleKey === 'SNELLEN') { const m = t.match(/^20\/(\d+)$/); return m ? 20 / Number(m[1]) : null; }
+    const n = Number(t);
+    return t !== '' && Number.isFinite(n) ? Math.pow(10, -n) : null;
+  }
+  function convertVa(v, from, to) {
+    if (from === to) return v;
+    const d = vaToDecimal(from, v);
+    if (d !== null) {
+      let best = null;
+      let bestDist = Infinity;
+      VA_SCALES[to].options.forEach((opt) => {
+        const od = vaToDecimal(to, opt);
+        if (od === null) return;
+        const dist = Math.abs(Math.log10(od / d));
+        if (dist < bestDist) { best = opt; bestDist = dist; }
+      });
+      return best;
+    }
+    const g = VA_SPECIAL_GROUPS.find((row) => row[VA_SCALE_IDX[from]] === v);
+    return g ? g[VA_SCALE_IDX[to]] : 'Không đo được';
+  }
+
   const PURPOSES = {
     DISTANCE: 'Kính nhìn xa / Đeo thường xuyên',
     PROGRESSIVE: 'Kính đa tròng (Progressive)',
@@ -141,11 +189,10 @@
           pdOd: 31.5, pdOs: 31.0, pdNear: 60.0,
           prismJustification: '',
           fitting: { frameId: 'FRM-01', bvd: 12, panto: 9, wrap: 5, segHeight: 20, ocHeight: 21 },
-          signerId: 'STF-01',
           validityMonths: 12,
           referralFlag: false,
           referralReason: '',
-          status: 'SIGNED',
+          status: 'DRAFT',
           revisionOf: null,
           revisionReason: ''
         },
@@ -193,11 +240,10 @@
           pdOd: 33.0, pdOs: 32.5, pdNear: 62.5,
           prismJustification: '',
           fitting: { frameId: 'FRM-03', bvd: 12, panto: 10, wrap: 5, segHeight: 20, ocHeight: 21 },
-          signerId: 'STF-02',
           validityMonths: 12,
           referralFlag: false,
           referralReason: '',
-          status: 'SIGNED',
+          status: 'DRAFT',
           revisionOf: null,
           revisionReason: ''
         },
@@ -231,11 +277,10 @@
           pdOd: 31.0, pdOs: 31.0, pdNear: 59.0,
           prismJustification: 'Cover test: Lác ẩn ngoài nhìn gần 6Δ, khách than mỏi mắt & song thị nhẹ khi đọc > 20 phút (theo toa BV Mắt TW).',
           fitting: { frameId: 'FRM-01', bvd: 12, panto: 9, wrap: 5, segHeight: 19, ocHeight: 20 },
-          signerId: 'STF-03',
           validityMonths: 12,
           referralFlag: true,
           referralReason: 'BCVA mắt phải 6/10 (< 7/10) và chênh khúc xạ 2 mắt ≥ 2.00 D — khuyến nghị tái khám BS Mắt theo hẹn.',
-          status: 'SIGNED',
+          status: 'DRAFT',
           revisionOf: null,
           revisionReason: ''
         },
@@ -256,6 +301,8 @@
   let activeCustomerId = 'CUS-01';
   let form = deepClone(customers[0].defaultForm);
   let formError = '';
+  let fieldErrors = {};
+  let rxSeq = 613;
   let toastTimer = null;
 
   function showToast(msg) {
@@ -274,6 +321,7 @@
     activeCustomerId = id;
     form = deepClone(getCustomer().defaultForm);
     formError = '';
+    fieldErrors = {};
     renderAll();
   }
 
@@ -286,39 +334,104 @@
   }
 
   // ==================== CLINICAL CHECKS ====================
+  function eyeMismatch(eye, conv) {
+    const c = roundQuarter(eye.cyl);
+    return (conv === 'MINUS' && c > 0) || (conv === 'PLUS' && c < 0);
+  }
+
   function computeClinicalAlerts() {
     const alerts = [];
-    const odSe = calcSE(toMinusCyl(form.od, form.cylConvention));
-    const osSe = calcSE(toMinusCyl(form.os, form.cylConvention));
+    const conv = form.cylConvention;
+    const odSe = calcSE(toMinusCyl(form.od, conv));
+    const osSe = calcSE(toMinusCyl(form.os, conv));
     const diffSe = Math.abs(odSe - osSe);
+
+    // B-03: dấu trụ mâu thuẫn quy ước đã chọn → chặn ký
+    const badEyes = ['od', 'os'].filter((k) => eyeMismatch(form[k], conv)).map((k) => k.toUpperCase());
+    if (badEyes.length) {
+      alerts.push({
+        level: 'err', block: true, action: 'convention',
+        text: `Dấu trụ (CYL) của ${badEyes.join(' & ')} mâu thuẫn quy ước đã chọn (${conv === 'MINUS' ? 'Trụ âm −CYL' : 'Trụ dương +CYL'}). Phải thống nhất trước khi ký, nếu không Lab có thể cắt sai độ loạn.`
+      });
+    }
+
     if (diffSe >= 2.0) {
       alerts.push({ level: 'warn', text: `Lệch khúc xạ hai mắt (Anisometropia): |SE OD − SE OS| = ${diffSe.toFixed(2)} D (≥ 2.00 D) — cân nhắc chiết suất cân bằng độ dày & theo dõi thích nghi.` });
     }
+
+    // B-04 / B-05: BCVA thấp hoặc "Không đo được" → đề xuất cờ chuyển tuyến + bắt nhập lý do trước khi ký
     const scale = VA_SCALES[form.vaScale];
     if (scale.lowSet.has(form.od.bcva) || scale.lowSet.has(form.os.bcva)) {
-      alerts.push({ level: 'err', text: `Thị lực chỉnh kính tối ưu (BCVA) dưới ngưỡng 7/10 (OD: ${form.od.bcva}, OS: ${form.os.bcva}) — bật cờ khuyến nghị chuyển tuyến Bác sĩ Mắt.` });
+      const noReason = !String(form.referralReason || '').trim();
+      const missing = !form.referralFlag || noReason;
+      alerts.push({
+        level: 'err', block: missing,
+        text: `BCVA dưới ngưỡng 7/10 hoặc không đo được (OD: ${form.od.bcva}, OS: ${form.os.bcva}) — ${!form.referralFlag ? 'cần bật cờ khuyến nghị chuyển tuyến Bác sĩ Mắt và nhập lý do trước khi ký.' : (noReason ? 'đã bật cờ chuyển tuyến, cần nhập lý do trước khi ký.' : 'đã bật cờ khuyến nghị chuyển tuyến kèm lý do.')}`
+      });
     }
+
+    // B-01: giá trị bất thường (trong khoảng hợp lệ nhưng cần xác nhận)
+    ['od', 'os'].forEach((k) => {
+      const e = form[k];
+      const odd = [];
+      if (Math.abs(Number(e.sph)) > SOFT_LIMITS.sphAbs) odd.push(`SPH ${fmtD(e.sph)}`);
+      if (Math.abs(Number(e.cyl)) > SOFT_LIMITS.cylAbs) odd.push(`CYL ${fmtD(e.cyl)}`);
+      if (Number(e.add) > 0 && (Number(e.add) < SOFT_LIMITS.addMin || Number(e.add) > SOFT_LIMITS.addMax)) odd.push(`ADD +${Number(e.add).toFixed(2)}`);
+      if (odd.length) {
+        alerts.push({ level: 'warn', ack: true, text: `${k.toUpperCase()}: giá trị bất thường (${odd.join(', ')}) — kiểm tra lại số đo trước khi ký.` });
+      }
+    });
+
     const frame = SAMPLE_FRAMES.find((f) => f.id === form.fitting.frameId);
     if (frame && (form.purpose === 'PROGRESSIVE' || form.purpose === 'OFFICE')) {
       if (frame.bMm < 30) {
-        alerts.push({ level: 'err', text: `Cảnh báo gọng hẹp: Chiều cao tròng B = ${frame.bMm} mm (< 30 mm tối thiểu cho đa tròng/văn phòng). Cần đổi gọng cao hơn.` });
+        alerts.push({ level: 'err', ack: true, text: `Cảnh báo gọng hẹp: Chiều cao tròng B = ${frame.bMm} mm (< 30 mm tối thiểu cho đa tròng/văn phòng). Cần đổi gọng cao hơn hoặc xác nhận có chủ đích.` });
       } else if (Number(form.fitting.segHeight) > frame.bMm - 10) {
         alerts.push({ level: 'warn', text: `Chiều cao tâm đọc (${form.fitting.segHeight} mm) quá sát mép trên của gọng (B = ${frame.bMm} mm).` });
+      }
+    }
+
+    // B-08: PD gần phải nhỏ hơn PD xa; PD trung gian (nếu nhập tay) nằm giữa
+    const pdTotal = Number(form.pdOd) + Number(form.pdOs);
+    if (Number(form.pdNear) >= pdTotal) {
+      alerts.push({ level: 'err', ack: true, text: `PD nhìn gần (${Number(form.pdNear).toFixed(1)} mm) phải nhỏ hơn PD xa tổng (${pdTotal.toFixed(1)} mm) — kiểm tra lại số đo PD.` });
+    }
+    if (form.purpose === 'OFFICE' && form.pdInter !== '' && form.pdInter != null) {
+      const pi = Number(form.pdInter);
+      if (!(pi > Number(form.pdNear) && pi < pdTotal)) {
+        alerts.push({ level: 'warn', ack: true, text: `PD trung gian (${pi.toFixed(1)} mm) phải nằm giữa PD gần (${Number(form.pdNear).toFixed(1)} mm) và PD xa tổng (${pdTotal.toFixed(1)} mm).` });
       }
     }
     return { alerts, odSe, osSe, diffSe };
   }
 
+  // ==================== RANGE / INPUT VALIDATION (B-01, B-02) ====================
+  function fieldLabel(eyeKey, field) {
+    return `${field.toUpperCase()} ${eyeKey === 'od' ? 'OD' : 'OS'}`;
+  }
+  function rejectRange(key, label, value, lim) {
+    if (value < lim[0] || value > lim[1]) {
+      fieldErrors[key] = `${label}: ${value} nằm ngoài khoảng hợp lệ [${lim[0]} … ${lim[1]}] — giá trị bị từ chối, giữ nguyên số cũ.`;
+      return true;
+    }
+    return false;
+  }
+
   // ==================== RENDER LEFT FORM ====================
-  function renderStepper(eyeKey, field, val, ariaLabel, isAdd = false) {
+  function renderStepper(eyeKey, field, val, ariaLabel, isAdd = false, disabled = false) {
     const formatted = isAdd ? (Number(val) > 0 ? '+' + roundQuarter(val).toFixed(2) : '0.00') : fmtD(val);
+    const dis = disabled ? 'disabled' : '';
     return `
       <div class="stepper">
-        <button type="button" data-step="${eyeKey}:${field}:-1" aria-label="Giảm ${ariaLabel} 0.25 D">−</button>
-        <input type="text" value="${formatted}" data-num="${eyeKey}:${field}" aria-label="${ariaLabel}" />
-        <button type="button" data-step="${eyeKey}:${field}:1" aria-label="Tăng ${ariaLabel} 0.25 D">+</button>
+        <button type="button" data-step="${eyeKey}:${field}:-1" aria-label="Giảm ${ariaLabel} 0.25 D" ${dis}>−</button>
+        <input type="text" value="${formatted}" data-num="${eyeKey}:${field}" aria-label="${ariaLabel}" ${dis} />
+        <button type="button" data-step="${eyeKey}:${field}:1" aria-label="Tăng ${ariaLabel} 0.25 D" ${dis}>+</button>
       </div>
     `;
+  }
+
+  function isLocked() {
+    return Boolean(form.currentRxId) && form.status !== 'DRAFT';
   }
 
   function renderExamForm() {
@@ -331,9 +444,13 @@
     const osAlt = transposeEye(form.os);
     const altLabel = form.cylConvention === 'MINUS' ? 'Quy đổi tương đương sang Trụ dương (+CYL)' : 'Quy đổi sang Trụ âm (−CYL · Chuẩn Lab cắt kính)';
     const hasPrism = Number(form.od.prism) > 0 || Number(form.os.prism) > 0;
-    const showNear = Number(form.od.add) > 0 || Number(form.os.add) > 0 || ['PROGRESSIVE', 'OFFICE', 'READING'].includes(form.purpose);
-    const showInter = form.purpose === 'PROGRESSIVE' || form.purpose === 'OFFICE';
+    const isReading = form.purpose === 'READING';
+    const showInter = form.purpose === 'OFFICE';
+    const showNear = !isReading && (Number(form.od.add) > 0 || Number(form.os.add) > 0 || form.purpose === 'PROGRESSIVE' || form.purpose === 'OFFICE');
     const binoPd = (Number(form.pdOd) + Number(form.pdOs)).toFixed(1);
+    const locked = isLocked();
+    const st = STATUS_META[form.status] || STATUS_META.DRAFT;
+    const errList = Object.values(fieldErrors);
 
     const panel = document.getElementById('examFormPanel');
     panel.innerHTML = `
@@ -342,11 +459,17 @@
           <h2 style="margin:0;font-size:16px">${esc(c.name)} <span class="muted-xs">(${c.age} tuổi · ${esc(c.phone)})</span></h2>
           <div class="muted-xs">${esc(c.note)}</div>
         </div>
-        ${form.revisionOf ? `<span class="badge badge-warn">Phiên bản sửa đổi từ ${esc(form.revisionOf)}</span>` : `<span class="badge badge-teal">Phiếu đo mới</span>`}
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+          ${form.revisionOf ? `<span class="badge badge-warn">Sửa đổi từ ${esc(form.revisionOf)}</span>` : ''}
+          <span class="badge ${st.cls}" id="rxStateBadge">${esc(form.currentRxId || 'Phiếu đo mới')} · ${esc(st.label)}</span>
+        </div>
       </div>
 
-      ${formError ? `<div class="callout callout-err" role="alert" style="margin-top:0;margin-bottom:12px"><strong>Không thể lưu phiếu:</strong> ${esc(formError)}</div>` : ''}
+      ${formError ? `<div class="callout callout-err" role="alert" style="margin-top:0;margin-bottom:12px"><strong>Không thể ký toa:</strong> ${esc(formError)}</div>` : ''}
+      ${locked ? `<div class="callout callout-info" style="margin-top:0;margin-bottom:12px">Phiếu <strong class="mono">${esc(form.currentRxId)}</strong> đã ký — các ô nhập bị khoá. Muốn chỉnh sửa, dùng "Tạo phiên bản sửa đổi" trong Lịch sử toa (bắt buộc ghi lý do).</div>` : ''}
+      ${form.legacyNote ? `<div class="callout callout-warn" style="margin-top:0;margin-bottom:12px">Toa gốc cũ chỉ lưu độ khúc xạ, PD xa, thị lực hai mắt và cờ chuyển tuyến. Các trường còn lại (biện minh lăng kính, PD gần, thông số lắp ráp, thị lực từng mắt…) đang lấy giá trị mặc định từ hồ sơ khách — cần KTV kiểm tra lại trước khi ký.</div>` : ''}
 
+      <fieldset class="form-fieldset" ${locked ? 'disabled' : ''}>
       <!-- 1. Source, Convention & Purpose -->
       <div class="block-card">
         <div class="block-head">
@@ -405,10 +528,10 @@
         `}
       </div>
 
-      <!-- 2. Distance Vision (DV) Table -->
+      <!-- 2. Distance (or Near-only) Table, split into 2 tables so nothing is hidden (C-01) -->
       <div class="block-card">
         <div class="block-head">
-          <h3 class="block-title">2. Khối Nhìn xa (DV — Distance Vision) &amp; Thị lực (VA)</h3>
+          <h3 class="block-title">2. Khối ${isReading ? 'Độ nhìn gần (kính đọc riêng)' : 'Nhìn xa (DV — Distance Vision)'} &amp; Thị lực (VA)</h3>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <label for="vaScaleSel" style="font-size:12px;font-weight:600;color:#4B5B58">Thang VA:</label>
             <select id="vaScaleSel" class="select" style="width:auto;padding:4px 8px">
@@ -417,8 +540,12 @@
           </div>
         </div>
 
+        ${isReading ? `<div class="callout callout-info" style="margin-top:0;margin-bottom:8px">Kính đọc riêng: SPH / CYL / AXIS bên dưới là <strong>độ nhìn gần</strong> áp dụng trực tiếp cho khoảng đọc — hệ thống không cộng thêm ADD (cột ADD bị khoá).</div>` : ''}
+        ${errList.length ? `<div class="callout callout-err" role="alert" style="margin-top:0;margin-bottom:8px">${errList.map((m) => `<div>${esc(m)}</div>`).join('')}</div>` : ''}
+
         <div class="rx-table-wrap">
-          <table class="rx-table">
+          <table class="rx-table stack" style="min-width:0">
+            <caption class="sr-only">Độ khúc xạ: cầu, trụ, trục, ADD</caption>
             <thead>
               <tr>
                 <th>Mắt</th>
@@ -426,6 +553,35 @@
                 <th>CYL (Trụ)</th>
                 <th>AXIS (1°–180°)</th>
                 <th>ADD (Đọc)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${['od', 'os'].map((k) => {
+                const eye = form[k];
+                const isOd = k === 'od';
+                const eyeLabel = isOd ? 'mắt phải (OD)' : 'mắt trái (OS)';
+                const cylZero = roundQuarter(eye.cyl) === 0;
+                return `
+                  <tr>
+                    <td class="cell-eye"><span class="eye-tag ${isOd ? 'eye-od' : 'eye-os'}">${isOd ? 'OD Phải' : 'OS Trái'}</span></td>
+                    <td data-label="SPH (Cầu)">${renderStepper(k, 'sph', eye.sph, `SPH ${eyeLabel}`)}</td>
+                    <td data-label="CYL (Trụ)">${renderStepper(k, 'cyl', eye.cyl, `CYL ${eyeLabel}`)}</td>
+                    <td data-label="AXIS (1°–180°)"><input type="number" min="1" max="180" step="1" class="input mono" style="width:66px" data-axis="${k}" aria-label="Trục AXIS ${eyeLabel}" value="${cylZero ? '' : (eye.axis || '')}" ${cylZero ? 'disabled placeholder="—"' : ''} /></td>
+                    <td data-label="ADD (Đọc)">${renderStepper(k, 'add', eye.add, `ADD ${eyeLabel}`, true, isReading)}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="rx-subhead">Lăng kính &amp; Thị lực từng mắt</div>
+        <div class="rx-table-wrap">
+          <table class="rx-table stack" style="min-width:0">
+            <caption class="sr-only">Lăng kính và thị lực từng mắt</caption>
+            <thead>
+              <tr>
+                <th>Mắt</th>
                 <th>PRISM (Δ)</th>
                 <th>BASE</th>
                 <th>UCVA</th>
@@ -438,31 +594,26 @@
                 const eye = form[k];
                 const isOd = k === 'od';
                 const eyeLabel = isOd ? 'mắt phải (OD)' : 'mắt trái (OS)';
-                const cylZero = roundQuarter(eye.cyl) === 0;
                 return `
                   <tr>
-                    <td><span class="eye-tag ${isOd ? 'eye-od' : 'eye-os'}">${isOd ? 'OD Phải' : 'OS Trái'}</span></td>
-                    <td>${renderStepper(k, 'sph', eye.sph, `SPH ${eyeLabel}`)}</td>
-                    <td>${renderStepper(k, 'cyl', eye.cyl, `CYL ${eyeLabel}`)}</td>
-                    <td><input type="number" min="1" max="180" class="input mono" style="width:66px" data-axis="${k}" aria-label="Trục AXIS ${eyeLabel}" value="${cylZero ? '' : (eye.axis || '')}" ${cylZero ? 'disabled placeholder="—"' : ''} /></td>
-                    <td>${renderStepper(k, 'add', eye.add, `ADD ${eyeLabel}`, true)}</td>
-                    <td><input type="number" step="0.25" min="0" max="15" class="input mono" style="width:62px" data-prism="${k}" aria-label="Lăng kính PRISM ${eyeLabel}" value="${eye.prism || 0}" /></td>
-                    <td>
+                    <td class="cell-eye"><span class="eye-tag ${isOd ? 'eye-od' : 'eye-os'}">${isOd ? 'OD Phải' : 'OS Trái'}</span></td>
+                    <td data-label="PRISM (Δ)"><input type="number" step="0.25" min="0" max="15" class="input mono" style="width:62px" data-prism="${k}" aria-label="Lăng kính PRISM ${eyeLabel}" value="${eye.prism || 0}" /></td>
+                    <td data-label="BASE">
                       <select class="select" style="width:64px;padding:5px" data-base="${k}" aria-label="Hướng đáy BASE ${eyeLabel}" ${Number(eye.prism) > 0 ? '' : 'disabled'}>
                         ${['BI', 'BO', 'BU', 'BD'].map((b) => `<option value="${b}" ${eye.base === b ? 'selected' : ''}>${b}</option>`).join('')}
                       </select>
                     </td>
-                    <td>
+                    <td data-label="UCVA">
                       <select class="select" style="width:94px;padding:5px" data-va="${k}:ucva" aria-label="Thị lực không kính UCVA ${eyeLabel}">
                         ${scale.options.map((opt) => `<option value="${opt}" ${eye.ucva === opt ? 'selected' : ''}>${opt}</option>`).join('')}
                       </select>
                     </td>
-                    <td>
+                    <td data-label="BCVA">
                       <select class="select" style="width:94px;padding:5px" data-va="${k}:bcva" aria-label="Thị lực có kính BCVA ${eyeLabel}">
                         ${scale.options.map((opt) => `<option value="${opt}" ${eye.bcva === opt ? 'selected' : ''}>${opt}</option>`).join('')}
                       </select>
                     </td>
-                    <td>
+                    <td data-label="Kính lỗ (PH)">
                       <select class="select" style="width:94px;padding:5px" data-va="${k}:ph" aria-label="Thị lực kính lỗ Pinhole ${eyeLabel}">
                         ${scale.options.map((opt) => `<option value="${opt}" ${eye.ph === opt ? 'selected' : ''}>${opt}</option>`).join('')}
                       </select>
@@ -474,7 +625,7 @@
           </table>
         </div>
 
-        <!-- Parallel Transposition Display (B-01) -->
+        <!-- Parallel Transposition Display -->
         <div class="callout callout-teal">
           <div style="font-weight:700;margin-bottom:3px">${esc(altLabel)} (Hiển thị song song chống cắt nhầm độ):</div>
           <div class="mono" style="font-size:12.5px">
@@ -482,7 +633,7 @@
           </div>
         </div>
 
-        <!-- SE & Clinical Classification Strip (B-04) + Binocular VA (B-06) -->
+        <!-- SE & Clinical Classification Strip + Binocular VA -->
         <div class="grid-3" style="margin-top:10px">
           <div class="field">
             <label>Phân loại OD · <span class="mono">SE = ${fmtD(odSe)} D</span></label>
@@ -508,11 +659,11 @@
         ` : ''}
       </div>
 
-      <!-- 3. Near Vision (NV) & Intermediate Block (B-02) -->
+      <!-- 3. Near Vision (NV) & Intermediate Block -->
       ${showNear ? `
         <div class="block-card">
           <div class="block-head">
-            <h3 class="block-title">3. Khối Nhìn gần (NV · Tự tính = SPH + ADD)${showInter ? ' &amp; Trung gian (Văn phòng)' : ''}</h3>
+            <h3 class="block-title">3. Khối Nhìn gần (NV · Tự tính = SPH + ADD)${showInter ? ' &amp; Trung gian (Văn phòng · tham khảo)' : ''}</h3>
             <span class="badge badge-info">Chỉ đọc · Tự đồng bộ từ DV</span>
           </div>
           <div class="rx-table-wrap">
@@ -528,10 +679,10 @@
               <tbody>
                 ${showInter ? `
                   <tr>
-                    <td><strong>Trung gian (60–80 cm)</strong></td>
+                    <td><strong>Trung gian (60–80 cm)</strong> <span class="badge badge-neutral">Tham khảo</span></td>
                     <td class="mono">${fmtD(roundQuarter(form.od.sph + roundQuarter(form.od.add * 0.5)))} / ${fmtD(form.od.cyl)} × ${form.od.axis || '—'}°</td>
                     <td class="mono">${fmtD(roundQuarter(form.os.sph + roundQuarter(form.os.add * 0.5)))} / ${fmtD(form.os.cyl)} × ${form.os.axis || '—'}°</td>
-                    <td class="mono">${(Number(form.pdNear) + 1.5).toFixed(1)} mm</td>
+                    <td><input id="pdInter" type="number" step="0.5" min="48" max="76" class="input mono" style="width:90px" aria-label="PD trung gian (mm), nhập tay, tùy chọn" placeholder="nhập tay" value="${form.pdInter ?? ''}" /></td>
                   </tr>
                 ` : ''}
                 <tr>
@@ -543,10 +694,11 @@
               </tbody>
             </table>
           </div>
+          ${showInter ? '<div class="muted-xs" style="margin-top:6px">Độ trung gian (SPH + ½ ADD) chỉ để tham khảo, không phải độ mài. PD trung gian do KTV nhập tay, phải nằm giữa PD gần và PD xa.</div>' : ''}
         </div>
       ` : ''}
 
-      <!-- 4. PD & Multifocal Fitting Cross-Check (B-07) -->
+      <!-- 4. PD & Multifocal Fitting Cross-Check -->
       <div class="block-card">
         <div class="block-head">
           <h3 class="block-title">4. Khoảng cách đồng tử (PD) &amp; Thông số lắp ráp Đa tròng</h3>
@@ -555,7 +707,7 @@
         <div class="grid-3">
           <div class="field"><label for="pdOd">PD mắt phải (mm)</label><input id="pdOd" type="number" step="0.5" min="24" max="40" class="input mono" value="${form.pdOd}" /></div>
           <div class="field"><label for="pdOs">PD mắt trái (mm)</label><input id="pdOs" type="number" step="0.5" min="24" max="40" class="input mono" value="${form.pdOs}" /></div>
-          <div class="field"><label for="pdNear">PD nhìn gần (mm)</label><input id="pdNear" type="number" step="0.5" min="48" max="76" class="input mono" value="${form.pdNear}" /></div>
+          <div class="field"><label for="pdNear">PD nhìn gần (mm) · phải &lt; PD tổng</label><input id="pdNear" type="number" step="0.5" min="48" max="76" class="input mono" value="${form.pdNear}" /></div>
         </div>
 
         <div class="grid-2" style="margin-top:10px">
@@ -577,19 +729,17 @@
         </div>
       </div>
 
-      <!-- 5. Signer, Validity, Referral & Legal Boundary (B-03, B-08) -->
+      <!-- 5. Signer (logged-in account), Validity, Referral & Legal Boundary -->
       <div class="block-card">
         <div class="block-head">
           <h3 class="block-title">5. Người ký có chứng chỉ, Hiệu lực toa &amp; Khuyến nghị chuyển tuyến</h3>
-          <span class="badge ${STATUS_META[form.status].cls}">${STATUS_META[form.status].label}</span>
+          <span class="badge ${st.cls}">${esc(st.label)}</span>
         </div>
-        <div class="grid-3">
-          <div class="field">
-            <label for="signerSel">Người ký (Nhân sự có CCHN) *</label>
-            <select id="signerSel" class="select">
-              ${CERTIFIED_SIGNERS.map((s) => `<option value="${s.id}" ${form.signerId === s.id ? 'selected' : ''}>${esc(s.name)} · ${esc(s.license)}</option>`).join('')}
-            </select>
-          </div>
+        <div class="field">
+          <label for="signerView">Người ký (tài khoản đang đăng nhập, có CCHN)</label>
+          <input id="signerView" class="input" readonly value="${esc(form.status === 'DRAFT' ? 'Chưa ký — sẽ ký bởi ' : '')}${esc(CURRENT_USER.name)} · ${esc(CURRENT_USER.license)}" />
+        </div>
+        <div class="grid-2" style="margin-top:10px">
           <div class="field">
             <label for="validitySel">Hiệu lực toa</label>
             <select id="validitySel" class="select">
@@ -599,20 +749,14 @@
             </select>
           </div>
           <div class="field">
-            <label for="statusSel">Trạng thái vòng đời</label>
-            <select id="statusSel" class="select">
-              <option value="DRAFT" ${form.status === 'DRAFT' ? 'selected' : ''}>Nháp (Chưa ký)</option>
-              <option value="SIGNED" ${form.status === 'SIGNED' ? 'selected' : ''}>Đã ký (Sẵn sàng cắt kính)</option>
-              <option value="LOCKED_FOR_LAB" ${form.status === 'LOCKED_FOR_LAB' ? 'selected' : ''}>Đã gửi Lab cắt kính (Khóa bất biến)</option>
-            </select>
+            <label for="statusView">Trạng thái vòng đời</label>
+            <output id="statusView" class="status-view"><span class="badge ${st.cls}">${esc(st.label)}</span></output>
           </div>
         </div>
+        <div class="muted-xs" style="margin-top:6px">Trạng thái do hệ thống chuyển: Nháp → “Ký toa” → Đã ký → “Gửi Lab” → Khóa.</div>
 
         ${form.revisionOf ? `
-          <div class="field" style="margin-top:10px">
-            <label for="revReasonInput">Lý do tạo phiên bản sửa đổi từ ${esc(form.revisionOf)} *</label>
-            <input id="revReasonInput" class="input" value="${esc(form.revisionReason)}" placeholder="VD: Khách chưa thích nghi độ loạn, giảm 0.25 D theo phản hồi..." />
-          </div>
+          <div class="callout callout-warn" style="margin-top:10px"><strong>Phiên bản sửa đổi từ ${esc(form.revisionOf)}.</strong> Lý do: ${esc(form.revisionReason)}</div>
         ` : ''}
 
         <div style="margin-top:10px">
@@ -628,14 +772,30 @@
           ` : ''}
         </div>
 
-        ${alerts.map((a) => `<div class="callout ${a.level === 'err' ? 'callout-err' : 'callout-warn'}">${esc(a.text)}</div>`).join('')}
+        ${alerts.map((a) => `
+          <div class="callout ${a.level === 'err' ? 'callout-err' : 'callout-warn'}">
+            ${esc(a.text)}
+            ${a.action === 'convention' ? `
+              <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+                <button type="button" class="btn btn-secondary btn-sm" data-fixconv="values">Quy đổi giá trị theo quy ước đã chọn</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-fixconv="convention">Đặt quy ước theo dấu đang nhập</button>
+              </div>` : ''}
+          </div>
+        `).join('')}
       </div>
+      </fieldset>
 
       <div class="sticky-action-bar">
-        <button type="button" class="btn btn-secondary" id="openPrintBtn">Xem &amp; In phiếu (Có Disclaimer)</button>
-        <div style="display:flex;gap:8px">
-          <button type="button" class="btn btn-secondary" id="resetFormBtn">Đặt lại</button>
-          <button type="button" class="btn btn-primary" id="saveExamBtn">Lưu phiếu đo &amp; Ký toa</button>
+        <div class="more-wrap">
+          <button type="button" class="btn btn-secondary" id="moreBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="moreMenu" aria-label="Thêm thao tác: xem in phiếu, đặt lại">⋯</button>
+          <div class="more-menu hidden" id="moreMenu" role="menu">
+            <button type="button" role="menuitem" class="more-item" id="openPrintBtn">Xem &amp; In phiếu (Có Disclaimer)</button>
+            <button type="button" role="menuitem" class="more-item" id="resetFormBtn">Đặt lại phiếu</button>
+          </div>
+        </div>
+        <div class="bar-main">
+          <button type="button" class="btn btn-secondary" id="saveDraftBtn" ${locked ? 'disabled' : ''}>Lưu nháp</button>
+          <button type="button" class="btn btn-primary" id="signBtn" ${locked ? 'disabled' : ''}>Ký toa…</button>
         </div>
       </div>
     `;
@@ -643,17 +803,32 @@
     bindFormEvents();
   }
 
+  // Nhập liệu sai khoảng/định dạng bị từ chối tại chỗ (B-01, B-02): không tự sửa giá trị.
+  function syncReferralSuggestion() {
+    const scale = VA_SCALES[form.vaScale];
+    if (scale.lowSet.has(form.od.bcva) || scale.lowSet.has(form.os.bcva)) {
+      if (!form.referralFlag) form.referralFlag = true;
+    }
+  }
+
   function bindFormEvents() {
     document.getElementById('rxSource').onchange = (e) => { form.source = e.target.value; renderExamForm(); };
     document.getElementById('cylConvention').onchange = (e) => { form.cylConvention = e.target.value; renderExamForm(); };
-    document.getElementById('rxPurpose').onchange = (e) => { form.purpose = e.target.value; renderExamForm(); };
-    document.getElementById('vaScaleSel').onchange = (e) => {
-      form.vaScale = e.target.value;
-      const opts = VA_SCALES[form.vaScale].options;
-      form.od.ucva = opts[4]; form.od.bcva = opts[1]; form.od.ph = opts[1];
-      form.os.ucva = opts[4]; form.os.bcva = opts[1]; form.os.ph = opts[1];
-      form.binocularVa = opts[1];
+    document.getElementById('rxPurpose').onchange = (e) => {
+      form.purpose = e.target.value;
+      if (form.purpose === 'READING') { form.od.add = 0; form.os.add = 0; }
       renderExamForm();
+    };
+    // B-04: đổi thang VA quy đổi số đo đã nhập, không ghi đè
+    document.getElementById('vaScaleSel').onchange = (e) => {
+      const from = form.vaScale;
+      const to = e.target.value;
+      ['od', 'os'].forEach((k) => ['ucva', 'bcva', 'ph'].forEach((f) => { form[k][f] = convertVa(form[k][f], from, to); }));
+      form.binocularVa = convertVa(form.binocularVa, from, to);
+      form.vaScale = to;
+      syncReferralSuggestion();
+      renderExamForm();
+      showToast(`Đã quy đổi thị lực sang thang ${VA_SCALES[to].label} (gần đúng) — kiểm tra lại các giá trị.`);
     };
     document.getElementById('binoVaSel').onchange = (e) => { form.binocularVa = e.target.value; };
 
@@ -666,6 +841,27 @@
       renderExamForm();
       showToast(`Đã chuyển dạng trụ sang ${form.cylConvention === 'MINUS' ? 'Trụ âm (−CYL)' : 'Trụ dương (+CYL)'}.`);
     };
+
+    document.querySelectorAll('[data-fixconv]').forEach((btn) => {
+      btn.onclick = () => {
+        if (btn.dataset.fixconv === 'values') {
+          ['od', 'os'].forEach((k) => {
+            if (eyeMismatch(form[k], form.cylConvention)) {
+              const t = transposeEye(form[k]);
+              form[k].sph = t.sph; form[k].cyl = t.cyl; form[k].axis = t.axis;
+            }
+          });
+          showToast('Đã quy đổi giá trị cho khớp quy ước đã chọn.');
+        } else {
+          const cyls = ['od', 'os'].map((k) => roundQuarter(form[k].cyl)).filter((v) => v !== 0);
+          if (cyls.every((v) => v > 0)) form.cylConvention = 'PLUS';
+          else if (cyls.every((v) => v < 0)) form.cylConvention = 'MINUS';
+          else { showToast('Hai mắt đang mang dấu trụ khác nhau — dùng "Quy đổi giá trị theo quy ước đã chọn".'); return; }
+          showToast('Đã đặt quy ước dấu trụ theo giá trị đang nhập.');
+        }
+        renderExamForm();
+      };
+    });
 
     const hospEl = document.getElementById('hospitalName');
     if (hospEl) hospEl.oninput = (e) => { form.hospitalName = e.target.value; };
@@ -687,20 +883,22 @@
       };
     }
 
-    // Steppers (±0.25 D, with B-12 ADD first-step fix!)
+    // Steppers (±0.25 D, ADD bước đầu 0.75) — chặn ngoài khoảng hợp lệ (B-01)
     document.querySelectorAll('[data-step]').forEach((btn) => {
       btn.onclick = () => {
         const [eyeKey, field, dirStr] = btn.dataset.step.split(':');
+        fieldErrors = {};
         const dir = Number(dirStr);
         let cur = roundQuarter(form[eyeKey][field]);
         if (field === 'add') {
-          if (dir > 0) cur = cur <= 0 ? 0.75 : Math.min(4.0, roundQuarter(cur + 0.25));
+          if (dir > 0) cur = cur <= 0 ? 0.75 : roundQuarter(cur + 0.25);
           else cur = cur <= 0.75 ? 0 : roundQuarter(cur - 0.25);
         } else {
           cur = roundQuarter(cur + dir * 0.25);
-          if (field === 'cyl' && cur !== 0 && !form[eyeKey].axis) form[eyeKey].axis = 180;
-          if (field === 'cyl' && cur === 0) form[eyeKey].axis = '';
         }
+        if (rejectRange(`${eyeKey}:${field}`, fieldLabel(eyeKey, field), cur, LIMITS[field])) { renderExamForm(); return; }
+        if (field === 'cyl' && cur !== 0 && !form[eyeKey].axis) form[eyeKey].axis = 180;
+        if (field === 'cyl' && cur === 0) form[eyeKey].axis = '';
         form[eyeKey][field] = cur;
         renderExamForm();
       };
@@ -709,24 +907,45 @@
     document.querySelectorAll('[data-num]').forEach((inp) => {
       inp.onchange = () => {
         const [eyeKey, field] = inp.dataset.num.split(':');
-        const parsed = parseFloat(inp.value.replace('−', '-'));
-        const val = Number.isNaN(parsed) ? 0 : roundQuarter(parsed);
-        form[eyeKey][field] = field === 'add' ? Math.max(0, val) : val;
+        const raw = inp.value.replace('−', '-').replace(',', '.').trim();
+        const parsed = Number(raw);
+        if (raw === '' || Number.isNaN(parsed)) {
+          fieldErrors[`${eyeKey}:${field}`] = `${fieldLabel(eyeKey, field)}: "${inp.value}" không phải số — giá trị bị từ chối, giữ nguyên số cũ.`;
+          renderExamForm();
+          return;
+        }
+        const val = roundQuarter(parsed);
+        if (rejectRange(`${eyeKey}:${field}`, fieldLabel(eyeKey, field), val, LIMITS[field])) { renderExamForm(); return; }
+        form[eyeKey][field] = val;
         if (field === 'cyl' && val === 0) form[eyeKey].axis = '';
         if (field === 'cyl' && val !== 0 && !form[eyeKey].axis) form[eyeKey].axis = 180;
         renderExamForm();
       };
     });
 
+    // B-02: AXIS chỉ nhận số nguyên 1–180, báo lỗi tại chỗ, không tự gói vòng
     document.querySelectorAll('[data-axis]').forEach((inp) => {
       inp.onchange = () => {
-        form[inp.dataset.axis].axis = normalizeAxis(inp.value);
+        const k = inp.dataset.axis;
+        const raw = inp.value.trim();
+        const n = Number(raw);
+        if (raw === '' || !Number.isInteger(n) || n < 1 || n > 180) {
+          fieldErrors[`${k}:axis`] = `AXIS ${k === 'od' ? 'OD' : 'OS'}: "${raw}" không hợp lệ — chỉ nhận số nguyên từ 1 đến 180°, giá trị bị từ chối, giữ nguyên số cũ.`;
+        } else {
+          form[k].axis = n;
+        }
         renderExamForm();
       };
     });
     document.querySelectorAll('[data-prism]').forEach((inp) => {
       inp.onchange = () => {
-        form[inp.dataset.prism].prism = Math.max(0, roundQuarter(inp.value));
+        const k = inp.dataset.prism;
+        const parsed = Number(inp.value);
+        if (inp.value.trim() === '' || Number.isNaN(parsed)) {
+          fieldErrors[`${k}:prism`] = `PRISM ${k === 'od' ? 'OD' : 'OS'}: "${inp.value}" không phải số — giá trị bị từ chối.`;
+        } else if (!rejectRange(`${k}:prism`, `PRISM ${k === 'od' ? 'OD' : 'OS'}`, roundQuarter(parsed), LIMITS.prism)) {
+          form[k].prism = roundQuarter(parsed);
+        }
         renderExamForm();
       };
     });
@@ -737,6 +956,7 @@
       sel.onchange = () => {
         const [eyeKey, field] = sel.dataset.va.split(':');
         form[eyeKey][field] = sel.value;
+        if (field === 'bcva') syncReferralSuggestion();
         renderExamForm();
       };
     });
@@ -744,9 +964,28 @@
     const prismJust = document.getElementById('prismJustInput');
     if (prismJust) prismJust.oninput = (e) => { form.prismJustification = e.target.value; };
 
-    document.getElementById('pdOd').onchange = (e) => { form.pdOd = Number(e.target.value) || 31; renderExamForm(); };
-    document.getElementById('pdOs').onchange = (e) => { form.pdOs = Number(e.target.value) || 31; renderExamForm(); };
-    document.getElementById('pdNear').onchange = (e) => { form.pdNear = Number(e.target.value) || 60; renderExamForm(); };
+    const pdHandler = (key, label, lim) => (e) => {
+      const parsed = Number(e.target.value);
+      if (e.target.value.trim() === '' || Number.isNaN(parsed)) {
+        fieldErrors[key] = `${label}: "${e.target.value}" không phải số — giá trị bị từ chối.`;
+      } else if (!rejectRange(key, label, parsed, lim)) {
+        form[key] = parsed;
+      }
+      renderExamForm();
+    };
+    document.getElementById('pdOd').onchange = pdHandler('pdOd', 'PD mắt phải', LIMITS.pdOd);
+    document.getElementById('pdOs').onchange = pdHandler('pdOs', 'PD mắt trái', LIMITS.pdOs);
+    document.getElementById('pdNear').onchange = pdHandler('pdNear', 'PD nhìn gần', LIMITS.pdNear);
+    const pdInter = document.getElementById('pdInter');
+    if (pdInter) {
+      pdInter.onchange = (e) => {
+        const v = e.target.value.trim();
+        if (v === '') form.pdInter = '';
+        else if (Number.isNaN(Number(v))) fieldErrors.pdInter = `PD trung gian: "${v}" không phải số — giá trị bị từ chối.`;
+        else if (!rejectRange('pdInter', 'PD trung gian', Number(v), LIMITS.pdNear)) form.pdInter = Number(v);
+        renderExamForm();
+      };
+    }
     document.getElementById('frameCrossSel').onchange = (e) => { form.fitting.frameId = e.target.value; renderExamForm(); };
     document.getElementById('fitBvd').onchange = (e) => { form.fitting.bvd = Number(e.target.value) || 12; };
     document.getElementById('fitPanto').onchange = (e) => { form.fitting.panto = Number(e.target.value) || 9; };
@@ -754,64 +993,107 @@
     document.getElementById('fitSegH').onchange = (e) => { form.fitting.segHeight = Number(e.target.value) || 19; renderExamForm(); };
     document.getElementById('fitOcH').onchange = (e) => { form.fitting.ocHeight = Number(e.target.value) || 20; };
 
-    document.getElementById('signerSel').onchange = (e) => { form.signerId = e.target.value; };
     document.getElementById('validitySel').onchange = (e) => { form.validityMonths = Number(e.target.value); };
-    document.getElementById('statusSel').onchange = (e) => { form.status = e.target.value; renderExamForm(); };
     document.getElementById('referralCb').onchange = (e) => { form.referralFlag = e.target.checked; renderExamForm(); };
 
     const refReason = document.getElementById('referralReasonInput');
     if (refReason) refReason.oninput = (e) => { form.referralReason = e.target.value; };
-    const revReason = document.getElementById('revReasonInput');
-    if (revReason) revReason.oninput = (e) => { form.revisionReason = e.target.value; };
 
-    document.getElementById('openPrintBtn').onclick = openPrintModal;
+    // C-05: thanh hành động gọn 1 hàng — Lưu nháp / Ký toa là chính, còn lại vào menu ⋯
+    const moreBtn = document.getElementById('moreBtn');
+    const moreMenu = document.getElementById('moreMenu');
+    moreBtn.onclick = (e) => {
+      e.stopPropagation();
+      const open = moreMenu.classList.toggle('hidden') === false;
+      moreBtn.setAttribute('aria-expanded', String(open));
+    };
+    document.getElementById('openPrintBtn').onclick = () => { moreMenu.classList.add('hidden'); openPrintModal(); };
     document.getElementById('resetFormBtn').onclick = () => {
       form = deepClone(getCustomer().defaultForm);
       formError = '';
+      fieldErrors = {};
       renderExamForm();
       showToast('Đã khôi phục dữ liệu phiếu đo.');
     };
 
-    document.getElementById('saveExamBtn').onclick = saveExam;
+    document.getElementById('saveDraftBtn').onclick = () => saveRx('DRAFT');
+    document.getElementById('signBtn').onclick = startSign;
   }
 
-  function saveExam() {
+  // ==================== SIGN FLOW (C-03, B-05, B-06) ====================
+  function blockingIssue() {
     const hasPrism = Number(form.od.prism) > 0 || Number(form.os.prism) > 0;
     if (hasPrism && !String(form.prismJustification || '').trim()) {
-      formError = 'Vui lòng nhập "Số đo biện minh kê Lăng kính" trước khi lưu toa có PRISM > 0.';
-      renderExamForm();
-      return;
+      return 'Vui lòng nhập "Số đo biện minh kê Lăng kính" trước khi ký toa có PRISM > 0.';
     }
-    if (form.revisionOf && !String(form.revisionReason || '').trim()) {
-      formError = 'Vui lòng ghi rõ lý do tạo phiên bản sửa đổi cho toa đã khóa.';
+    const { alerts } = computeClinicalAlerts();
+    const b = alerts.find((a) => a.block);
+    return b ? b.text : '';
+  }
+
+  function eyeLine(k, convention) {
+    const lab = toMinusCyl(form[k], convention);
+    const add = Number(form[k].add) > 0 && form.purpose !== 'READING' ? ` · ADD +${Number(form[k].add).toFixed(2)}` : '';
+    const prism = Number(form[k].prism) > 0 ? ` · ${form[k].prism}Δ ${form[k].base}` : '';
+    return `<strong>${k.toUpperCase()}:</strong> <span class="mono">${fmtD(lab.sph)} / ${fmtD(lab.cyl)} × ${lab.axis || '—'}°${add}${prism}</span>`;
+  }
+
+  function startSign() {
+    const issue = blockingIssue();
+    if (issue) {
+      formError = issue;
       renderExamForm();
+      document.getElementById('examFormPanel').scrollIntoView({ block: 'start' });
       return;
     }
     formError = '';
-
     const c = getCustomer();
-    const signer = CERTIFIED_SIGNERS.find((s) => s.id === form.signerId) || CERTIFIED_SIGNERS[0];
+    const { alerts } = computeClinicalAlerts();
+    const today = new Date().toISOString().slice(0, 10);
+    openConfirm({
+      title: 'Xác nhận ký toa kính',
+      confirmLabel: 'Ký toa',
+      bodyHtml: `
+        <dl class="confirm-dl">
+          <dt>Khách hàng</dt><dd>${esc(c.name)} (${c.age} tuổi)</dd>
+          <dt>Độ ký (quy về −CYL cho Lab)</dt><dd>${eyeLine('od', form.cylConvention)}<br>${eyeLine('os', form.cylConvention)}</dd>
+          <dt>Người ký</dt><dd>${esc(CURRENT_USER.name)} · <span class="mono">${esc(CURRENT_USER.license)}</span></dd>
+          <dt>Hiệu lực</dt><dd>${Number(form.validityMonths)} tháng — đến <span class="mono">${esc(addMonths(today, form.validityMonths))}</span></dd>
+          ${form.revisionOf ? `<dt>Thay thế</dt><dd>${esc(form.revisionOf)} sẽ chuyển sang “Đã thay thế”</dd>` : ''}
+        </dl>
+        <div class="callout callout-warn" style="margin-top:8px">Sau khi ký, toa bị khoá chỉnh sửa trực tiếp và sẵn sàng cho Lab. Mọi thay đổi sau đó phải tạo phiên bản sửa đổi kèm lý do.</div>`,
+      acks: alerts.filter((a) => a.ack).map((a) => a.text),
+      onConfirm: () => saveRx('SIGNED')
+    });
+  }
+
+  function nextRxId() {
+    rxSeq += 1;
+    return 'RX-2026-' + rxSeq;
+  }
+
+  // C-04 / B-07: lưu đủ mọi trường (data = bản chụp biểu mẫu); chỉ thay thế toa gốc khi bản mới đã ký
+  function saveRx(status) {
+    const c = getCustomer();
+    const signed = status === 'SIGNED';
     const today = new Date().toISOString().slice(0, 10);
 
     let nextVer = 1;
-    if (form.revisionOf) {
-      const old = c.history.find((h) => h.id === form.revisionOf);
-      if (old) {
-        old.status = 'SUPERSEDED';
-        nextVer = (old.version || 1) + 1;
-      }
-    }
+    const old = form.revisionOf ? c.history.find((h) => h.id === form.revisionOf) : null;
+    if (old) nextVer = (old.version || 1) + 1;
 
-    c.history.unshift({
-      id: 'RX-2026-' + String(Math.floor(300 + Math.random() * 600)),
+    form.status = status;
+    const id = form.currentRxId || nextRxId();
+    const record = {
+      id,
       version: nextVer,
       date: today,
       expiresAt: addMonths(today, form.validityMonths),
-      status: form.status,
+      status,
       source: form.source,
       cylConvention: form.cylConvention,
       purpose: form.purpose,
-      signer: `${signer.name} (${signer.license})`,
+      signer: signed ? `${CURRENT_USER.name} (${CURRENT_USER.license})` : 'Chưa ký',
       od: deepClone(form.od),
       os: deepClone(form.os),
       pdOd: form.pdOd,
@@ -819,19 +1101,29 @@
       vaScale: form.vaScale,
       binocularVa: form.binocularVa,
       referralFlag: form.referralFlag,
-      revisionReason: form.revisionReason
-    });
+      revisionOf: form.revisionOf,
+      revisionReason: form.revisionReason,
+      data: null
+    };
+    form.currentRxId = id;
+    record.data = deepClone(form);
 
-    form.revisionOf = null;
-    form.revisionReason = '';
+    const idx = c.history.findIndex((h) => h.id === id);
+    if (idx >= 0) c.history[idx] = record; else c.history.unshift(record);
+    if (signed && old) old.status = 'SUPERSEDED';
+
+    formError = '';
+    fieldErrors = {};
     renderAll();
-    showToast('Đã lưu phiếu đo khúc xạ và cập nhật biểu đồ diễn tiến SE.');
+    showToast(signed
+      ? `Đã ký toa ${id} bởi ${CURRENT_USER.name}. Toa sẵn sàng cho Lab, các ô đã khoá.`
+      : `Đã lưu nháp ${id} (chưa ký, chưa có hiệu lực).`);
   }
 
   // ==================== RIGHT: SE EVOLUTION CHART (B-04 / PRJ-002) ====================
   function renderChartPanel() {
     const c = getCustomer();
-    const sorted = [...c.history].filter((h) => h.status !== 'SUPERSEDED').sort((a, b) => a.date.localeCompare(b.date));
+    const sorted = [...c.history].filter((h) => h.status !== 'SUPERSEDED' && !(h.status === 'DRAFT' && h.revisionOf)).sort((a, b) => a.date.localeCompare(b.date));
     const panel = document.getElementById('chartPanel');
 
     if (!sorted.length) {
@@ -883,21 +1175,22 @@
     `;
   }
 
-  // ==================== RIGHT: IMMUTABLE RX HISTORY (B-08) ====================
   function renderHistoryPanel() {
     const c = getCustomer();
     const panel = document.getElementById('historyPanel');
+    const activeCount = c.history.filter((h) => h.status !== 'SUPERSEDED').length;
     panel.innerHTML = `
       <div class="block-head">
         <div>
-          <h3 class="block-title">Lịch sử Toa kính bất biến (${c.history.length} bản)</h3>
-          <div class="muted-xs">Toa đã cắt kính bị khóa — sửa đổi phải tạo phiên bản mới kèm lý do.</div>
+          <h3 class="block-title" aria-live="polite">Lịch sử Toa kính bất biến (${c.history.length} bản · ${activeCount} còn hiệu lực)</h3>
+          <div class="muted-xs">Toa đã ký bị khóa — sửa đổi phải tạo phiên bản mới kèm lý do. Toa chỉ chuyển “Đã thay thế” khi bản mới được ký.</div>
         </div>
       </div>
       ${c.history.map((h) => {
         const odSe = calcSE(toMinusCyl(h.od, h.cylConvention));
         const osSe = calcSE(toMinusCyl(h.os, h.cylConvention));
         const st = STATUS_META[h.status] || STATUS_META.SIGNED;
+        const isOpen = h.id === form.currentRxId;
         return `
           <div class="hist-card ${h.status === 'SUPERSEDED' ? 'superseded' : ''}">
             <div class="hist-head">
@@ -906,13 +1199,17 @@
               </div>
               <span class="badge ${st.cls}">${esc(st.label)}</span>
             </div>
-            <div class="hist-rx-line"><strong>OD:</strong> ${fmtD(h.od.sph)} / ${fmtD(h.od.cyl)} × ${h.od.axis || '—'}° ${h.od.add ? '· ADD +' + h.od.add.toFixed(2) : ''} (SE ${fmtD(odSe)})</div>
-            <div class="hist-rx-line"><strong>OS:</strong> ${fmtD(h.os.sph)} / ${fmtD(h.os.cyl)} × ${h.os.axis || '—'}° ${h.os.add ? '· ADD +' + h.os.add.toFixed(2) : ''} (SE ${fmtD(osSe)})</div>
+            <div class="hist-rx-line"><strong>OD:</strong> ${fmtD(h.od.sph)} / ${fmtD(h.od.cyl)} × ${h.od.axis || '—'}° ${h.od.add ? '· ADD +' + Number(h.od.add).toFixed(2) : ''} (SE ${fmtD(odSe)})</div>
+            <div class="hist-rx-line"><strong>OS:</strong> ${fmtD(h.os.sph)} / ${fmtD(h.os.cyl)} × ${h.os.axis || '—'}° ${h.os.add ? '· ADD +' + Number(h.os.add).toFixed(2) : ''} (SE ${fmtD(osSe)})</div>
             <div class="muted-xs" style="margin-top:6px">Người ký: ${esc(h.signer)} · Hạn toa: <span class="mono">${esc(h.expiresAt)}</span></div>
+            ${h.revisionOf ? `<div class="muted-xs" style="margin-top:3px">Sửa đổi từ ${esc(h.revisionOf)}</div>` : ''}
             ${h.revisionReason ? `<div class="muted-xs" style="color:#B45309;margin-top:3px">Lý do sửa đổi: ${esc(h.revisionReason)}</div>` : ''}
             ${h.status !== 'SUPERSEDED' ? `
               <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
-                <button type="button" class="btn btn-secondary btn-sm" data-revise="${esc(h.id)}">Tạo phiên bản sửa đổi</button>
+                ${h.status === 'DRAFT'
+                  ? (isOpen ? '<span class="muted-xs">Đang mở trong biểu mẫu</span>' : `<button type="button" class="btn btn-secondary btn-sm" data-open-draft="${esc(h.id)}">Mở nháp</button>`)
+                  : `<button type="button" class="btn btn-secondary btn-sm" data-revise="${esc(h.id)}">Tạo phiên bản sửa đổi</button>`}
+                ${h.status === 'SIGNED' ? `<button type="button" class="btn btn-secondary btn-sm" data-send-lab="${esc(h.id)}">Gửi Lab (Khóa)</button>` : ''}
               </div>
             ` : ''}
           </div>
@@ -920,30 +1217,152 @@
       }).join('')}
     `;
 
+    // C-04: bắt buộc nhập lý do sửa đổi trước khi nạp toa vào biểu mẫu
     panel.querySelectorAll('[data-revise]').forEach((btn) => {
       btn.onclick = () => {
         const target = c.history.find((h) => h.id === btn.dataset.revise);
         if (!target) return;
-        form.od.sph = target.od.sph; form.od.cyl = target.od.cyl; form.od.axis = target.od.axis; form.od.add = target.od.add || 0;
-        form.os.sph = target.os.sph; form.os.cyl = target.os.cyl; form.os.axis = target.os.axis; form.os.add = target.os.add || 0;
-        form.cylConvention = target.cylConvention || 'MINUS';
-        form.revisionOf = target.id;
-        form.revisionReason = '';
-        form.status = 'SIGNED';
+        openConfirm({
+          title: `Tạo phiên bản sửa đổi từ ${target.id}`,
+          confirmLabel: 'Tạo phiên bản sửa đổi',
+          bodyHtml: `<p style="margin:0 0 8px">Toa gốc <strong class="mono">${esc(target.id)}</strong> được giữ nguyên bất biến. Bản sao đầy đủ sẽ mở ở trạng thái Nháp; toa gốc chỉ chuyển “Đã thay thế” khi bản mới được ký.</p>`,
+          reasonLabel: `Lý do sửa đổi từ ${target.id} *`,
+          reasonPlaceholder: 'VD: Khách chưa thích nghi độ loạn, giảm 0.25 D theo phản hồi...',
+          onConfirm: (reason) => loadRevision(target, reason)
+        });
+      };
+    });
+
+    panel.querySelectorAll('[data-open-draft]').forEach((btn) => {
+      btn.onclick = () => {
+        const target = c.history.find((h) => h.id === btn.dataset.openDraft);
+        if (!target || !target.data) return;
+        form = deepClone(target.data);
+        form.currentRxId = target.id;
+        formError = '';
+        fieldErrors = {};
         renderExamForm();
-        showToast(`Đã nạp ${target.id} vào biểu mẫu để tạo phiên bản sửa đổi (toa gốc giữ nguyên bất biến).`);
+        renderHistoryPanel();
+        showToast(`Đã mở nháp ${target.id}.`);
+      };
+    });
+
+    // B-06: trạng thái chỉ đổi qua hành động có tên
+    panel.querySelectorAll('[data-send-lab]').forEach((btn) => {
+      btn.onclick = () => {
+        const target = c.history.find((h) => h.id === btn.dataset.sendLab);
+        if (!target) return;
+        openConfirm({
+          title: `Gửi ${target.id} sang Lab cắt kính`,
+          confirmLabel: 'Gửi Lab & Khóa',
+          bodyHtml: `<p style="margin:0">Toa <strong class="mono">${esc(target.id)}</strong> sẽ chuyển sang “Đã dùng cắt kính (Khóa)”. Sau đó không thể sửa trực tiếp, chỉ tạo phiên bản sửa đổi kèm lý do.</p>`,
+          onConfirm: () => {
+            target.status = 'LOCKED_FOR_LAB';
+            if (target.data) target.data.status = 'LOCKED_FOR_LAB';
+            if (form.currentRxId === target.id) form.status = 'LOCKED_FOR_LAB';
+            renderAll();
+            showToast(`Đã gửi ${target.id} sang Lab — toa đã khóa.`);
+          }
+        });
       };
     });
   }
 
-  // ==================== PRINT MODAL (B-03 DISCLAIMER) ====================
+  // B-07: nhân bản toàn bộ toa gốc
+  function formFromRx(h) {
+    if (h.data) return deepClone(h.data);
+    const cus = getCustomer();
+    const base = deepClone(cus.defaultForm);
+    base.source = h.source || base.source;
+    base.cylConvention = h.cylConvention || 'MINUS';
+    base.purpose = h.purpose || base.purpose;
+    base.pdOd = h.pdOd;
+    base.pdOs = h.pdOs;
+    base.referralFlag = Boolean(h.referralFlag);
+    base.referralReason = h.referralFlag ? base.referralReason : '';
+    const fromScale = base.vaScale;
+    const toScale = h.vaScale || fromScale;
+    ['od', 'os'].forEach((k) => {
+      base[k] = Object.assign({}, base[k], h[k]);
+      if (!base[k].base) base[k].base = 'BI';
+      ['ucva', 'bcva', 'ph'].forEach((f) => { base[k][f] = convertVa(base[k][f], fromScale, toScale); });
+    });
+    base.vaScale = toScale;
+    base.binocularVa = h.binocularVa || convertVa(base.binocularVa, fromScale, toScale);
+    base.legacyNote = true;
+    if ((Number(base.od.prism) > 0 || Number(base.os.prism) > 0) && h.source !== 'EXTERNAL_RX') base.prismJustification = '';
+    return base;
+  }
+
+  function loadRevision(target, reason) {
+    form = formFromRx(target);
+    form.revisionOf = target.id;
+    form.revisionReason = reason;
+    form.status = 'DRAFT';
+    form.currentRxId = null;
+    formError = '';
+    fieldErrors = {};
+    renderAll();
+    showToast(`Đã nhân bản ${target.id} thành bản sửa đổi (Nháp). Toa gốc vẫn bất biến.`);
+    document.getElementById('examFormPanel').scrollIntoView({ block: 'start' });
+  }
+
+  // ==================== CONFIRM DIALOG (C-03, C-04) ====================
+  let confirmState = null;
+
+  function openConfirm({ title, bodyHtml, acks = [], reasonLabel = '', reasonPlaceholder = '', confirmLabel = 'Xác nhận', onConfirm }) {
+    confirmState = { onConfirm, needAck: acks.length > 0, needReason: Boolean(reasonLabel), opener: document.activeElement };
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmBody').innerHTML = `
+      ${bodyHtml || ''}
+      ${acks.length ? `
+        <div class="callout callout-warn" style="margin-top:8px">
+          <ul style="margin:0 0 6px;padding-left:18px">${acks.map((a) => `<li>${esc(a)}</li>`).join('')}</ul>
+          <label class="check-label" for="confirmAck"><input type="checkbox" id="confirmAck" /><span>Tôi đã kiểm tra các cảnh báo trên và xác nhận ký có chủ đích.</span></label>
+        </div>` : ''}
+      ${reasonLabel ? `
+        <div class="field" style="margin-top:8px">
+          <label for="confirmReason">${esc(reasonLabel)}</label>
+          <textarea id="confirmReason" class="textarea" rows="3" placeholder="${esc(reasonPlaceholder)}"></textarea>
+        </div>` : ''}
+    `;
+    const okBtn = document.getElementById('confirmOkBtn');
+    okBtn.textContent = confirmLabel;
+    const refresh = () => {
+      const ackOk = !confirmState.needAck || document.getElementById('confirmAck').checked;
+      const reasonOk = !confirmState.needReason || document.getElementById('confirmReason').value.trim() !== '';
+      okBtn.disabled = !(ackOk && reasonOk);
+    };
+    const ack = document.getElementById('confirmAck');
+    const reason = document.getElementById('confirmReason');
+    if (ack) ack.onchange = refresh;
+    if (reason) reason.oninput = refresh;
+    refresh();
+    document.getElementById('confirmBackdrop').classList.remove('hidden');
+    document.getElementById('confirmModal').classList.remove('hidden');
+    (reason || ack || okBtn).focus();
+  }
+
+  function closeConfirm() {
+    document.getElementById('confirmBackdrop').classList.add('hidden');
+    document.getElementById('confirmModal').classList.add('hidden');
+    const opener = confirmState && confirmState.opener;
+    confirmState = null;
+    if (opener && document.body.contains(opener)) opener.focus();
+  }
+
+  // ==================== PRINT MODAL (DISCLAIMER + SIGNER + DV/NV) ====================
   function openPrintModal() {
     const c = getCustomer();
-    const signer = CERTIFIED_SIGNERS.find((s) => s.id === form.signerId) || CERTIFIED_SIGNERS[0];
+    const signed = form.status !== 'DRAFT';
     const today = new Date().toISOString().slice(0, 10);
     const expires = addMonths(today, form.validityMonths);
     const odLab = toMinusCyl(form.od, form.cylConvention);
     const osLab = toMinusCyl(form.os, form.cylConvention);
+    const isReading = form.purpose === 'READING';
+    const zoneLabel = isReading ? 'Nhìn gần (kính đọc)' : 'Nhìn xa';
+    const origConv = form.cylConvention === 'PLUS' ? 'Trụ dương (+CYL)' : 'Trụ âm (−CYL)';
+    const showNearRow = !isReading && (form.od.add > 0 || form.os.add > 0);
 
     document.getElementById('printBody').innerHTML = `
       <div class="rx-print-sheet">
@@ -955,6 +1374,7 @@
           <div style="text-align:right">
             <div style="font-weight:700;font-size:14px">PHIẾU KẾT QUẢ ĐO KHÚC XẠ &amp; TOA KÍNH</div>
             <div class="muted-xs mono">Ngày đo: ${today} · Hiệu lực đến: ${expires}</div>
+            ${signed ? '' : '<div class="badge badge-warn" style="margin-top:4px">BẢN NHÁP — CHƯA KÝ</div>'}
           </div>
         </div>
 
@@ -971,24 +1391,24 @@
           </thead>
           <tbody>
             <tr>
-              <td><strong>Nhìn xa — OD</strong></td>
+              <td><strong>${zoneLabel} — OD</strong></td>
               <td class="mono">${fmtD(odLab.sph)}</td>
               <td class="mono">${fmtD(odLab.cyl)}</td>
               <td class="mono">${odLab.axis || '—'}°</td>
-              <td class="mono">${form.od.add ? '+' + form.od.add.toFixed(2) : '—'}</td>
+              <td class="mono">${!isReading && form.od.add ? '+' + Number(form.od.add).toFixed(2) : '—'}</td>
               <td class="mono">${form.od.prism ? form.od.prism + 'Δ ' + form.od.base : '—'}</td>
               <td class="mono">${esc(form.od.bcva)}</td>
             </tr>
             <tr>
-              <td><strong>Nhìn xa — OS</strong></td>
+              <td><strong>${zoneLabel} — OS</strong></td>
               <td class="mono">${fmtD(osLab.sph)}</td>
               <td class="mono">${fmtD(osLab.cyl)}</td>
               <td class="mono">${osLab.axis || '—'}°</td>
-              <td class="mono">${form.os.add ? '+' + form.os.add.toFixed(2) : '—'}</td>
+              <td class="mono">${!isReading && form.os.add ? '+' + Number(form.os.add).toFixed(2) : '—'}</td>
               <td class="mono">${form.os.prism ? form.os.prism + 'Δ ' + form.os.base : '—'}</td>
               <td class="mono">${esc(form.os.bcva)}</td>
             </tr>
-            ${(form.od.add > 0 || form.os.add > 0) ? `
+            ${showNearRow ? `
               <tr>
                 <td><strong>Nhìn gần — OD / OS</strong></td>
                 <td class="mono" colspan="6">OD: ${fmtD(roundQuarter(odLab.sph + form.od.add))} / ${fmtD(odLab.cyl)} × ${odLab.axis || '—'}° &nbsp;|&nbsp; OS: ${fmtD(roundQuarter(osLab.sph + form.os.add))} / ${fmtD(osLab.cyl)} × ${osLab.axis || '—'}°</td>
@@ -996,6 +1416,11 @@
             ` : ''}
           </tbody>
         </table>
+
+        <div class="muted-xs" style="margin-bottom:10px">
+          <strong>Quy ước dấu trụ:</strong> toa gốc ghi theo ${origConv}; bản in quy về <strong>Trụ âm (−CYL)</strong> để cắt kính${form.cylConvention === 'PLUS' ? ' — <strong>đã quy đổi từ toa gốc +CYL</strong>' : ' — không cần quy đổi'}.
+          ${form.cylConvention === 'PLUS' ? `<div class="mono" style="margin-top:3px">Toa gốc (+CYL): OD ${fmtD(form.od.sph)} / ${fmtD(form.od.cyl)} × ${form.od.axis || '—'}° &nbsp;|&nbsp; OS ${fmtD(form.os.sph)} / ${fmtD(form.os.cyl)} × ${form.os.axis || '—'}°</div>` : ''}
+        </div>
 
         ${form.referralFlag ? `
           <div class="callout callout-err" style="margin-bottom:10px">
@@ -1007,8 +1432,10 @@
           <div class="muted-xs">Thị lực hai mắt (OU): <strong class="mono">${esc(form.binocularVa)}</strong></div>
           <div style="text-align:center">
             <div style="font-size:12.5px;font-weight:700">Người thực hiện &amp; Ký tên</div>
-            <div style="margin-top:26px;font-weight:700">${esc(signer.name)}</div>
-            <div class="muted-xs mono">${esc(signer.license)}</div>
+            ${signed ? `
+              <div style="margin-top:26px;font-weight:700">${esc(CURRENT_USER.name)}</div>
+              <div class="muted-xs mono">${esc(CURRENT_USER.license)}</div>
+            ` : '<div style="margin-top:26px;font-weight:700">(Chưa ký)</div>'}
           </div>
         </div>
 
@@ -1095,7 +1522,31 @@
     } else if (e.key === 'Escape') {
       closeCmdk();
       closePrintModal();
+      if (confirmState) closeConfirm();
       closeMobileSidebar();
+    }
+  });
+
+  document.getElementById('confirmCancelBtn').onclick = closeConfirm;
+  document.getElementById('confirmBackdrop').onclick = closeConfirm;
+  document.getElementById('confirmOkBtn').onclick = () => {
+    if (!confirmState) return;
+    const reasonEl = document.getElementById('confirmReason');
+    const fn = confirmState.onConfirm;
+    const reason = reasonEl ? reasonEl.value.trim() : '';
+    closeConfirm();
+    if (fn) fn(reason);
+  };
+
+  // Lỗi nhập liệu (khoảng/định dạng) tự xoá khi người dùng thao tác tiếp
+  const formPanelEl = document.getElementById('examFormPanel');
+  formPanelEl.addEventListener('change', () => { fieldErrors = {}; }, true);
+  document.addEventListener('click', (e) => {
+    const menu = document.getElementById('moreMenu');
+    if (menu && !menu.classList.contains('hidden') && !e.target.closest('.more-wrap')) {
+      menu.classList.add('hidden');
+      const b = document.getElementById('moreBtn');
+      if (b) b.setAttribute('aria-expanded', 'false');
     }
   });
 

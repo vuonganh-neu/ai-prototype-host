@@ -144,6 +144,19 @@
     <div class="modal-body" id="printBody"></div>
   </div>
 
+  <!-- Confirm Dialog (ký toa / sửa đổi / gửi Lab) -->
+  <div id="confirmBackdrop" class="backdrop hidden no-print" aria-hidden="true"></div>
+  <div id="confirmModal" class="print-modal confirm-modal hidden no-print" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="modal-head">
+      <h2 id="confirmTitle" style="margin:0;font-size:16px"></h2>
+    </div>
+    <div class="modal-body" id="confirmBody"></div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-secondary" id="confirmCancelBtn">Huỷ</button>
+      <button type="button" class="btn btn-primary" id="confirmOkBtn">Xác nhận</button>
+    </div>
+  </div>
+
   <!-- Quick Search Modal (⌘K — Baseline Shell Control C-03) -->
   <div id="cmdkBackdrop" class="backdrop hidden no-print" aria-hidden="true"></div>
   <div id="cmdkModal" class="cmdk-modal hidden no-print" role="dialog" aria-modal="true" aria-label="Tra cứu nhanh hồ sơ khách hàng">
