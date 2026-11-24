@@ -29,6 +29,8 @@ Tầng 1 rẻ, chạy mọi version. Tầng 2 tốn thời gian (tra cứu web),
 Tầng 3 luôn là người cuối — AI không thay được.
 **Version có hai trạng thái: Nháp (chưa tới tay người — sửa tại chỗ theo finding, §9) và Đã khóa (bất biến — mọi thay đổi là version mới).**
 
+> Guide demo (skill `guide-demo`) là lớp tùy chọn nằm ngoài thư mục version: **không** là điều kiện của review/seal/promote và không làm version đã khóa thay đổi.
+
 ## 2. Luật Độc lập (không thương lượng)
 1. **Ngữ cảnh mới tinh**: reviewer chạy trong chat/subagent mới, KHÔNG chia sẻ lịch sử với agent đã vẽ mockup. Khuyến nghị **model khác** với model đã thiết kế.
 2. **Chỉ đọc**: reviewer không sửa `prototypes/**`. Chỉ ghi file báo cáo. Nếu runtime chặn ghi file → in nguyên văn báo cáo bắt đầu bằng `VERDICT:` và nêu đường dẫn đích để phiên điều phối lưu y nguyên, không tóm tắt.

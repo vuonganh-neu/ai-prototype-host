@@ -1,0 +1,4 @@
+{
+  "_ghi_chu": "Bảng TÊN LOGIC → selector CSS trong mockup. Kịch bản chỉ dùng tên logic; mockup đổi thì chỉ sửa file này. Tên không có trong bảng sẽ thử [data-testid=\"<tên>\"]. Đây là selector nội bộ của guide, KHÔNG phải hợp đồng test E2E.",
+  "ví dụ.nút_lưu": "#saveBtn"
+}

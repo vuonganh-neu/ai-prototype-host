@@ -1,0 +1,8 @@
+{
+  "title": "{{TITLE}}",
+  "app": "../../{{VERSION}}/index.html",
+  "defaultMode": "simple",
+  "resetStorage": [],
+  "stamp": { "project": "{{PROJECT}}", "feature": "{{FEATURE}}", "version": "{{VERSION}}", "rev": 0, "date": "{{DATE}}", "baseHash": "" },
+  "_ghi_chu": "app: đường dẫn tới mockup (proto promote tự đổi thành ../index.html). resetStorage: các TIỀN TỐ khoá localStorage mà mockup lưu trạng thái (để ↺ đưa về trạng thái đầu; để [] nếu mockup không lưu). stamp: do `proto guide stamp` ghi — đừng sửa tay."
+}

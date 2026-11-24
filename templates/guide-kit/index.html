@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hướng dẫn thao tác</title>
+  <link rel="stylesheet" href="./engine/guide.css" />
+</head>
+<body>
+  <div id="gd-app" class="gd-simple">
+    <header id="gd-head">
+      <h1><span id="gd-title">Hướng dẫn thao tác</span><br />
+        <small>Tài liệu tham khảo trên bản thiết kế mẫu — giao diện thật có thể khác đôi chút. <span id="gd-stamp"></span></small></h1>
+      <button id="gd-mode" type="button">⚙ Chế độ kỹ thuật</button>
+    </header>
+    <main id="gd-stage"><iframe id="gd-frame" title="Bản thiết kế mẫu đang được hướng dẫn"></iframe></main>
+    <section id="gd-cap" aria-live="polite"><small id="gd-cap-meta"></small><p id="gd-cap-text">Đang tải…</p></section>
+    <aside id="gd-panel" aria-label="Điều khiển hướng dẫn"></aside>
+  </div>
+  <script src="./engine/scenario.js"></script>
+  <script src="./engine/guide.js"></script>
+  <script>Guide.start();</script>
+</body>
+</html>
