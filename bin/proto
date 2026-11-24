@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 proto — CLI quản lý vòng đời Mockup & Prototype tập trung
-Vị trí: /Users/vuonganhvu/Desktop/workspace/mockup/bin/proto
+Vị trí: <kho mockup>/bin/proto (gọi qua ~/.config/mockup/root/bin/proto)
 """
 
 from __future__ import annotations
@@ -350,14 +350,14 @@ def update_project_mockups_readme(mockups_root: Path, proj_slug: str, base_url: 
                     approved_ver = line.split("`")[1]
                 elif "Đối tượng sử dụng" in line and "`" in line:
                     persona = line.split("`")[1]
-        hub_link = f"[So sánh các bản nháp]({base_url}/viewer.html?project={proj_slug}&feature={d.name})" if base_url else "Trong kho `/Users/vuonganhvu/Desktop/workspace/mockup`"
+        hub_link = f"[So sánh các bản nháp]({base_url}/viewer.html?project={proj_slug}&feature={d.name})" if base_url else "Trong kho mockup"
         rows.append(f"| `{d.name}` | `{persona}` | `{approved_ver}` | [index.html](./{d.name}/index.html) · [SPEC-NOTES.md](./{d.name}/SPEC-NOTES.md) | {hub_link} |")
 
     table_body = "\n".join(rows) if rows else "| *(Chưa có mockup nào được chốt)* | - | - | - | - |"
     readme_content = f"""# Danh mục Mockup Đã Chốt — `{proj_slug}`
 
 > Thư mục này **chỉ lưu trữ các phiên bản thiết kế đã được duyệt (Approved)** để làm căn cứ triển khai code thực tế.
-> Toàn bộ các phương án thử nghiệm (`v1`, `v2`, `v3`...) được lưu trữ tách biệt tại kho `/Users/vuonganhvu/Desktop/workspace/mockup`.
+> Toàn bộ các phương án thử nghiệm (`v1`, `v2`, `v3`...) được lưu trữ tách biệt tại kho mockup (`~/.config/mockup/root`).
 
 - **Định hướng thiết kế dự án**: Xem [DESIGN-CONTEXT.md](./DESIGN-CONTEXT.md)
 
@@ -965,9 +965,9 @@ def thin_review_skill(name: str) -> str:
     front = m.group(1) if m else f"---\nname: {name}\ndescription: Review mockup độc lập\n---\n"
     return (
         f"{front}\n# {name} (Thin Entrypoint)\n\n"
-        f"Đọc ngay và làm theo toàn bộ: `{STABLE_ROOT_DISPLAY}/skill/{name}/SKILL.md` "
-        f"(kèm `{STABLE_ROOT_DISPLAY}/skill/REVIEW.md`). Nếu đường dẫn không tồn tại: chạy "
-        f"`{ROOT_DIR}/bin/proto init-project <dự-án>` một lần để tạo symlink.\n"
+        f"Đọc và làm theo đúng một file: `{STABLE_ROOT_DISPLAY}/skill/{name}/SKILL.md` "
+        f"(file đó tự dẫn tới phần còn lại — không đọc thêm từ đây). Chưa có đường dẫn: chạy "
+        f"`<kho-mockup>/bin/proto init-project <dự-án>` một lần để tạo symlink.\n"
     )
 
 
@@ -1156,7 +1156,7 @@ def review_prompt(tier: str, proj: str, feat: str, ver: str, packet: Path, out: 
     skill = "ui-ux-review" if tier == "core" else "business-review"
     return (
         f"Bạn là REVIEWER ĐỘC LẬP (phiên mới, không liên quan người đã vẽ mockup). Chỉ đọc, không sửa `prototypes/**`.\n"
-        f"Làm theo skill `{skill}`: {STABLE_ROOT_DISPLAY}/skill/{skill}/SKILL.md (và {STABLE_ROOT_DISPLAY}/skill/REVIEW.md).\n"
+        f"Làm theo skill `{skill}`: {STABLE_ROOT_DISPLAY}/skill/{skill}/SKILL.md (skill tự dẫn tới phần còn lại).\n"
         f"Mục tiêu: {proj}/{feat}/{ver}. Đọc packet: {packet}\n"
         f"Ghi báo cáo vào: {out} — dòng đầu tiên là `VERDICT: …`; mỗi finding đúng một dòng `- [SEVERITY] ID `vị trí` — …`."
     )
@@ -1203,6 +1203,24 @@ def cmd_review_prep(args: argparse.Namespace) -> None:
         nb = brief_path_for(proj, feat, prev)
         prev_lines.append(f"- Brief bản trước ({prev}): {nb}" + ("" if nb.is_file() else " — ⚠️ CHƯA CÓ"))
 
+    baselines = []
+    if meta.get("approved_version") and meta.get("approved_version") != ver:
+        baselines.append(f"{feat}/{meta['approved_version']} (bản chốt của chính màn hình này)")
+    elif prev:
+        baselines.append(f"{feat}/{prev} (phiên bản liền trước)")
+    else:
+        for other in sorted((PROTOTYPES_DIR / proj).iterdir()) if (PROTOTYPES_DIR / proj).is_dir() else []:
+            om = other / "meta.json"
+            if other.name != feat and om.is_file():
+                try:
+                    av = json.loads(om.read_text(encoding="utf-8")).get("approved_version")
+                except Exception:
+                    av = ""
+                if av:
+                    baselines.append(f"{other.name}/{av} (bản chốt của màn hình khác trong dự án)")
+    baseline_md = "\n".join(f"- `{PROTOTYPES_DIR / proj / b.split(' ')[0]}/index.html` — {b}" for b in baselines) \
+        or "- (chưa có bản chốt/bản trước để đối chiếu — ghi rõ trong báo cáo)"
+
     rounds = {t: (round_files(rdir, t)[-1][0] + 1 if round_files(rdir, t) else 1) for t in tiers}
     lint_md = "\n".join(f"- `{i['sev']}` {i['file']}{':' + str(i['line']) if i['line'] else ''} — {i['msg']}" for i in lint) or "- (không phát hiện gì)"
     counts = {k: sum(1 for i in lint if i["sev"] == k) for k in ("MAJOR", "WARN", "INFO")}
@@ -1229,6 +1247,10 @@ def cmd_review_prep(args: argparse.Namespace) -> None:
 
 ## Đọc theo thứ tự (ưu tiên khi mâu thuẫn: dự án > persona > domain > core)
 {chr(10).join(read_list)}
+
+## Baseline khung điều hướng (Shell Continuity — Tầng 1 bắt buộc đối chiếu)
+> Tên menu, icon, thứ tự, layout shell phải giữ nguyên so với baseline, trừ khi brief/người dùng cho phép đổi.
+{baseline_md}
 
 ## Từ vòng trước
 {chr(10).join(prev_lines) if prev_lines else '- (đây là version đầu tiên của màn hình)'}
@@ -1411,7 +1433,7 @@ def main() -> None:
     p_promote.set_defaults(func=cmd_promote)
 
     p_init_proj = sub.add_parser("init-project", help="Khởi tạo DESIGN-CONTEXT.md và README.md trong dự án")
-    p_init_proj.add_argument("project_path", help="Đường dẫn tới dự án (vd: /Users/vuonganhvu/Desktop/workspace/editor-platform)")
+    p_init_proj.add_argument("project_path", help="Đường dẫn tới dự án (vd: ../my-project)")
     p_init_proj.add_argument("--slug", help="Slug dự án")
     p_init_proj.add_argument("--domain", help="Mã lĩnh vực mặc định (vd: 04-creative-editor)")
     p_init_proj.add_argument("--force", action="store_true", help="Ghi đè DESIGN-CONTEXT.md nếu đã có")

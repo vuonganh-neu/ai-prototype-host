@@ -7,7 +7,7 @@ Kho lưu trữ tập trung, quản lý lịch sử phiên bản bất biến (`v
 ## 1. Cấu trúc Thư mục
 
 ```text
-/Users/vuonganhvu/Desktop/workspace/mockup/
+mockup/
 ├── index.html                      # Trang chủ Gallery (lọc theo dự án, domain, persona)
 ├── viewer.html                     # Khung Review & So sánh phiên bản (A|B split, responsive)
 ├── prototypes.json                 # Manifest tự động sinh bởi ./bin/proto build
@@ -34,8 +34,7 @@ Kho lưu trữ tập trung, quản lý lịch sử phiên bản bất biến (`v
 ├── templates/                      # Template sinh tự động
 │   ├── DESIGN-CONTEXT.template.md · SPEC-NOTES.template.md
 │   ├── BUSINESS-REVIEW.template.md # gói nghiệp vụ — chép vào REPO DỰ ÁN
-│   ├── REVIEW-CORE.template.md · REVIEW-BUSINESS.template.md · NEXT-BRIEF.template.md
-│   └── examples/                   # ví dụ điền mẫu (nhãn khoa)
+│   └── REVIEW-CORE.template.md · REVIEW-BUSINESS.template.md · NEXT-BRIEF.template.md
 ├── briefs/<project>/<feature>/<version>.md   # brief cho version kế tiếp (commit, đã lược dữ liệu nhạy cảm)
 ├── .ops/reviews/<project>/<feature>/<version>/  # kết quả review — KHÔNG commit (.gitignore)
 └── prototypes/                     # Nơi chứa toàn bộ các phiên bản prototype theo dự án
@@ -82,7 +81,7 @@ Kho lưu trữ tập trung, quản lý lịch sử phiên bản bất biến (`v
 
 1. **Khởi tạo / nối dự án với kho mockup** (idempotent — tạo DESIGN-CONTEXT nếu thiếu, chèn khối "Thiết kế UI/UX" vào `AGENTS.md` + `CLAUDE.md`, symlink `~/.config/mockup/root`):
    ```bash
-   ./bin/proto init-project /Users/vuonganhvu/Desktop/workspace/editor-platform --domain 04-creative-editor
+   ./bin/proto init-project <đường-dẫn-dự-án> --domain 04-creative-editor
    ```
 2. **Tạo một phiên bản prototype mới (chặn ghi đè bản cũ)**:
    ```bash
@@ -102,7 +101,7 @@ Kho lưu trữ tập trung, quản lý lịch sử phiên bản bất biến (`v
 4. **Chốt phiên bản ưng ý và chép sạch sẽ về thư mục dự án**:
    ```bash
    ./bin/proto promote editor-platform 01-canvas-toolbar v2-docked \
-     --to /Users/vuonganhvu/Desktop/workspace/editor-platform \
+     --to <đường-dẫn-dự-án> \
      --notes "Chốt bản v2 vì tối ưu diện tích dọc trên màn hình MacBook 14 inch"
    ```
 5. **Tích luỹ bài học UI/UX mới** — mỗi bài học ghi vào **đúng MỘT nơi**, mặc định là dự án:

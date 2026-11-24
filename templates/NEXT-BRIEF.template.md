@@ -8,6 +8,7 @@
 - **Mục tiêu version tới** *(1–2 câu: thay đổi lớn nhất cần đạt)*: <điền>
 
 ## 1. Giữ nguyên (đã tốt / đã chốt — không được phá khi sửa)
+- **Khung điều hướng** (tên menu, icon, thứ tự, layout shell) lấy nguyên từ bản chốt gần nhất — chỉ đổi khi có yêu cầu rõ ràng ở mục 3.
 - <điền từ "Đã kiểm & sạch" của các báo cáo + điều người dùng khen>
 
 ## 2. Việc cần làm — từ review AI (Tầng 1 + Tầng 2)

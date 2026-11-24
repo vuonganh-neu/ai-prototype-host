@@ -13,7 +13,7 @@ description: >-
 
 ## 0. Điều kiện chạy
 - Phiên mới, không dính lịch sử người vẽ; chỉ đọc `prototypes/**` và repo dự án; chỉ ghi `business-rN.md` vào `.ops/reviews/…` (không commit). **Không sửa** `BUSINESS-REVIEW.md` — chỉ đề xuất trong báo cáo, người dùng duyệt rồi ghi.
-- Dự án chưa có `BUSINESS-REVIEW.md` → dừng, báo người dùng: tạo từ [mẫu](../../templates/BUSINESS-REVIEW.template.md) (hoặc `proto init-project` đã tạo sẵn khung) và điền ít nhất mục 1–3. Ví dụ đã điền cho nhãn khoa: [templates/examples/BUSINESS-REVIEW.optical.example.md](../../templates/examples/BUSINESS-REVIEW.optical.example.md).
+- Dự án chưa có `BUSINESS-REVIEW.md` → dừng, báo người dùng: tạo từ [mẫu](../../templates/BUSINESS-REVIEW.template.md) (hoặc `proto init-project` đã tạo sẵn khung) và điền ít nhất mục 1–3.
 
 ## 1. Chuẩn bị
 ```bash

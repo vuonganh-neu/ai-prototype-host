@@ -4,10 +4,15 @@
 > ⚠️ File này được commit cùng kho mockup (có thể công khai): chỉ ghi *yêu cầu thiết kế*, **không** chép giá vốn/dữ liệu khách/quy tắc nghiệp vụ độc quyền hay trích dẫn nguồn dài. Chi tiết xem báo cáo ở `.ops/reviews/optic-shop/02-clinical-exam-rx/v1-clinical-refraction/` (không commit).
 > Quyết định: `Adopt` (làm ở version tới) · `Defer` (để sau, ghi lý do) · `Reject` (không làm, ghi lý do). Không để trống mục BLOCKER/MAJOR.
 
-- **Sinh lúc**: 2026-11-24 · **Nguồn**: business-r1 (BLOCKER), human.md
-- **Mục tiêu version tới** *(1–2 câu: thay đổi lớn nhất cần đạt)*: v2 của màn Đo mắt & Toa kính đạt “phiếu khám khúc xạ” an toàn cho demo cửa hàng: chuyển dạng trụ, tách nhìn xa/nhìn gần, SE + phân loại, thang thị lực đầy đủ, vòng đời toa bất biến, người ký + disclaimer + cờ chuyển tuyến, thông số lắp đa tròng — rồi mới viết phase doc/migration (lô P01D-1).
+- **Sinh lúc**: 2026-11-24 · **Nguồn**: core-r1 (CHANGES_REQUESTED), business-r1 (BLOCKER), human.md
+- **Mục tiêu version tới** *(1–2 câu: thay đổi lớn nhất cần đạt)*: **Giữ nguyên khung điều hướng của bản chốt (tên menu, icon, layout shell; chỉ được thu gọn danh sách) và chỉ thay phần nội dung bên trong.** v2 của màn Đo mắt & Toa kính đạt “phiếu khám khúc xạ” an toàn cho demo cửa hàng: chuyển dạng trụ, tách nhìn xa/nhìn gần, SE + phân loại, thang thị lực đầy đủ, vòng đời toa bất biến, người ký + disclaimer + cờ chuyển tuyến, thông số lắp đa tròng; sửa tràn ngang và điều hướng ở màn hẹp — rồi mới viết phase doc/migration (lô P01D-1).
 
 ## 1. Giữ nguyên (đã tốt / đã chốt — không được phá khi sửa)
+- **Khung điều hướng** (tên menu, icon, thứ tự, layout shell) lấy nguyên từ bản chốt gần nhất — chỉ đổi khi có yêu cầu rõ ràng ở mục 3.
+- Có `lang="vi"`, `<title>`, `viewport`; không có màu tím/indigo mặc định; không có nội dung giả (lorem/“Item 1”).
+- Dữ liệu mẫu thực tế (khách Nguyễn Minh Anh 27 tuổi, độ cận/loạn, ngày theo định dạng VN).
+- Split-view lịch sử + biểu đồ diễn tiến đúng `PRJ-002`; 3 tab ca bệnh để thử các trạng thái khác nhau.
+- Bảng token CSS trong `:root` đầy đủ; có toast phản hồi sau thao tác.
 - Bước nhảy 0.25 D cho SPH/CYL/ADD và hỗ trợ cả dương (viễn) lẫn âm (cận); `roundQuarter()` + stepper ±0.25.
 - Trục AXIS 1°–180°, chỉ mở khi có CYL, xoá khi CYL = 0 (đúng chuẩn TABO).
 - PRISM + BASE 4 hướng đáy BI/BO/BU/BD.
@@ -22,6 +27,16 @@
 ## 2. Việc cần làm — từ review AI (Tầng 1 + Tầng 2)
 | ID | Mức | Nguồn | Nội dung | Quyết định | Lý do (nếu Defer/Reject) |
 | :-: | :-: | :-: | :--- | :-: | :--- |
+| C-01 | MAJOR | T1 | `Khung › tên menu, nhóm, thương hiệu phụ, footer` — Vấn đề: shell drift — “Đo mắt & Toa kính” → “Phòng Đo mắt & Toa kính”, “Khách hàng” → “Hồ sơ Khách hàng”, nhóm “Chuyên môn Khúc xạ” thay nhóm gốc, brand-sub và footer đổi; phase chỉ thiết kế nội dung nên thay đổi này dễ bị áp vào bản triển khai dù không ai chủ ý. Căn cứ: CORE-004, DESIGN-CONTEXT (khung đã chốt ở bản chốt v4). Hướng sửa: dùng lại đúng tên/nhóm/brand/footer của baseline, chỉ thu gọn danh sách. | Adopt | Ưu tiên cao: yêu cầu trực tiếp của người dùng (giữ nguyên khung điều hướng) |
+| C-02 | MAJOR | T1 | `Khung › icon “Tổng quan”` — Vấn đề: shell drift — icon ngôi nhà của baseline bị thay bằng lưới ô vuông. Căn cứ: CORE-004. Hướng sửa: dùng lại icon baseline. | Adopt | Ưu tiên cao: yêu cầu trực tiếp của người dùng (giữ nguyên khung điều hướng) |
+| C-03 | MAJOR | T1 | `Khung › điều khiển shell` — Vấn đề: mất nút thu gọn sidebar, ô tìm nhanh ⌘K và nút menu mobile; breadcrumb đổi dạng. Căn cứ: CORE-004. Hướng sửa: giữ nguyên các điều khiển của shell baseline. | Adopt | Ưu tiên cao: yêu cầu trực tiếp của người dùng (giữ nguyên khung điều hướng) |
+| C-04 | MAJOR | T1 | `Toàn trang › ≤ 820 px` — Vấn đề: `.sidebar {display:none}` mà không có nút mở menu, người dùng tablet/mobile không chuyển được màn hình. Căn cứ: core §2.5, Nielsen #3 (kiểm soát). Hướng sửa: nút menu mở sidebar dạng drawer như baseline. | Adopt | Làm cùng v2 |
+| C-05 | MAJOR | T1 | `Toàn trang › bố cục ngang` — Vấn đề: scrollWidth 1505 px ở viewport 1440 và 885 px ở 768/390; bảng toa, nút “Lưu phiếu” và biểu đồ bị cắt phải. Căn cứ: core §2.5. Hướng sửa: cho bảng toa cuộn trong khung hoặc co cột; không để trang tràn ngang. | Adopt | Làm cùng v2 |
+| C-06 | MAJOR | T1 | `Phiếu đo › ô nhập` — Vấn đề: 26/28 ô `input/select` không có label/aria-label, trình đọc màn hình và bàn phím không biết ô nào là SPH/CYL/AXIS của mắt nào. Căn cứ: WCAG 1.3.1, 4.1.2. Hướng sửa: gắn `aria-label` “SPH mắt phải”… hoặc `<label for>`. | Adopt | Làm cùng v2 |
+| C-07 | MAJOR | T1 | `Toàn trang › focus bàn phím` — Vấn đề: CSS chỉ có một khai báo `:focus`; đo focus lập trình trên 40/40 điều khiển không thấy outline/box-shadow; lint báo tắt outline mà không có `:focus-visible`. Căn cứ: WCAG 2.4.7 [tĩnh + đo]. Hướng sửa: thêm `:focus-visible` rõ ràng cho input/button. | Adopt | Làm cùng v2 |
+| C-08 | NIT | T1 | `Toàn trang › cỡ chữ` — Vấn đề: 32 phần tử chữ 10.5–11.5 px (nhãn nhóm, ghi chú OD/OS, nhãn đơn vị) khó đọc trên dữ liệu lâm sàng. Căn cứ: lint T0. Hướng sửa: tối thiểu 12 px. | Adopt | Làm cùng v2 |
+| C-09 | NIT | T1 | `Phiếu đo › ô “Ghi nhận kết quả đo từ máy”` — Vấn đề: checkbox 13×13 px nhỏ hơn mục tiêu bấm 24 px. Căn cứ: WCAG 2.5.8. Hướng sửa: tăng vùng bấm (label bấm được). | Adopt | Làm cùng v2 |
+| C-10 | NIT | T1 | `Phiếu đo › trạng thái` — Vấn đề: chưa thấy trạng thái lỗi lưu / đang tải / quá nhiều dữ liệu lịch sử. Căn cứ: state matrix. Hướng sửa: bổ sung khi có v2 (kết hợp vòng đời toa). | Defer | Làm cùng vòng đời toa (B-08) ở v3 |
 | B-01 | BLOCKER | T2 | Form toa cần quy ước dấu trụ, nút chuyển dạng và hiển thị song song hai dạng ngay tại bước tiếp nhận toa ngoài. *(chi tiết: .ops/reviews/…/business-r1.md)* | Adopt | Lô P01D-1 |
 | B-02 | BLOCKER | T2 | Toa cần hai khối nhìn xa/nhìn gần tách biệt kèm độ gần tự tính; hỗ trợ mốc trung gian cho kính văn phòng. *(chi tiết: .ops/reviews/…/business-r1.md)* | Adopt | Lô P01D-1 |
 | B-03 | BLOCKER | T2 | Phiếu đo cần người ký thuộc nhân sự có chứng chỉ, cờ khuyến nghị chuyển tuyến và dòng disclaimer không phải chẩn đoán trên bản in. *(chi tiết: .ops/reviews/…/business-r1.md)* | Adopt | Lô P01D-1 |
@@ -39,10 +54,12 @@
 ## 3. Phản hồi người dùng thật (Tầng 3)
 - [2026-11-23] Máy đo khúc xạ cho được cả viễn, loạn, trục, cầu — phiếu đo phải phản ánh đủ.
 - [2026-11-23] Cần có phần “phân loại, đặc điểm” (mức độ cận/viễn/loạn…) trên màn hình đo mắt.
+- [2026-11-24] Khung điều hướng giữ nguyên bản gần nhất (tên menu, icon, layout) — phase này chỉ design phần nội dung bên trong. Danh sách menu có thể gọn nhưng không đổi icon/tên trừ khi có yêu cầu; nếu chọn version chốt mà icon/tên đã đổi thì khi triển khai rất có thể áp dụng thay đổi đó dù người duyệt không chủ ý (họ tập trung vào nội dung).
 
 ## 4. Ý tưởng cải tiến (xếp theo tác động/công sức)
 | ID | Ý tưởng | Tác động | Công sức | Quyết định |
 | :-: | :--- | :-: | :-: | :-: |
+| C-11 | `Phiếu đo › nút Lưu` — Lợi ích cho KTV: thanh hành động dính ở đáy khung vì form dài (nút “Lưu phiếu” nằm cuối, phải cuộn qua nhiều khối, đặc biệt trên tablet). Tham chiếu: thanh hành động cố định ở các trình soạn phiếu dài. | Vừa | Thấp | ⬜ |
 | B-14 | Liên thông màn Đo mắt và Sản phẩm để gợi ý gọng theo PD và giới hạn độ. *(chi tiết: .ops/reviews/…/business-r1.md)* | Cao | Vừa | Defer (P01D-2) |
 
 ## 5. Câu hỏi còn mở / cần chuyên gia

@@ -9,6 +9,14 @@ VERDICT: APPROVE_WITH_NOTES | CHANGES_REQUESTED | BLOCKER
 ## Tóm tắt
 - 2–4 gạch đầu dòng: phạm vi, mức rủi ro chung, độ đầy đủ của việc kiểm.
 
+## Shell Continuity (so với baseline trong packet)
+| Hạng mục | Baseline | Version này | Kết luận |
+| :--- | :--- | :--- | :---: |
+| Tên menu | | | GIỮ / THU GỌN / ĐỔI |
+| Icon | | | |
+| Thứ tự | | | |
+| Layout shell | | | |
+
 ## Cognitive walkthrough
 | Tác vụ chính của persona | Số bước | Chỗ kẹt / mơ hồ |
 | :--- | :---: | :--- |

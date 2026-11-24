@@ -1,7 +1,7 @@
 # Quy trình Review Mockup độc lập (3 tầng + vòng lặp phiên bản)
 
-> Áp dụng cho **mọi dự án** dùng kho mockup. Lấy cảm hứng từ `AI_PR_REVIEWER_PLAYBOOK` của optic-shop (review code độc lập với coding),
-> chuyển sang thế giới thiết kế. Hai skill con: [`ui-ux-review`](./ui-ux-review/SKILL.md) (Tầng 1) và [`business-review`](./business-review/SKILL.md) (Tầng 2).
+> Áp dụng cho **mọi dự án** dùng kho mockup. Mô hình review độc lập tách khỏi người làm (như review code độc lập với coding), áp vào thiết kế.
+> Hai skill con (mỗi skill tự đọc file này một lần — file này không dẫn ngược lại skill): `ui-ux-review` (Tầng 1), `business-review` (Tầng 2).
 
 ## 1. Dòng chảy
 
@@ -28,7 +28,7 @@ Tầng 1 rẻ, chạy mọi version. Tầng 2 tốn thời gian (tra cứu web),
 Tầng 3 luôn là người cuối — AI không thay được.
 
 ## 2. Luật Độc lập (không thương lượng)
-1. **Ngữ cảnh mới tinh**: reviewer chạy trong chat/subagent mới, KHÔNG chia sẻ lịch sử với agent đã vẽ mockup. Khuyến nghị **model khác** với model đã thiết kế (đồng bộ `independent_ai_reviewer_different_model` của optic-shop).
+1. **Ngữ cảnh mới tinh**: reviewer chạy trong chat/subagent mới, KHÔNG chia sẻ lịch sử với agent đã vẽ mockup. Khuyến nghị **model khác** với model đã thiết kế.
 2. **Chỉ đọc**: reviewer không sửa `prototypes/**`. Chỉ ghi file báo cáo. Nếu runtime chặn ghi file → in nguyên văn báo cáo bắt đầu bằng `VERDICT:` và nêu đường dẫn đích để phiên điều phối lưu y nguyên, không tóm tắt.
 3. **Bằng chứng hơn ý kiến**: mọi `[BLOCKER]`/`[MAJOR]` phải có (a) vị trí cụ thể (`file:dòng` hoặc `màn hình › vùng`), (b) quy tắc/chuẩn bị vi phạm (ID `CORE-…`/`PRJ-…`/`D02-…` hoặc nguồn URL), (c) hướng sửa tối thiểu.
 4. **Không khen cho có / không bắt lỗi cho có**: sạch thì nêu *đã kiểm những gì*; vi phạm thì `CHANGES_REQUESTED`/`BLOCKER` rõ ràng.
@@ -59,12 +59,12 @@ Map với thang 0–4 của heuristic evaluation (Nielsen): 4 = BLOCKER · 3 = M
 | Loại | Nằm ở | Commit? | Lý do |
 | :--- | :--- | :---: | :--- |
 | **Tri thức chuyên ngành** của dự án (`BUSINESS-REVIEW.md`: thuật ngữ, chuẩn, quy tắc BR-xx, nguồn tra cứu, quy trình thật) | **Repo dự án**: `<project>/docs/02-mockups/BUSINESS-REVIEW.md` | ✅ cùng repo dự án | Dự án sở hữu; kho mockup **không** giữ bản sao |
-| **Kết quả review + nhận xét** (`packet.md`, `core-rN.md`, `business-rN.md`, `human.md`) | **Kho mockup, `.ops/reviews/<project>/<feature>/<version>/`** (đổi gốc bằng biến `MOCKUP_OPS_DIR`) | ❌ `.gitignore` | Giống `.ops/reviews/` của optic-shop: có thể chứa nghiệp vụ nhạy cảm, không publish lên Pages |
+| **Kết quả review + nhận xét** (`packet.md`, `core-rN.md`, `business-rN.md`, `human.md`) | **Kho mockup, `.ops/reviews/<project>/<feature>/<version>/`** (đổi gốc bằng biến `MOCKUP_OPS_DIR`) | ❌ `.gitignore` | Như `.ops/reviews/` của review code độc lập: có thể chứa nghiệp vụ nhạy cảm, không publish lên Pages |
 | **Brief cho version kế tiếp** | **Kho mockup, `briefs/<project>/<feature>/<version>.md`** | ✅ | Là đầu vào của lần design tiếp theo nên đi cùng prototype; đã lược dữ liệu nhạy cảm |
 | **Mockup chốt** + dữ liệu bảo mật của dự án | `<project>/docs/02-mockups/<feature>/` (qua `proto promote`) | ✅ repo dự án | Dự án chỉ lấy bản final |
 | **Mô tả lĩnh vực + dự án tham khảo** | Bảng trong `README.md` kho mockup (1 dòng/dự án) | ✅ | Kho chỉ biết “dự án này thuộc lĩnh vực gì, từng tham khảo dự án nào”; **không sở hữu kiến thức chuyên ngành** |
 
-> `.ops/` của kho mockup có cùng bố cục với `.ops/` của optic-shop (chỉ `README.md` được commit; `runs/`, `index.jsonl`, `dashboard/` còn để dự phòng) — xem [`.ops/README.md`](../.ops/README.md).
+> `.ops/` của kho mockup theo bố cục `.ops/` chuẩn dùng chung (chỉ `README.md` được commit; `runs/`, `index.jsonl`, `dashboard/` còn để dự phòng) — xem `.ops/README.md`.
 
 ```text
 mockup/

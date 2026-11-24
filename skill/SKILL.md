@@ -2,30 +2,33 @@
 name: mockup-studio
 description: >-
   Hệ thống thiết kế UI/UX Mockup & Prototype chuyên nghiệp theo Ma trận Lĩnh vực (Domain) ×
-  Đối tượng sử dụng (Persona), lưu trữ lịch sử phiên bản bất biến tại kho /Users/vuonganhvu/Desktop/workspace/mockup,
+  Đối tượng sử dụng (Persona), lưu trữ lịch sử phiên bản bất biến tại kho mockup,
   xuất bản tự động lên GitHub Pages để review đa thiết bị, và chỉ chép bản chốt sạch sẽ về thư mục dự án.
 ---
 
 # Mockup Studio — Quy trình Thiết kế & Quản lý Prototype Tập trung
 
-Hệ thống này được đặt tại `/Users/vuonganhvu/Desktop/workspace/mockup` và đóng vai trò là **Engine thiết kế giao diện chuẩn mực** cho mọi dự án cá nhân.
+Hệ thống này là kho mockup dùng chung (đường dẫn ổn định `~/.config/mockup/root`) và đóng vai trò là **Engine thiết kế giao diện chuẩn mực** cho mọi dự án cá nhân.
 
 ---
 
 ## 1. Nguyên tắc Vận hành Cốt lõi
 
 1. **Làm việc tại Workspace Dự án, Nháp tại Kho Mockup**:
-   - Bạn đọc tài liệu đặc tả (`docs/`) trực tiếp tại workspace dự án đang mở (ví dụ: `editor-platform`).
+   - Bạn đọc tài liệu đặc tả (`docs/`) trực tiếp tại workspace dự án đang mở (ví dụ: `my-project`).
    - Nếu dự án chưa có file `docs/02-mockups/DESIGN-CONTEXT.md` (hoặc chưa có khối "Thiết kế UI/UX (Mockup)" trong `AGENTS.md`/`CLAUDE.md`), hãy khởi tạo bằng lệnh dưới. Lệnh idempotent: tạo DESIGN-CONTEXT nếu thiếu, chèn/cập nhật khối mockup cho mọi agent, tạo symlink `~/.config/mockup/root`. Domain + persona tự suy từ đặc tả dự án; chỉ hỏi người dùng khi không suy được:
      ```bash
-     /Users/vuonganhvu/Desktop/workspace/mockup/bin/proto init-project "<đường-dẫn-dự-án>" --domain "<mã-domain>"
+     ~/.config/mockup/root/bin/proto init-project "<đường-dẫn-dự-án>" --domain "<mã-domain>"
      ```
-   - **KHÔNG** tạo các bản nháp `v1`, `v2` trực tiếp trong thư mục dự án. Mọi bản nháp phải được tạo trong `/Users/vuonganhvu/Desktop/workspace/mockup/prototypes/<project-slug>/<feature-slug>/<version-slug>/`.
+   - **KHÔNG** tạo các bản nháp `v1`, `v2` trực tiếp trong thư mục dự án. Mọi bản nháp phải được tạo trong `<kho-mockup>/prototypes/<project-slug>/<feature-slug>/<version-slug>/`.
 2. **Bất biến & Không ghi đè (Immutable Versions)**:
    - Mỗi lần tạo mới hoặc chỉnh sửa theo phản hồi của người dùng, luôn tạo một phiên bản mới (`v1-minimal`, `v2-dense`, `v3-refined`...) để giữ nguyên các bản cũ phục vụ so sánh trực tiếp trên trình duyệt.
 3. **Chỉ Bản Chốt mới đưa về Dự án (Clean Handoff)**:
    - Chỉ khi người dùng xác nhận duyệt một phiên bản, mới chạy lệnh `proto promote` để chép bản đó về `<project>/docs/02-mockups/<feature-slug>/`.
 
+4. **Giữ nguyên phần đã chốt ngoài phạm vi phase (Shell Continuity)**:
+   - Khung điều hướng (tên menu, icon, thứ tự, layout sidebar/topbar/footer) lấy **y nguyên từ bản chốt/phiên bản gần nhất**; phase chỉ design phần *nội dung bên trong*. Được phép **thu gọn** danh sách menu cho gọn, **không** đổi tên/icon/vị trí nếu người dùng không yêu cầu.
+   - Lý do: người duyệt tập trung vào nội dung nên dễ chấp thuận luôn thay đổi nhỏ ở khung; khi triển khai thật, thay đổi đó sẽ bị áp dụng dù không ai chủ ý. Tầng 1 sẽ kiểm điều này.
 ---
 
 ## 2. Quy trình 5 Bước Khi Thiết kế Mockup Mới
@@ -34,17 +37,17 @@ Hệ thống này được đặt tại `/Users/vuonganhvu/Desktop/workspace/moc
 0. **Nếu màn hình đã có version trước**: đọc brief `briefs/<project>/<feature>/<version-trước>.md` (kết quả review AI + phản hồi người dùng + ý tưởng) — là đầu vào bắt buộc; mục đã **Adopt** phải được làm, mục “Giữ nguyên” không được phá.
 1. Đọc tài liệu đặc tả của dự án và file `<project>/docs/02-mockups/DESIGN-CONTEXT.md`.
 2. Xác định rõ màn hình đang thiết kế thuộc **Lĩnh vực (Domain)** nào và phục vụ **Đối tượng sử dụng (Persona)** nào (Lưu ý: Cùng 1 dự án nhưng màn hình cho Người đọc và màn hình cho Quản trị viên phải dùng 2 Persona khác nhau!):
-   - **Luật bắt buộc chung**: Đọc [core-anti-ai-slop.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/core-anti-ai-slop.md)
+   - **Luật bắt buộc chung**: Đọc [core-anti-ai-slop.md](../knowledge/core-anti-ai-slop.md)
    - **Chiều Đối tượng sử dụng (Personas)**:
-     - Độc giả / Học viên / Khách truy cập: [consumer-reader.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/personas/consumer-reader.md)
-     - Quản trị / Người đăng bài / Nhân viên vận hành: [operator-admin.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/personas/operator-admin.md)
-     - Người sáng tạo / Thiết kế trên Studio/Canvas: [creator-builder.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/personas/creator-builder.md)
-     - Cấp quản lý / Phê duyệt / Xem báo cáo: [executive-manager.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/personas/executive-manager.md)
+     - Độc giả / Học viên / Khách truy cập: [consumer-reader.md](../knowledge/personas/consumer-reader.md)
+     - Quản trị / Người đăng bài / Nhân viên vận hành: [operator-admin.md](../knowledge/personas/operator-admin.md)
+     - Người sáng tạo / Thiết kế trên Studio/Canvas: [creator-builder.md](../knowledge/personas/creator-builder.md)
+     - Cấp quản lý / Phê duyệt / Xem báo cáo: [executive-manager.md](../knowledge/personas/executive-manager.md)
    - **Chiều Lĩnh vực (Domains)**:
-     - Giáo dục (EdTech / LMS): [01-education.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/domains/01-education.md)
-     - Ứng dụng Quản lý / SaaS / Tài chính: [02-management-saas.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/domains/02-management-saas.md)
-     - Trang giới thiệu / Blog / Chia sẻ / Tin tức: [03-editorial-showcase.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/domains/03-editorial-showcase.md)
-     - Trình quản lý thiết kế / Studio (Editor): [04-creative-editor.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/domains/04-creative-editor.md)
+     - Giáo dục (EdTech / LMS): [01-education.md](../knowledge/domains/01-education.md)
+     - Ứng dụng Quản lý / SaaS / Tài chính: [02-management-saas.md](../knowledge/domains/02-management-saas.md)
+     - Trang giới thiệu / Blog / Chia sẻ / Tin tức: [03-editorial-showcase.md](../knowledge/domains/03-editorial-showcase.md)
+     - Trình quản lý thiết kế / Studio (Editor): [04-creative-editor.md](../knowledge/domains/04-creative-editor.md)
 
 ### Bước 2: Tham khảo Thực tế (Mobbin / Real-world Reference)
 - Nếu có công cụ Mobbin MCP, hãy đọc skill `search` của Mobbin và tìm kiếm 2–3 màn hình thực tế theo từ khoá gợi ý trong file Domain/Persona trước khi lên bố cục.
@@ -52,7 +55,7 @@ Hệ thống này được đặt tại `/Users/vuonganhvu/Desktop/workspace/moc
 ### Bước 3: Khởi tạo Phiên bản trong Kho Mockup
 - Chạy CLI `proto new` để tạo khung phiên bản mới (không bao giờ ghi đè phiên bản cũ):
   ```bash
-  /Users/vuonganhvu/Desktop/workspace/mockup/bin/proto new \
+  ~/.config/mockup/root/bin/proto new \
     "<project-slug>" "<feature-slug>" "<version-slug>" \
     --title "<Tên màn hình>" \
     --domain "<domain-id>" \
@@ -66,10 +69,10 @@ Hệ thống này được đặt tại `/Users/vuonganhvu/Desktop/workspace/moc
 - Ở vòng đầu tiên của một tính năng quan trọng, khuyến khích tạo 2 phương án có cá tính rõ rệt (ví dụ `v1-floating` và `v2-docked`) hoặc tách theo đối tượng sử dụng (`01-reader-home/v1` và `02-publisher-cms/v1`).
 
 ### Bước 4: Xây dựng Giao diện HTML/CSS/JS Tương tác Cao & Publish
-- Viết code vào `/Users/vuonganhvu/Desktop/workspace/mockup/prototypes/<project>/<feature>/<version>/index.html` (cùng `styles.css`, `app.js` với **đường dẫn tương đối `./`**).
+- Viết code vào `<kho-mockup>/prototypes/<project>/<feature>/<version>/index.html` (cùng `styles.css`, `app.js` với **đường dẫn tương đối `./`**).
 - Sau khi hoàn thiện, xuất bản lên GitHub Pages bằng 1 lệnh:
   ```bash
-  /Users/vuonganhvu/Desktop/workspace/mockup/bin/proto publish -m "feat(<project>): add <feature> <version>"
+  ~/.config/mockup/root/bin/proto publish -m "feat(<project>): add <feature> <version>"
   ```
 - Gửi cho người dùng:
   0. **Link Hub theo phase** `<hub>/?project=<project>&phase=<Pxx>` (người review chỉ thấy màn hình của phase đang design) — `proto status --project <project> --phase <Pxx>` in sẵn link. Tổng quan cả dự án: `<hub>/?project=<project>`.
@@ -77,19 +80,17 @@ Hệ thống này được đặt tại `/Users/vuonganhvu/Desktop/workspace/moc
   2. **Link Trực tiếp (Raw URL)**
   3. Điểm khác biệt chính giữa các phương án để người dùng đánh giá nhanh.
 
-### Bước 4b: Review độc lập 3 tầng — TRƯỚC khi người dùng thật xem
-Chi tiết: [REVIEW.md](./REVIEW.md). Mọi review chạy trong **phiên mới** (không phải phiên vừa vẽ mockup).
-1. `proto review-prep <project> <feature> <version>` → lint tĩnh (Tầng 0) + packet + prompt cho reviewer.
-2. **Tầng 1** — skill [`ui-ux-review`](./ui-ux-review/SKILL.md): quy tắc chung của kho mockup; chạy sau **mỗi** version.
-3. **Tầng 2** — skill [`business-review`](./business-review/SKILL.md): nghiệp vụ/chuẩn ngành theo `<project>/docs/02-mockups/BUSINESS-REVIEW.md`, có tra cứu internet; bỏ qua nếu màn hình không có nghiệp vụ chuyên ngành.
-4. Còn BLOCKER → làm bản sửa trước. Sạch BLOCKER → gửi link Hub cho **người dùng thật (Tầng 3)**.
-5. `proto brief <project> <feature> <version> [--human "phản hồi"…]` → gom Tầng 1 + 2 + 3 + ý tưởng thành brief cho version kế tiếp.
-- Kết quả review ở `.ops/` (không commit); tri thức chuyên ngành thuộc repo dự án — **không chép vào kho mockup**; brief ở `briefs/` đã lược dữ liệu nhạy cảm.
+### Bước 4b: Review độc lập — TRƯỚC khi người dùng thật xem
+Reviewer là **phiên khác** (không phải phiên vừa vẽ), nên đừng tự review ở đây.
+1. Chạy `~/.config/mockup/root/bin/proto review-prep <project> <feature> <version>` → lint tĩnh + `packet.md` + prompt có sẵn để dán vào phiên reviewer mới (Tầng 1 `ui-ux-review`, Tầng 2 `business-review` nếu dự án có `BUSINESS-REVIEW.md`).
+2. Còn BLOCKER → làm bản sửa trước; sạch BLOCKER → gửi link Hub cho người dùng thật.
+3. Sau phản hồi: `proto brief <project> <feature> <version> [--human "…"]` → brief cho version kế tiếp (Bước 1, mục 0).
+- Kết quả review ở `.ops/` (không commit); tri thức chuyên ngành thuộc repo dự án; brief ở `briefs/`. Cần tra cứu quy trình chi tiết mới đọc `REVIEW.md`.
 
 ### Bước 5: Chốt Phương án (Promote) & Tích luỹ Tri thức (Learn)
 1. **Khi người dùng duyệt bản chốt** (`promote` chặn nếu chưa qua review Tầng 1/2 hoặc còn BLOCKER; bỏ qua có chủ đích bằng `--skip-review` + lý do trong `--notes`):
    ```bash
-   /Users/vuonganhvu/Desktop/workspace/mockup/bin/proto promote \
+   ~/.config/mockup/root/bin/proto promote \
      "<project-slug>" "<feature-slug>" "<version-slug>" \
      --to "<đường-dẫn-tuyệt-đối-tới-dự-án>" \
      --notes "<Ghi chú lý do chọn và lưu ý khi code thật>"

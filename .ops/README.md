@@ -1,6 +1,6 @@
 # Operations & Telemetry Hub của kho mockup (`.ops/`)
 
-Cấu trúc **giống `.ops/` của optic-shop** để các dự án sau dùng chung một kiểu tổ chức. Chỉ file này được commit; mọi thứ còn lại bị `.gitignore` chặn (có thể chứa nghiệp vụ nhạy cảm, log, dữ liệu máy).
+Bố cục `.ops/` chuẩn dùng chung cho mọi dự án (kho mockup và repo dự án có cùng kiểu tổ chức). Chỉ file này được commit; mọi thứ còn lại bị `.gitignore` chặn (có thể chứa nghiệp vụ nhạy cảm, log, dữ liệu máy).
 
 > Trạng thái: **chưa đóng gói**. Dashboard hiển thị và danh sách file nào sẽ đưa lên git chưa chốt — các mục đánh dấu *(dự phòng)* chỉ là chỗ giữ chỗ, CLI chưa ghi vào đó.
 
