@@ -1,11 +1,11 @@
 # Design Context: {{PROJECT_NAME}}
 
 > File này định hình "cá tính" giao diện và ngữ cảnh nghiệp vụ cho dự án **{{PROJECT_NAME}}**.
-> AI Agent **bắt buộc** đọc file này cùng với Hệ thống Tri thức tại `/Users/vuonganhvu/Desktop/workspace/mockup/knowledge/` trước khi thiết kế bất kỳ mockup nào.
+> AI Agent **bắt buộc** đọc file này cùng với Hệ thống Tri thức tại `~/.config/mockup/root/knowledge/` trước khi thiết kế bất kỳ mockup nào.
 
 ## 1. Phân loại Dự án (Domain & Personas)
 - **Project Slug**: `{{PROJECT_SLUG}}`
-- **Lĩnh vực chính (Primary Domain)**: `{{DOMAIN_ID}}` (Xem `/Users/vuonganhvu/Desktop/workspace/mockup/knowledge/domains/{{DOMAIN_ID}}.md`)
+- **Lĩnh vực chính (Primary Domain)**: `{{DOMAIN_ID}}` (Xem `~/.config/mockup/root/knowledge/domains/{{DOMAIN_ID}}.md`)
 - **Các nhóm đối tượng sử dụng (Target Personas)**:
   1. **Đối tượng 1**: *(Ví dụ: Người sáng tạo trên Canvas -> Persona `creator-builder`)*
   2. **Đối tượng 2**: *(Ví dụ: Người quản lý tài nguyên -> Persona `operator-admin`)*

@@ -7,14 +7,17 @@ Kho lưu trữ tập trung, quản lý lịch sử phiên bản bất biến (`v
 ## 1. Cấu trúc Thư mục
 
 ```text
-/Users/vuonganhvu/Desktop/workspace/mockup/
+mockup/
 ├── index.html                      # Trang chủ Gallery (lọc theo dự án, domain, persona)
 ├── viewer.html                     # Khung Review & So sánh phiên bản (A|B split, responsive)
 ├── prototypes.json                 # Manifest tự động sinh bởi ./bin/proto build
 ├── bin/
 │   └── proto                       # CLI quản lý: new, build, publish, promote, init-project, learn
 ├── skill/
-│   └── SKILL.md                    # Tài liệu quy trình chính (được trỏ tới từ Global Skill)
+│   ├── SKILL.md                    # Tài liệu quy trình chính (được trỏ tới từ Global Skill)
+│   ├── REVIEW.md                   # Quy trình review độc lập 3 tầng
+│   ├── ui-ux-review/SKILL.md       # Tầng 1: review UI/UX theo quy tắc chung (chạy mọi version)
+│   └── business-review/SKILL.md    # Tầng 2: review nghiệp vụ/chuẩn ngành (tra cứu internet)
 ├── knowledge/                      # Ma trận Tri thức Thiết kế tích luỹ theo thời gian
 │   ├── README.md
 │   ├── core-anti-ai-slop.md        # Bộ luật chống thiết kế rập khuôn của AI
@@ -28,9 +31,12 @@ Kho lưu trữ tập trung, quản lý lịch sử phiên bản bất biến (`v
 │       ├── 02-management-saas.md
 │       ├── 03-editorial-showcase.md
 │       └── 04-creative-editor.md
-├── templates/                      # Template sinh tự động cho thư mục dự án
-│   ├── DESIGN-CONTEXT.template.md
-│   └── SPEC-NOTES.template.md
+├── templates/                      # Template sinh tự động
+│   ├── DESIGN-CONTEXT.template.md · SPEC-NOTES.template.md
+│   ├── BUSINESS-REVIEW.template.md # gói nghiệp vụ — chép vào REPO DỰ ÁN
+│   └── REVIEW-CORE.template.md · REVIEW-BUSINESS.template.md · NEXT-BRIEF.template.md
+├── briefs/<project>/<feature>/<version>.md   # brief cho version kế tiếp (commit, đã lược dữ liệu nhạy cảm)
+├── .ops/reviews/<project>/<feature>/<version>/  # kết quả review — KHÔNG commit (.gitignore)
 └── prototypes/                     # Nơi chứa toàn bộ các phiên bản prototype theo dự án
     └── <project-slug>/
         └── <feature-slug>/
@@ -40,6 +46,16 @@ Kho lưu trữ tập trung, quản lý lịch sử phiên bản bất biến (`v
 ```
 
 ---
+
+## Dự án đã dùng kho mockup
+> Kho này **không sở hữu kiến thức chuyên ngành**: chỉ ghi dự án thuộc lĩnh vực gì và từng tham khảo dự án nào. Kiến thức nghiệp vụ nằm ở repo của từng dự án (`docs/02-mockups/BUSINESS-REVIEW.md`).
+> Ghi bằng `proto init-project <path> --field "<lĩnh vực>" --ref <dự-án-trước>`.
+
+<!-- projects:begin -->
+| Dự án | Lĩnh vực | Tham khảo từ dự án trước |
+| :--- | :--- | :--- |
+| `optic-shop` | bán lẻ & dịch vụ nhãn khoa (đo khúc xạ, lab lắp kính, bảo hành) | — |
+<!-- projects:end -->
 
 ## Hub: hai góc nhìn
 - **Tổng quan dự án** `?project=<slug>`: bảng mọi màn hình — bản chốt hiện hành, bản mới nhất, phase, trạng thái (chờ review / đã chốt).
@@ -52,11 +68,20 @@ Kho lưu trữ tập trung, quản lý lịch sử phiên bản bất biến (`v
 | Cursor | Khối mockup trong `AGENTS.md` + rule `ui-from-mockup.mdc` (adapter cursor của dev-playbook) — chỉ thực thi theo bản chốt |
 | Antigravity | `proto install-skill` (THIN-SKILL) + khối mockup trong `AGENTS.md` |
 
+## Review độc lập 3 tầng (xem [skill/REVIEW.md](skill/REVIEW.md))
+```bash
+./bin/proto review-prep optic-shop 02-clinical-exam-rx v1-clinical-refraction   # Tầng 0: lint + packet + prompt
+# → mở phiên MỚI chạy skill ui-ux-review (Tầng 1), rồi business-review (Tầng 2); kết quả ở .ops/
+./bin/proto review-status --project optic-shop                                    # xem tiến độ T0–T3
+./bin/proto brief optic-shop 02-clinical-exam-rx v1-clinical-refraction --human "Nút lưu khó thấy"   # → briefs/…
+./bin/proto promote … [--skip-review]                                             # chặn nếu chưa review / còn BLOCKER
+```
+
 ## 2. Các Lệnh CLI Thường Dùng (`./bin/proto`)
 
 1. **Khởi tạo / nối dự án với kho mockup** (idempotent — tạo DESIGN-CONTEXT nếu thiếu, chèn khối "Thiết kế UI/UX" vào `AGENTS.md` + `CLAUDE.md`, symlink `~/.config/mockup/root`):
    ```bash
-   ./bin/proto init-project /Users/vuonganhvu/Desktop/workspace/editor-platform --domain 04-creative-editor
+   ./bin/proto init-project <đường-dẫn-dự-án> --domain 04-creative-editor
    ```
 2. **Tạo một phiên bản prototype mới (chặn ghi đè bản cũ)**:
    ```bash
@@ -76,7 +101,7 @@ Kho lưu trữ tập trung, quản lý lịch sử phiên bản bất biến (`v
 4. **Chốt phiên bản ưng ý và chép sạch sẽ về thư mục dự án**:
    ```bash
    ./bin/proto promote editor-platform 01-canvas-toolbar v2-docked \
-     --to /Users/vuonganhvu/Desktop/workspace/editor-platform \
+     --to <đường-dẫn-dự-án> \
      --notes "Chốt bản v2 vì tối ưu diện tích dọc trên màn hình MacBook 14 inch"
    ```
 5. **Tích luỹ bài học UI/UX mới** — mỗi bài học ghi vào **đúng MỘT nơi**, mặc định là dự án:

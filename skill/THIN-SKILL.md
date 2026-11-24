@@ -6,29 +6,10 @@ description: >-
   tạo mockup, prototype, wireframe, redesign màn hình, hoặc quản lý/publish/chốt phiên bản thiết kế.
 ---
 
-# Mockup Studio (Thin Global Entrypoint)
+# Mockup Studio (Thin Entrypoint)
 
-Skill này là điểm vào toàn cục (Global Entrypoint) áp dụng cho **tất cả các dự án**. Toàn bộ quy trình chi tiết, CLI tự động hoá và Ma trận Tri thức Thiết kế (Domain × Persona) được quản lý tập trung tại kho `/Users/vuonganhvu/Desktop/workspace/mockup`.
+Điểm vào mỏng cho các AI agent. **Toàn bộ quy trình và danh sách tri thức cần đọc nằm ở một file duy nhất** — đọc nó và làm theo, không đọc thêm file tri thức từ đây (file đó tự dẫn tới những gì cần):
 
-## BẮT BUỘC Thực hiện Trước Khi Thiết kế
+`~/.config/mockup/root/skill/SKILL.md`
 
-1. **Đọc Quy trình Chi tiết (Master Skill)**:
-   - Đọc ngay file [SKILL.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/skill/SKILL.md) để nắm quy trình 5 bước, cách dùng CLI `/Users/vuonganhvu/Desktop/workspace/mockup/bin/proto`, nguyên tắc **Không ghi đè phiên bản (`v1`, `v2`, `v3`)** và quy trình **Chỉ chép bản chốt về dự án (`proto promote`)**.
-2. **Đọc Luật Chống Thiết kế AI Mặc định**:
-   - Đọc [core-anti-ai-slop.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/core-anti-ai-slop.md).
-3. **Đọc Ma trận Lĩnh vực (Domain) × Đối tượng sử dụng (Persona) phù hợp với màn hình**:
-   - Tổng quan ma trận: [knowledge/README.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/README.md)
-   - **Theo Đối tượng sử dụng (`knowledge/personas/`)**:
-     - Độc giả / Học viên / Người dùng cuối: [consumer-reader.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/personas/consumer-reader.md)
-     - Quản trị / Người đăng bài / Vận hành: [operator-admin.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/personas/operator-admin.md)
-     - Người sáng tạo / Thiết kế trên Studio: [creator-builder.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/personas/creator-builder.md)
-     - Quản lý / Phê duyệt / Xem chỉ số: [executive-manager.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/personas/executive-manager.md)
-   - **Theo Lĩnh vực (`knowledge/domains/`)**:
-     - Giáo dục (EdTech / LMS): [01-education.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/domains/01-education.md)
-     - Ứng dụng Quản lý / SaaS / Tài chính: [02-management-saas.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/domains/02-management-saas.md)
-     - Trang giới thiệu / Blog / Tin tức: [03-editorial-showcase.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/domains/03-editorial-showcase.md)
-     - Trình quản lý thiết kế (Editor Platform): [04-creative-editor.md](file:///Users/vuonganhvu/Desktop/workspace/mockup/knowledge/domains/04-creative-editor.md)
-
-## Quy ước phase (bắt buộc)
-- Mỗi phiên bản gắn `--phase <Pxx>` = phase mà UI đó là đầu vào thiết kế; prototype tổng thể MVP thêm `--stage mvp`.
-- Gửi người review link Hub theo phase: `proto status --project <slug> --phase <Pxx>` in sẵn link.
+Chưa có đường dẫn trên → chạy `<kho-mockup>/bin/proto init-project <đường-dẫn-dự-án>` một lần (tự tạo symlink).

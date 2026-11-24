@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 proto — CLI quản lý vòng đời Mockup & Prototype tập trung
-Vị trí: /Users/vuonganhvu/Desktop/workspace/mockup/bin/proto
+Vị trí: <kho mockup>/bin/proto (gọi qua ~/.config/mockup/root/bin/proto)
 """
 
 from __future__ import annotations
@@ -177,6 +177,21 @@ def cmd_new(args: argparse.Namespace) -> None:
         )
         sys.exit(1)
 
+    prev_meta_path = feat_dir / "meta.json"
+    if prev_meta_path.is_file():
+        try:
+            prev_names = [v.get("version") for v in json.loads(prev_meta_path.read_text(encoding="utf-8")).get("versions", [])]
+            prev_ver = next((n for n in reversed(prev_names) if n and n != ver_slug), "")
+        except Exception:
+            prev_ver = ""
+        if prev_ver:
+            if brief_path_for(proj_slug, feat_slug, prev_ver).is_file():
+                print(f"[INFO] Đọc brief bản trước trước khi design: {brief_path_for(proj_slug, feat_slug, prev_ver)}")
+            elif latest_report(reviews_dir_for(proj_slug, feat_slug, prev_ver), "core") or \
+                    latest_report(reviews_dir_for(proj_slug, feat_slug, prev_ver), "business"):
+                print(f"[CẢNH BÁO] {prev_ver} đã được review nhưng chưa có brief — chạy "
+                      f"`proto brief {proj_slug} {feat_slug} {prev_ver}` để gom kết quả làm đầu vào.", file=sys.stderr)
+
     ver_dir.mkdir(parents=True, exist_ok=True)
     meta_path = feat_dir / "meta.json"
     meta = {
@@ -259,6 +274,14 @@ def cmd_promote(args: argparse.Namespace) -> None:
         print(f"[LỖI] Không tìm thấy phiên bản '{proj_slug}/{feat_slug}/{ver_slug}' trong kho mockup.", file=sys.stderr)
         sys.exit(1)
 
+    warns = review_gate_warnings(proj_slug, feat_slug, ver_slug, target_project_dir)
+    if warns and not args.skip_review:
+        print(f"[CHẶN CHỐT] {proj_slug}/{feat_slug}/{ver_slug}: " + "; ".join(warns) +
+              ".\n  → Chạy review (proto review-prep …) hoặc bỏ qua có chủ đích bằng --skip-review (ghi lý do vào --notes).", file=sys.stderr)
+        sys.exit(1)
+    if warns:
+        print("[CẢNH BÁO] Bỏ qua cổng review: " + "; ".join(warns), file=sys.stderr)
+
     meta_path = feat_dir / "meta.json"
     meta = {}
     if meta_path.is_file():
@@ -327,14 +350,14 @@ def update_project_mockups_readme(mockups_root: Path, proj_slug: str, base_url: 
                     approved_ver = line.split("`")[1]
                 elif "Đối tượng sử dụng" in line and "`" in line:
                     persona = line.split("`")[1]
-        hub_link = f"[So sánh các bản nháp]({base_url}/viewer.html?project={proj_slug}&feature={d.name})" if base_url else "Trong kho `/Users/vuonganhvu/Desktop/workspace/mockup`"
+        hub_link = f"[So sánh các bản nháp]({base_url}/viewer.html?project={proj_slug}&feature={d.name})" if base_url else "Trong kho mockup"
         rows.append(f"| `{d.name}` | `{persona}` | `{approved_ver}` | [index.html](./{d.name}/index.html) · [SPEC-NOTES.md](./{d.name}/SPEC-NOTES.md) | {hub_link} |")
 
     table_body = "\n".join(rows) if rows else "| *(Chưa có mockup nào được chốt)* | - | - | - | - |"
     readme_content = f"""# Danh mục Mockup Đã Chốt — `{proj_slug}`
 
 > Thư mục này **chỉ lưu trữ các phiên bản thiết kế đã được duyệt (Approved)** để làm căn cứ triển khai code thực tế.
-> Toàn bộ các phương án thử nghiệm (`v1`, `v2`, `v3`...) được lưu trữ tách biệt tại kho `/Users/vuonganhvu/Desktop/workspace/mockup`.
+> Toàn bộ các phương án thử nghiệm (`v1`, `v2`, `v3`...) được lưu trữ tách biệt tại kho mockup (`~/.config/mockup/root`).
 
 - **Định hướng thiết kế dự án**: Xem [DESIGN-CONTEXT.md](./DESIGN-CONTEXT.md)
 
@@ -345,6 +368,30 @@ def update_project_mockups_readme(mockups_root: Path, proj_slug: str, base_url: 
 {table_body}
 """
     (mockups_root / "README.md").write_text(readme_content, encoding="utf-8")
+
+
+PROJ_TABLE_BEGIN = "<!-- projects:begin -->"
+PROJ_TABLE_END = "<!-- projects:end -->"
+
+
+def register_project(slug: str, field: str, refs: list[str], path: Path) -> None:
+    """Ghi 1 dòng mô tả lĩnh vực vào README kho mockup. Kho chỉ biết 'dự án này thuộc lĩnh vực gì' và
+    'tham khảo dự án trước nào' — KHÔNG lưu kiến thức chuyên ngành (nằm ở repo dự án)."""
+    readme = ROOT_DIR / "README.md"
+    text = readme.read_text(encoding="utf-8")
+    if PROJ_TABLE_BEGIN not in text or PROJ_TABLE_END not in text:
+        print(f"[CẢNH BÁO] README kho mockup chưa có khối {PROJ_TABLE_BEGIN} … {PROJ_TABLE_END}; bỏ qua ghi lĩnh vực.", file=sys.stderr)
+        return
+    head, rest = text.split(PROJ_TABLE_BEGIN, 1)
+    body, tail = rest.split(PROJ_TABLE_END, 1)
+    lines = [l for l in body.strip("\n").splitlines()]
+    header = ["| Dự án | Lĩnh vực | Tham khảo từ dự án trước |", "| :--- | :--- | :--- |"]
+    rows = [l for l in lines[2:] if not l.startswith(f"| `{slug}`")]
+    rows.append(f"| `{slug}` | {field or '—'} | {', '.join('`' + r + '`' for r in refs) or '—'} |")
+    new = head + PROJ_TABLE_BEGIN + "\n" + "\n".join(header + sorted(rows)) + "\n" + PROJ_TABLE_END + tail
+    if new != text:
+        readme.write_text(new, encoding="utf-8")
+        print(f"[OK] README kho mockup: ghi lĩnh vực của '{slug}' (kho không lưu tri thức chuyên ngành)")
 
 
 def cmd_init_project(args: argparse.Namespace) -> None:
@@ -368,10 +415,20 @@ def cmd_init_project(args: argparse.Namespace) -> None:
     else:
         print(f"[INFO] Đã tồn tại {ctx_file} (dùng --force nếu muốn tạo lại)")
 
+    biz_file = business_pack_path(target_dir)
+    if not biz_file.exists():
+        biz_tpl = (TEMPLATES_DIR / "BUSINESS-REVIEW.template.md").read_text(encoding="utf-8")
+        biz_file.write_text(biz_tpl.replace("{{PROJECT_NAME}}", proj_slug).replace("{{DATE}}", today_str()), encoding="utf-8")
+        print(f"[OK] Đã tạo {biz_file} — gói nghiệp vụ cho Tầng 2, thuộc repo dự án (kho mockup không sở hữu). "
+              f"Điền mục 1–3; xoá file nếu dự án không có nghiệp vụ chuyên ngành.")
+
     readme_file = mockups_root / "README.md"
     if not readme_file.exists():
         update_project_mockups_readme(mockups_root, proj_slug, get_pages_base_url())
         print(f"[OK] Đã tạo {readme_file}")
+
+    if args.field or args.ref:
+        register_project(proj_slug, args.field or "", args.ref or [], target_dir)
 
     link_stable_root()
     upsert_agent_block(target_dir, proj_slug)
@@ -565,6 +622,9 @@ def agent_block(proj_slug: str) -> str:
         "- **Khi code UI**: bám bản chốt trong `docs/02-mockups/` mà phase doc chỉ định; không tự sáng tác giao diện; "
         "chỗ nào lệch mockup → ghi lý do trong phase doc.\n"
         f"- Trạng thái design: `{STABLE_ROOT_DISPLAY}/bin/proto status --project {proj_slug} [--phase <Pxx>]`\n"
+        "- **Review mockup độc lập** (trước khi người dùng thật xem): Tầng 1 skill `ui-ux-review`, Tầng 2 skill `business-review` "
+        f"(đọc `docs/02-mockups/BUSINESS-REVIEW.md` của repo này) — bắt đầu bằng `{STABLE_ROOT_DISPLAY}/bin/proto review-prep {proj_slug} <màn-hình> <version>`. "
+        "Kết quả ở `.ops/` của kho mockup (không commit); tri thức nghiệp vụ chỉ nằm trong repo này, không chép sang kho mockup.\n"
         f"{hub}"
         f"{BLOCK_END}\n"
     )
@@ -898,20 +958,449 @@ def cmd_init_repo(args: argparse.Namespace) -> None:
         print(f"  → URL Preview Hub: {get_pages_base_url()}/")
 
 
-def cmd_install_skill(_args: argparse.Namespace) -> None:
+def thin_review_skill(name: str) -> str:
+    """Skill mỏng: giữ frontmatter của skill thật, thân chỉ trỏ về kho (link tương đối của bản gốc sẽ gãy nếu copy)."""
+    src = (ROOT_DIR / "skill" / name / "SKILL.md").read_text(encoding="utf-8")
+    m = re.match(r"^(---\n.*?\n---\n)", src, re.S)
+    front = m.group(1) if m else f"---\nname: {name}\ndescription: Review mockup độc lập\n---\n"
+    return (
+        f"{front}\n# {name} (Thin Entrypoint)\n\n"
+        f"Đọc và làm theo đúng một file: `{STABLE_ROOT_DISPLAY}/skill/{name}/SKILL.md` "
+        f"(file đó tự dẫn tới phần còn lại — không đọc thêm từ đây). Chưa có đường dẫn: chạy "
+        f"`<kho-mockup>/bin/proto init-project <dự-án>` một lần để tạo symlink.\n"
+    )
+
+
+def cmd_install_skill(args: argparse.Namespace) -> None:
     thin_src = ROOT_DIR / "skill" / "THIN-SKILL.md"
     if not thin_src.is_file():
         print(f"[LỖI] Không tìm thấy {thin_src}", file=sys.stderr)
         sys.exit(1)
 
-    targets = [
-        Path.home() / ".gemini" / "antigravity" / "skills" / "mockup-studio" / "SKILL.md",
-        Path.home() / ".gemini" / "config" / "skills" / "mockup-studio" / "SKILL.md",
+    roots = [
+        Path.home() / ".gemini" / "antigravity" / "skills",
+        Path.home() / ".gemini" / "config" / "skills",
     ]
-    for dest in targets:
+    if getattr(args, "claude", False):
+        roots.append(Path.home() / ".claude" / "skills")
+    for root in roots:
+        dest = root / "mockup-studio" / "SKILL.md"
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(thin_src, dest)
         print(f"[OK] Đã cài đặt Global Skill mỏng tại: {dest}")
+        for name in ("ui-ux-review", "business-review"):
+            d = root / name / "SKILL.md"
+            d.parent.mkdir(parents=True, exist_ok=True)
+            d.write_text(thin_review_skill(name), encoding="utf-8")
+            print(f"[OK] Đã cài đặt Global Skill mỏng tại: {d}")
+
+
+# ---------------------------------------------------------------------------
+# Review độc lập 3 tầng (xem skill/REVIEW.md)
+#   Tầng 0: proto review-prep  — lint tĩnh + packet.md        (script, tất định)
+#   Tầng 1: skill ui-ux-review   → reviews/<f>/<v>/core-rN.md
+#   Tầng 2: skill business-review → reviews/<f>/<v>/business-rN.md
+#   Tầng 3: người dùng thật      → human.md ; proto brief → briefs/<p>/<f>/<v>.md
+# Kết quả review (có thể chứa nghiệp vụ nhạy cảm) nằm ở .ops/ của kho mockup — KHÔNG commit (.gitignore).
+# Brief (đầu vào version kế tiếp, đã lược dữ liệu nhạy cảm) nằm ở briefs/ — commit cùng kho mockup.
+# Tri thức chuyên ngành (BUSINESS-REVIEW.md) thuộc repo DỰ ÁN; kho mockup không sở hữu.
+# ---------------------------------------------------------------------------
+
+FINDING_RE = re.compile(r"^- \[(BLOCKER|MAJOR|NIT|IDEA)\]\s+(?:([A-Z]-\d+)\s+)?(.+)$")
+VERDICT_RE = re.compile(r"^VERDICT:\s*([A-Z_]+)\s*$")
+VALID_VERDICTS = {"APPROVE_WITH_NOTES", "CHANGES_REQUESTED", "BLOCKER"}
+LINT_CAP = 5
+
+
+def project_dir_for(slug: str, path: str | None = None, required: bool = True) -> Path:
+    pd = Path(path).expanduser().resolve() if path else ROOT_DIR.parent / slug
+    if required and not pd.is_dir():
+        fail(f"Không thấy thư mục dự án: {pd} (dùng --project-path nếu dự án không nằm cạnh kho mockup)")
+    return pd
+
+
+def business_pack_path(pd: Path) -> Path:
+    return pd / "docs" / "02-mockups" / "BUSINESS-REVIEW.md"
+
+
+OPS_DIR = Path(os.environ.get("MOCKUP_OPS_DIR", str(ROOT_DIR / ".ops"))).expanduser()
+BRIEFS_DIR = ROOT_DIR / "briefs"
+
+
+def reviews_dir_for(proj: str, feat: str, ver: str) -> Path:
+    """Kết quả review (không commit): .ops/reviews/<project>/<feature>/<version>/"""
+    return OPS_DIR / "reviews" / proj / feat / ver
+
+
+def brief_path_for(proj: str, feat: str, ver: str) -> Path:
+    """Brief đầu vào cho version kế tiếp (commit): briefs/<project>/<feature>/<version>.md"""
+    return BRIEFS_DIR / proj / feat / f"{ver}.md"
+
+
+def feature_meta(proj: str, feat: str) -> dict:
+    p = PROTOTYPES_DIR / proj / feat / "meta.json"
+    if not p.is_file():
+        fail(f"Không thấy {p}")
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def previous_version(meta: dict, ver: str) -> str:
+    names = [v.get("version") for v in meta.get("versions", [])]
+    return names[names.index(ver) - 1] if ver in names and names.index(ver) > 0 else ""
+
+
+def round_files(rdir: Path, prefix: str) -> list[tuple[int, Path]]:
+    out = []
+    if rdir.is_dir():
+        for f in rdir.glob(f"{prefix}-r*.md"):
+            m = re.match(rf"^{prefix}-r(\d+)\.md$", f.name)
+            if m:
+                out.append((int(m.group(1)), f))
+    return sorted(out)
+
+
+def latest_report(rdir: Path, prefix: str) -> tuple[int, Path] | None:
+    rounds = round_files(rdir, prefix)
+    return rounds[-1] if rounds else None
+
+
+def parse_report(path: Path) -> dict:
+    text = path.read_text(encoding="utf-8")
+    verdict = "UNSET"
+    for line in text.splitlines():
+        m = VERDICT_RE.match(line.strip())
+        if m and m.group(1) in VALID_VERDICTS:
+            verdict = m.group(1)
+        break  # chỉ xét dòng không rỗng đầu tiên
+    findings = []
+    for line in text.splitlines():
+        m = FINDING_RE.match(line.strip())
+        if m and "Vấn đề: …" not in line and "màn hình › vùng" not in line:
+            findings.append({"sev": m.group(1), "id": m.group(2) or "", "text": m.group(3).strip()})
+    counts = {k: sum(1 for f in findings if f["sev"] == k) for k in ("BLOCKER", "MAJOR", "NIT", "IDEA")}
+    return {"verdict": verdict, "findings": findings, "counts": counts, "text": text}
+
+
+def md_section(text: str, heading_prefix: str) -> list[str]:
+    lines, grab, out = text.splitlines(), False, []
+    for ln in lines:
+        if ln.startswith("## "):
+            grab = ln[3:].strip().lower().startswith(heading_prefix.lower())
+            continue
+        if grab and ln.strip().startswith(("-", "1", "2", "3", "4", "5")) and ln.strip() not in ("-",):
+            out.append(ln.strip())
+    return out
+
+
+def static_lint(ver_dir: Path) -> list[dict]:
+    """Tầng 0: kiểm tra tất định, rẻ. Không thay được review của AI/người; chỉ bắt lỗi cơ học."""
+    issues: list[dict] = []
+    files = [f for f in sorted(ver_dir.rglob("*")) if f.is_file() and f.suffix in {".html", ".css", ".js"}
+             and f.stat().st_size < 2_000_000 and "reviews" not in f.parts]
+    texts = {f: f.read_text(encoding="utf-8", errors="ignore") for f in files}
+    all_css = "\n".join(t for f, t in texts.items() if f.suffix in {".css", ".html"})
+
+    def add(sev: str, f: Path, text: str, pos: int, msg: str) -> None:
+        issues.append({"sev": sev, "file": str(f.relative_to(ver_dir)), "line": text.count("\n", 0, pos) + 1, "msg": msg})
+
+    def scan(rule_sev: str, pattern: str, msg: str, only: set[str] | None = None, flags: int = re.I) -> None:
+        hits = 0
+        for f, t in texts.items():
+            if only and f.suffix not in only:
+                continue
+            for m in re.finditer(pattern, t, flags):
+                hits += 1
+                if hits <= LINT_CAP:
+                    add(rule_sev, f, t, m.start(), msg)
+        if hits > LINT_CAP:
+            issues.append({"sev": rule_sev, "file": "*", "line": 0, "msg": f"{msg} (+{hits - LINT_CAP} vị trí nữa)"})
+
+    for f, t in texts.items():
+        if f.suffix != ".html":
+            continue
+        if "<html" in t.lower() and not re.search(r"<html[^>]*\slang=", t, re.I):
+            add("WARN", f, t, 0, "<html> thiếu thuộc tính lang (trình đọc màn hình/ngắt từ tiếng Việt)")
+        if not re.search(r'<meta[^>]+name=["\']viewport', t, re.I):
+            add("MAJOR", f, t, 0, "Thiếu <meta name=viewport> — mobile 390px sẽ vỡ")
+        if not re.search(r"<title>\s*\S", t, re.I):
+            add("WARN", f, t, 0, "Thiếu <title>")
+    scan("MAJOR", r"user-scalable\s*=\s*(no|0)|maximum-scale\s*=\s*1(\.0)?\b", "Khoá zoom (user-scalable=no/maximum-scale=1) — vi phạm WCAG 1.4.4", {".html"})
+    scan("WARN", r"<img\b(?![^>]*\balt=)[^>]*>", "<img> thiếu alt", {".html"})
+    scan("WARN", r"<(?:input|select|textarea)\b(?![^>]*(?:aria-label|aria-labelledby|\bid=|type=[\"'](?:hidden|submit|button)))[^>]*>",
+         "Ô nhập có thể thiếu nhãn (không aria-label/id để gắn <label>)", {".html"})
+    scan("WARN", r"<(?:div|span)\b[^>]*\sonclick=", "Phần tử không ngữ nghĩa (div/span) làm nút bấm — dùng <button>/<a> để có focus + bàn phím", {".html"})
+    scan("WARN", r"tabindex\s*=\s*[\"']?[1-9]", "tabindex dương làm hỏng thứ tự tab")
+    scan("MAJOR", r"/Users/|file://|(?:src|href)\s*=\s*[\"']/(?!/)|url\(\s*[\"']?/(?!/)",
+         "Đường dẫn tuyệt đối/gốc — sẽ hỏng trên GitHub Pages (core §2.1: dùng ./)")
+    scan("WARN", r"lorem ipsum|john doe|jane smith|card title|\bitem\s*\d\b|sample text|test user|\bTODO\b|\bFIXME\b",
+         "Nội dung giả/để dở (core §1.3)")
+    scan("WARN", r"#6366f1|#8b5cf6|#667eea|#764ba2", "Màu tím/indigo mặc định của AI (core §1.1) — chỉ chấp nhận nếu thương hiệu yêu cầu")
+    scan("WARN", r"font-size\s*:\s*(?:[0-9]|1[01])(?:\.\d+)?px", "Cỡ chữ < 12px khó đọc")
+    scan("INFO", r"<(?:script|link)\b[^>]+(?:src|href)\s*=\s*[\"']https?://[^\"']+", "Tài nguyên ngoài (CDN/font) — cần mạng khi review")
+    scan("WARN", r"\balert\(", "alert() — dùng toast/modal có style", {".js", ".html"})
+
+    if not re.search(r":root\s*\{[^}]*--", all_css):
+        issues.append({"sev": "WARN", "file": "*", "line": 0, "msg": "Không thấy bảng token CSS trong :root (core §2.2)"})
+    if re.search(r"outline\s*:\s*(?:none|0)\b", all_css) and ":focus-visible" not in all_css:
+        issues.append({"sev": "MAJOR", "file": "*", "line": 0, "msg": "Tắt outline nhưng không có :focus-visible thay thế — mất chỉ báo focus bàn phím"})
+    if files and "@media" not in all_css:
+        issues.append({"sev": "WARN", "file": "*", "line": 0, "msg": "Không có @media nào — kiểm tra responsive 768/390px"})
+    if re.search(r"\b(?:transition|animation)\s*:", all_css) and "prefers-reduced-motion" not in all_css:
+        issues.append({"sev": "INFO", "file": "*", "line": 0, "msg": "Có chuyển động nhưng không xử lý prefers-reduced-motion"})
+    if not files:
+        issues.append({"sev": "MAJOR", "file": "*", "line": 0, "msg": "Không có file html/css/js nào để kiểm"})
+    return issues
+
+
+def review_prompt(tier: str, proj: str, feat: str, ver: str, packet: Path, out: Path) -> str:
+    skill = "ui-ux-review" if tier == "core" else "business-review"
+    return (
+        f"Bạn là REVIEWER ĐỘC LẬP (phiên mới, không liên quan người đã vẽ mockup). Chỉ đọc, không sửa `prototypes/**`.\n"
+        f"Làm theo skill `{skill}`: {STABLE_ROOT_DISPLAY}/skill/{skill}/SKILL.md (skill tự dẫn tới phần còn lại).\n"
+        f"Mục tiêu: {proj}/{feat}/{ver}. Đọc packet: {packet}\n"
+        f"Ghi báo cáo vào: {out} — dòng đầu tiên là `VERDICT: …`; mỗi finding đúng một dòng `- [SEVERITY] ID `vị trí` — …`."
+    )
+
+
+def cmd_review_prep(args: argparse.Namespace) -> None:
+    proj, feat, ver = args.project.strip(), args.feature.strip(), args.version.strip()
+    ver_dir = PROTOTYPES_DIR / proj / feat / ver
+    if not (ver_dir / "index.html").is_file():
+        fail(f"Không thấy phiên bản {proj}/{feat}/{ver} trong kho mockup.")
+    meta = feature_meta(proj, feat)
+    vinfo = next((v for v in meta.get("versions", []) if v.get("version") == ver), {})
+    prev = previous_version(meta, ver)
+    pd = project_dir_for(proj, args.project_path, required=False)
+    rdir = reviews_dir_for(proj, feat, ver)
+    rdir.mkdir(parents=True, exist_ok=True)
+    tiers = ["core", "business"] if args.tier == "both" else [args.tier]
+
+    biz_pack = business_pack_path(pd)
+    if "business" in tiers and not biz_pack.is_file():
+        print(f"[CẢNH BÁO] Dự án chưa có {biz_pack} — Tầng 2 chưa chạy được. "
+              f"Tạo từ templates/BUSINESS-REVIEW.template.md (hoặc `proto init-project`), hoặc ghi 'business: N/A — lý do' vào packet.", file=sys.stderr)
+
+    lint = static_lint(ver_dir)
+    order = {"MAJOR": 0, "WARN": 1, "INFO": 2}
+    lint.sort(key=lambda i: (order.get(i["sev"], 3), i["file"], i["line"]))
+    base = get_pages_base_url()
+    domain, persona = meta.get("domain", ""), meta.get("persona", "")
+    ctx = pd / "docs" / "02-mockups" / "DESIGN-CONTEXT.md"
+
+    read_list = [
+        f"- {ctx} (PRJ-*, bản sắc dự án) {'' if ctx.is_file() else '⚠️ CHƯA CÓ'}",
+        f"- {KNOWLEDGE_DIR / 'personas' / (persona + '.md')}" if persona else "- (persona chưa gắn trong meta.json)",
+        f"- {KNOWLEDGE_DIR / 'domains' / (domain + '.md')}" if domain else "- (domain chưa gắn trong meta.json)",
+        f"- {KNOWLEDGE_DIR / 'core-anti-ai-slop.md'}",
+    ]
+    prev_lines = []
+    if prev:
+        prev_rdir = reviews_dir_for(proj, feat, prev)
+        for pref in ("core", "business"):
+            lr = latest_report(prev_rdir, pref)
+            if lr:
+                prev_lines.append(f"- Báo cáo {pref} bản trước: {lr[1]}")
+        nb = brief_path_for(proj, feat, prev)
+        prev_lines.append(f"- Brief bản trước ({prev}): {nb}" + ("" if nb.is_file() else " — ⚠️ CHƯA CÓ"))
+
+    baselines = []
+    if meta.get("approved_version") and meta.get("approved_version") != ver:
+        baselines.append(f"{feat}/{meta['approved_version']} (bản chốt của chính màn hình này)")
+    elif prev:
+        baselines.append(f"{feat}/{prev} (phiên bản liền trước)")
+    else:
+        for other in sorted((PROTOTYPES_DIR / proj).iterdir()) if (PROTOTYPES_DIR / proj).is_dir() else []:
+            om = other / "meta.json"
+            if other.name != feat and om.is_file():
+                try:
+                    av = json.loads(om.read_text(encoding="utf-8")).get("approved_version")
+                except Exception:
+                    av = ""
+                if av:
+                    baselines.append(f"{other.name}/{av} (bản chốt của màn hình khác trong dự án)")
+    baseline_md = "\n".join(f"- `{PROTOTYPES_DIR / proj / b.split(' ')[0]}/index.html` — {b}" for b in baselines) \
+        or "- (chưa có bản chốt/bản trước để đối chiếu — ghi rõ trong báo cáo)"
+
+    rounds = {t: (round_files(rdir, t)[-1][0] + 1 if round_files(rdir, t) else 1) for t in tiers}
+    lint_md = "\n".join(f"- `{i['sev']}` {i['file']}{':' + str(i['line']) if i['line'] else ''} — {i['msg']}" for i in lint) or "- (không phát hiện gì)"
+    counts = {k: sum(1 for i in lint if i["sev"] == k) for k in ("MAJOR", "WARN", "INFO")}
+    files_md = "\n".join(
+        f"- {f.relative_to(ver_dir)} ({f.stat().st_size // 1024} KB)"
+        for f in sorted(ver_dir.rglob("*")) if f.is_file()
+    )
+    prompts = "\n\n".join(
+        f"### Prompt cho reviewer {t} (r{rounds[t]})\n```text\n"
+        + review_prompt(t, proj, feat, ver, rdir / "packet.md", rdir / f"{t}-r{rounds[t]}.md") + "\n```"
+        for t in tiers
+    )
+    packet = f"""# Review Packet — {proj} / {feat} / {ver}
+
+- **Sinh lúc**: {now_iso()} · **Phase**: {vinfo.get('phase') or '∅'} · **Stage**: {vinfo.get('stage') or '∅'}
+- **Persona**: `{persona or '∅'}` · **Domain**: `{domain or '∅'}` · **Bản chốt hiện hành**: `{meta.get('approved_version') or '—'}` · **Bản trước**: `{prev or '—'}`
+- **Ghi chú version**: {vinfo.get('notes') or '(không có)'}
+- **Xem**: {(base + f'/viewer.html?project={proj}&feature={feat}&version={ver}') if base else '(chưa có URL Pages)'} · local: `{ver_dir / 'index.html'}`
+- **Gói nghiệp vụ (Tầng 2)**: {biz_pack if biz_pack.is_file() else '❌ chưa có — ghi `business: N/A — <lý do>` tại đây nếu màn hình không có nghiệp vụ chuyên ngành'}
+
+## Tầng 0 — Lint tĩnh ({counts['MAJOR']} MAJOR · {counts['WARN']} WARN · {counts['INFO']} INFO)
+> Chỉ bắt lỗi cơ học. Reviewer phải tự xác nhận trên bản render; không chép nguyên vào báo cáo nếu không tái hiện được.
+{lint_md}
+
+## Đọc theo thứ tự (ưu tiên khi mâu thuẫn: dự án > persona > domain > core)
+{chr(10).join(read_list)}
+
+## Baseline khung điều hướng (Shell Continuity — Tầng 1 bắt buộc đối chiếu)
+> Tên menu, icon, thứ tự, layout shell phải giữ nguyên so với baseline, trừ khi brief/người dùng cho phép đổi.
+{baseline_md}
+
+## Từ vòng trước
+{chr(10).join(prev_lines) if prev_lines else '- (đây là version đầu tiên của màn hình)'}
+
+## File của version
+{files_md}
+
+{prompts}
+"""
+    out = rdir / "packet.md"
+    out.write_text(packet, encoding="utf-8")
+    print(f"[OK] Tầng 0 — lint: {counts['MAJOR']} MAJOR · {counts['WARN']} WARN · {counts['INFO']} INFO")
+    print(f"[OK] Packet: {out}")
+    for t in tiers:
+        print(f"→ Tầng {1 if t == 'core' else 2} ({t}): mở phiên MỚI, chạy skill "
+              f"{'ui-ux-review' if t == 'core' else 'business-review'} → ghi {rdir / f'{t}-r{rounds[t]}.md'}")
+
+
+def review_state(proj: str, pd: Path, feat: str, ver: str) -> dict:
+    rdir = reviews_dir_for(proj, feat, ver)
+    st: dict = {"packet": (rdir / "packet.md").is_file(), "human": (rdir / "human.md").is_file(),
+                "brief": brief_path_for(proj, feat, ver).is_file(), "core": None, "business": None}
+    for t in ("core", "business"):
+        lr = latest_report(rdir, t)
+        if lr:
+            rep = parse_report(lr[1])
+            st[t] = {"round": lr[0], "verdict": rep["verdict"], "counts": rep["counts"]}
+    st["needs_business"] = business_pack_path(pd).is_file()
+    t1, t2 = st["core"], st["business"]
+    blocked = any(x and (x["verdict"] == "BLOCKER" or x["counts"]["BLOCKER"] > 0) for x in (t1, t2))
+    st["ready_for_human"] = bool(t1) and (bool(t2) or not st["needs_business"]) and not blocked
+    st["blocked"] = blocked
+    return st
+
+
+def fmt_tier(x: dict | None) -> str:
+    if not x:
+        return "—"
+    c = x["counts"]
+    return f"r{x['round']} {x['verdict'].replace('_', ' ').lower()} ({c['BLOCKER']}B/{c['MAJOR']}M/{c['NIT']}N/{c['IDEA']}I)"
+
+
+def cmd_review_status(args: argparse.Namespace) -> None:
+    pd = project_dir_for(args.project, args.project_path, required=False)
+    feats = [f for f in load_feature_meta(args.project) if not args.feature or f["slug"] == args.feature]
+    rows = []
+    for f in feats:
+        vers = f.get("versions", [])
+        for v in (vers if args.all else vers[-1:]):
+            rows.append((f["slug"], v["version"], review_state(args.project, pd, f["slug"], v["version"])))
+    if args.brief:
+        pend = [f"{s}@{v}" for s, v, st in rows if not st["ready_for_human"]]
+        blocked = [f"{s}@{v}" for s, v, st in rows if st["blocked"]]
+        msg = f"[review] {args.project}: {len(rows) - len(pend)}/{len(rows)} bản mới nhất sẵn sàng cho người dùng thật"
+        if blocked:
+            msg += f" · BLOCKER: {', '.join(blocked[:3])}"
+        elif pend:
+            msg += f" · chờ review AI: {', '.join(pend[:3])}{'…' if len(pend) > 3 else ''}"
+        print(msg)
+        return
+    if not rows:
+        print(f"[INFO] {args.project}: chưa có màn hình nào.")
+        return
+    print(f"Review — {args.project}   (T0 packet · T1 ui-ux · T2 nghiệp vụ · T3 người dùng · brief)")
+    for s, v, st in rows:
+        t2 = fmt_tier(st["business"]) if (st["needs_business"] or st["business"]) else "n/a (chưa có BUSINESS-REVIEW.md)"
+        flag = "⛔ BLOCKER" if st["blocked"] else ("✅ sẵn sàng cho người dùng thật" if st["ready_for_human"] else "⏳ chờ review AI")
+        print(f"  {s}/{v}\n    T0 {'✓' if st['packet'] else '—'} · T1 {fmt_tier(st['core'])} · T2 {t2} · "
+              f"T3 {'✓' if st['human'] else '—'} · brief {'✓' if st['brief'] else '—'}   {flag}")
+
+
+def cmd_brief(args: argparse.Namespace) -> None:
+    proj, feat, ver = args.project.strip(), args.feature.strip(), args.version.strip()
+    rdir = reviews_dir_for(proj, feat, ver)
+    rdir.mkdir(parents=True, exist_ok=True)
+    meta = feature_meta(proj, feat)
+    vinfo = next((v for v in meta.get("versions", []) if v.get("version") == ver), {})
+
+    human = rdir / "human.md"
+    if args.human:
+        head = "" if human.is_file() else f"# Phản hồi người dùng thật (Tầng 3) — {proj}/{feat}/{ver}\n\n"
+        with human.open("a", encoding="utf-8") as fh:
+            fh.write(head + "".join(f"- [{today_str()}] {h}\n" for h in args.human))
+        print(f"[OK] Đã ghi {len(args.human)} phản hồi vào {human}")
+
+    out = brief_path_for(proj, feat, ver)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    if out.exists() and not args.force:
+        fail(f"{out} đã tồn tại (quyết định Adopt/Defer/Reject có thể đã được điền). Dùng --force để sinh lại, hoặc sửa tay file đó.")
+
+    rows, ideas, keep, questions, sources = [], [], [], [], []
+    for prefix, tag in (("core", "T1"), ("business", "T2")):
+        lr = latest_report(rdir, prefix)
+        if not lr:
+            continue
+        rep = parse_report(lr[1])
+        sources.append(f"{prefix}-r{lr[0]} ({rep['verdict']})")
+        for f in rep["findings"]:
+            ftxt = f["text"]
+            if prefix == "business":
+                mb = re.search(r"Brief:\s*(.+)$", ftxt)
+                if mb:
+                    ftxt = mb.group(1).strip() + f" *(chi tiết: .ops/reviews/…/business-r{lr[0]}.md)*"
+                else:
+                    ftxt = f"⚠️ finding thiếu phần `Brief:` — xem báo cáo business-r{lr[0]}.md trong .ops/ và viết lại yêu cầu thiết kế đã lược dữ liệu nhạy cảm"
+                    print(f"[CẢNH BÁO] {f['id'] or f['sev']} (business) thiếu 'Brief:' — brief chỉ ghi placeholder, không chép nguyên văn.", file=sys.stderr)
+            txt = ftxt.replace("|", "\\|")
+            if f["sev"] == "IDEA":
+                ideas.append(f"| {f['id'] or '—'} | {txt} | ? | ? | ⬜ |")
+            else:
+                dec = "Adopt" if f["sev"] in ("BLOCKER", "MAJOR") else "⬜"
+                rows.append(f"| {f['id'] or '—'} | {f['sev']} | {tag} | {txt} | {dec} | |")
+        keep += [f"- {l.lstrip('-').strip()}" for l in md_section(rep["text"], "Đã kiểm & sạch")]
+        for l in md_section(rep["text"], "Câu hỏi cho chuyên gia"):
+            if "không có" not in l.lower():
+                questions.append("- " + re.sub(r"^[-0-9.\s]+", "", l))
+    if not sources:
+        print("[CẢNH BÁO] Chưa có báo cáo core-r*/business-r* — brief chỉ chứa phần phản hồi người dùng.", file=sys.stderr)
+    human_items = [l.strip() for l in human.read_text(encoding="utf-8").splitlines() if l.strip().startswith("- ")] if human.is_file() else []
+    if human_items:
+        sources.append("human.md")
+
+    tpl = (TEMPLATES_DIR / "NEXT-BRIEF.template.md").read_text(encoding="utf-8")
+    content = (
+        tpl.replace("{{PROJECT}}", proj).replace("{{FEATURE}}", feat).replace("{{VERSION}}", ver)
+        .replace("{{PHASE}}", vinfo.get("phase") or "<Pxx>").replace("{{DATE}}", today_str())
+        .replace("{{SOURCES}}", ", ".join(sources) or "—")
+        .replace("{{FINDINGS_TABLE}}", "\n".join(rows) or "| — | — | — | (không có finding) | — | |")
+        .replace("{{IDEAS_TABLE}}", "\n".join(ideas) or "| — | (không có) | — | — | — |")
+        .replace("{{HUMAN_ITEMS}}", "\n".join(human_items) or "- *(chưa có — ghi bằng `proto brief … --human \"…\"` hoặc sửa `human.md`)*")
+    )
+    content = content.replace("- <điền từ \"Đã kiểm & sạch\" của các báo cáo + điều người dùng khen>",
+                              "\n".join(keep) or "- <điền>")
+    if questions:
+        content = content.replace("- <từ mục \"Câu hỏi cho chuyên gia thật\">", "\n".join(questions))
+    out.write_text(content, encoding="utf-8")
+    print(f"[OK] {out}  ({len(rows)} việc · {len(ideas)} ý tưởng · {len(human_items)} phản hồi người dùng)")
+    print("→ Điền cột Quyết định + 'Mục tiêu version tới', rồi `proto new` — version mới phải đọc file này.")
+
+
+def review_gate_warnings(proj: str, feat: str, ver: str, pd: Path) -> list[str]:
+    st = review_state(proj, pd, feat, ver)
+    msgs = []
+    if not st["core"]:
+        msgs.append("chưa có báo cáo Tầng 1 (ui-ux-review)")
+    if st["needs_business"] and not st["business"]:
+        msgs.append("chưa có báo cáo Tầng 2 (business-review) dù dự án có BUSINESS-REVIEW.md")
+    if st["blocked"]:
+        msgs.append("còn BLOCKER chưa xử lý")
+    return msgs
 
 
 def main() -> None:
@@ -940,13 +1429,16 @@ def main() -> None:
     p_promote.add_argument("version", help="Phiên bản được duyệt")
     p_promote.add_argument("--to", required=True, help="Đường dẫn tới thư mục gốc của dự án thực tế")
     p_promote.add_argument("--notes", help="Ghi chú lý do chọn & lưu ý khi code")
+    p_promote.add_argument("--skip-review", action="store_true", help="Bỏ qua cổng review 3 tầng (nêu lý do trong --notes)")
     p_promote.set_defaults(func=cmd_promote)
 
     p_init_proj = sub.add_parser("init-project", help="Khởi tạo DESIGN-CONTEXT.md và README.md trong dự án")
-    p_init_proj.add_argument("project_path", help="Đường dẫn tới dự án (vd: /Users/vuonganhvu/Desktop/workspace/editor-platform)")
+    p_init_proj.add_argument("project_path", help="Đường dẫn tới dự án (vd: ../my-project)")
     p_init_proj.add_argument("--slug", help="Slug dự án")
     p_init_proj.add_argument("--domain", help="Mã lĩnh vực mặc định (vd: 04-creative-editor)")
     p_init_proj.add_argument("--force", action="store_true", help="Ghi đè DESIGN-CONTEXT.md nếu đã có")
+    p_init_proj.add_argument("--field", help="Mô tả 1 dòng lĩnh vực của dự án (ghi vào README kho mockup), vd: 'bán lẻ & dịch vụ nhãn khoa'")
+    p_init_proj.add_argument("--ref", action="append", help="Dự án trước đây dùng làm nguồn tham khảo (lặp cờ được); chỉ ghi tên, không chép tri thức")
     p_init_proj.set_defaults(func=cmd_init_project)
 
     p_set = sub.add_parser("set-phase", help="Gắn phase/stage cho phiên bản đã có (chỉ sửa meta, không đụng nội dung)")
@@ -1001,8 +1493,34 @@ def main() -> None:
     p_repo.add_argument("--public", action="store_true", default=True, help="Tạo public repo (mặc định để dùng GitHub Pages Free)")
     p_repo.set_defaults(func=cmd_init_repo)
 
-    p_skill = sub.add_parser("install-skill", help="Cài đặt Global Skill mỏng vào ~/.gemini/antigravity/skills/ và ~/.gemini/config/skills/")
+    p_skill = sub.add_parser("install-skill", help="Cài Global Skill mỏng (mockup-studio + ui-ux-review + business-review) vào ~/.gemini/…; --claude để cài cả vào ~/.claude/skills")
+    p_skill.add_argument("--claude", action="store_true", help="Cài thêm vào ~/.claude/skills/ (Claude Code)")
     p_skill.set_defaults(func=cmd_install_skill)
+
+    p_rp = sub.add_parser("review-prep", help="Tầng 0: lint tĩnh + sinh packet.md và prompt cho reviewer độc lập (Tầng 1/2)")
+    p_rp.add_argument("project")
+    p_rp.add_argument("feature")
+    p_rp.add_argument("version")
+    p_rp.add_argument("--tier", choices=["core", "business", "both"], default="both",
+                      help="core = ui-ux-review (chạy mọi version) · business = business-review · both (mặc định)")
+    p_rp.add_argument("--project-path", help="Thư mục dự án nếu không nằm cạnh kho mockup")
+    p_rp.set_defaults(func=cmd_review_prep)
+
+    p_rs = sub.add_parser("review-status", help="Trạng thái review 3 tầng của dự án (bản mới nhất mỗi màn hình)")
+    p_rs.add_argument("--project", required=True)
+    p_rs.add_argument("--feature", help="Chỉ một màn hình")
+    p_rs.add_argument("--all", action="store_true", help="Hiện mọi version, không chỉ bản mới nhất")
+    p_rs.add_argument("--brief", action="store_true", help="1 dòng (cho hook đầu phiên)")
+    p_rs.add_argument("--project-path")
+    p_rs.set_defaults(func=cmd_review_status)
+
+    p_br = sub.add_parser("brief", help="Gộp kết quả Tầng 1 + 2 + phản hồi người dùng + ý tưởng → briefs/<dự-án>/<màn-hình>/<version>.md (đầu vào version kế tiếp)")
+    p_br.add_argument("project")
+    p_br.add_argument("feature")
+    p_br.add_argument("version", help="Version vừa được review")
+    p_br.add_argument("--human", action="append", help="Phản hồi của người dùng thật (Tầng 3); lặp cờ cho nhiều ý, ghi vào human.md")
+    p_br.add_argument("--force", action="store_true", help="Sinh lại brief (mất quyết định đã điền)")
+    p_br.set_defaults(func=cmd_brief)
 
     args = parser.parse_args()
     args.func(args)
