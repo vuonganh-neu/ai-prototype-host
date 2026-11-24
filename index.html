@@ -219,6 +219,23 @@
       border-color: #FDE68A;
     }
 
+    /* Nhãn trạng thái review/khóa của từng version (từ prototypes.json — chỉ vòng/rev/verdict, không có nội dung finding) */
+    .rev-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      background: var(--bg-surface);
+      white-space: nowrap;
+    }
+    .rev-tag.is-sealed { color: #1E3A8A; background: #DBEAFE; border-color: #BFDBFE; }
+    .rev-tag.is-ok { color: #166534; background: #DCFCE7; border-color: #BBF7D0; }
+    .rev-tag.is-warn { color: #92400E; background: #FEF3C7; border-color: #FDE68A; }
+    .rev-tag.is-bad { color: #991B1B; background: #FEE2E2; border-color: #FECACA; }
+
     .overview {
       margin-bottom: 28px;
       border: 1px solid var(--border-subtle);
@@ -918,6 +935,28 @@
       return `<span class="phase-tag ${v.stage === 'mvp' ? 'is-mvp' : ''}" title="${v.stage === 'mvp' ? 'Bản nền MVP' : 'Phase'} ${v.phase}">${v.phase}${v.stage === 'mvp' ? ' · MVP' : ''}</span>`;
     }
 
+    const VERDICT_SHORT = { APPROVE_WITH_NOTES: 'ổn, có ghi chú', CHANGES_REQUESTED: 'cần sửa', BLOCKER: 'BLOCKER' };
+
+    // Nhãn: "Chưa review · rev1" · "Nháp rev2 · T1 r2 cần sửa · T2 r1 ổn…" · "… · cần review lại" · "🔒 Đã khóa · rev2"
+    function revTag(v) {
+      if (!v) return '';
+      const rev = v.rev || 1;
+      const r = v.review || {};
+      const tiers = [['T1', r.core], ['T2', r.business]].filter(([, x]) => x);
+      if (v.sealed) {
+        return `<span class="rev-tag is-sealed" title="Đã khóa — mọi thay đổi là version mới">🔒 Đã khóa · rev${rev}</span>`;
+      }
+      if (!tiers.length) {
+        return `<span class="rev-tag" title="Chưa có báo cáo review nào cho bản này">Chưa review · rev${rev}</span>`;
+      }
+      const parts = tiers.map(([n, x]) => `${n} r${x.round} ${VERDICT_SHORT[x.verdict] || x.verdict}`).join(' · ');
+      const stale = (r.stale || []).length > 0;
+      const open = r.open || 0;
+      const cls = stale || open ? (tiers.some(([, x]) => x.verdict === 'BLOCKER') ? 'is-bad' : 'is-warn') : 'is-ok';
+      const extra = stale ? ' · cần review lại' : open ? ` · còn ${open} BLOCKER/MAJOR` : '';
+      return `<span class="rev-tag ${cls}" title="Bản nháp chưa khóa — vòng review mới nhất của từng tầng">Nháp rev${rev} · ${parts}${extra}</span>`;
+    }
+
     function viewerHref(proj, feat, ver) {
       const q = new URLSearchParams({ project: proj, feature: feat, version: ver });
       if (state.selectedPhase !== 'all' && state.selectedPhase !== NO_PHASE) q.set('phase', state.selectedPhase);
@@ -1129,6 +1168,7 @@
                         <div class="version-id-row">
                           <span class="version-id">${v.version}</span>
                           ${phaseTag(v)}
+                          ${isApproved ? '' : revTag(v)}
                           ${isApproved ? `<span class="badge-approved">${isOutOfScope ? 'BẢN CHỐT HIỆN HÀNH' : 'BẢN CHỐT'}</span>` : ''}
                         </div>
                         ${v.notes ? `<div class="version-note">${v.notes}</div>` : ''}

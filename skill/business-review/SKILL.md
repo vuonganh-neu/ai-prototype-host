@@ -46,7 +46,7 @@ description: >-
 8. **Câu hỏi cho chuyên gia thật**: liệt kê tối đa 5 điểm AI không thể kết luận (đặc biệt y khoa/pháp lý) để chủ dự án hỏi người có chuyên môn (KTV khúc xạ, kế toán…). Đây là mục bắt buộc, có thể rỗng nhưng phải ghi “không có”.
 
 ## 3. Đầu ra
-Ghi `.ops/reviews/<project>/<feature>/<version>/business-r<N>.md` theo [mẫu](../../templates/REVIEW-BUSINESS.template.md). Dòng đầu `VERDICT:`. Finding một dòng, thêm nhãn nguồn: 
+Ghi `.ops/reviews/<project>/<feature>/<version>/business-r<N>.md` theo [mẫu](../../templates/REVIEW-BUSINESS.template.md). Dòng đầu `VERDICT:`, dòng thứ hai `Revision: revN` (lấy từ packet). Finding một dòng, thêm nhãn nguồn: 
 
 ```text
 - [MAJOR] B-02 `Khám mắt › ô ADD` — Vấn đề: cho nhập ADD âm. Căn cứ: BR-03 + https://… [VERIFIED 2026-11-24]. Hướng sửa: giới hạn khoảng, bước 0.25, cảnh báo ngoài khoảng. Brief: Ô ADD cần ràng buộc khoảng giá trị và cảnh báo khi vượt.
@@ -55,6 +55,10 @@ Ghi `.ops/reviews/<project>/<feature>/<version>/business-r<N>.md` theo [mẫu](.
 **Mỗi finding kết thúc bằng `Brief: …`** — một câu *yêu cầu thiết kế* đã lược số liệu bảo mật/quy tắc độc quyền/trích nguồn, vì chỉ câu này được đưa vào brief (commit cùng kho mockup, có thể công khai). Phần chi tiết ở lại báo cáo `.ops/`.
 
 Cuối báo cáo có mục **“Đề xuất cập nhật BUSINESS-REVIEW.md”** (quy tắc mới đã xác minh, kèm nguồn) — người dùng duyệt rồi mới ghi vào gói.
+
+**Mục cần chuyên gia mà chưa có chuyên gia** (MVP): vẫn ghi finding như thường, nhưng thêm phần **“Mặc định đề xuất”** — giá trị/quy tắc khuyến nghị tốt nhất hiện có (nghiêng về phía an toàn), mức rủi ro (giao diện / dữ liệu / **an toàn**) và chi phí refactor ước tính nếu giả định sai. Đây là đầu vào cho `proto seal --assume` và Sổ giả định của dự án (REVIEW.md §9.5). Không tự ghi vào gói.
+
+**Vòng review lại (packet ghi rev ≥ 2)**: làm theo REVIEW.md §9 — kiểm phần thay đổi + hồi quy, giữ nguyên ID finding còn lỗi, finding đã sửa ghi ở mục “Đã khắc phục ở vòng này”.
 
 ## 4. Không làm
 - Không đưa lời khuyên y tế/pháp lý/tài chính cá nhân; chỉ đánh giá *mockup có nhất quán với chuẩn công bố hay không*.

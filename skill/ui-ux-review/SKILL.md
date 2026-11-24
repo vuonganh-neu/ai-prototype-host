@@ -46,7 +46,9 @@ Nếu có brief bản trước `briefs/<project>/<feature>/<version-trước>.md
 7. **Ghi “Đã kiểm & sạch”**: những gì đã soát mà không có vấn đề (tránh rubber-stamp, giúp vòng sau không soát lại).
 
 ## 4. Đầu ra
-Ghi `.ops/reviews/<project>/<feature>/<version>/core-r<N>.md` (kho mockup, không commit) theo [mẫu](../../templates/REVIEW-CORE.template.md). **Dòng đầu tiên là `VERDICT:`**. Finding đúng định dạng một dòng của REVIEW.md §4.
+Ghi `.ops/reviews/<project>/<feature>/<version>/core-r<N>.md` (kho mockup, không commit) theo [mẫu](../../templates/REVIEW-CORE.template.md). **Dòng đầu tiên là `VERDICT:`, dòng thứ hai là `Revision: revN`** (lấy từ packet). Finding đúng định dạng một dòng của REVIEW.md §4.
+
+**Vòng review lại (packet ghi rev ≥ 2)**: đây là bản hiệu chỉnh tại chỗ theo finding vòng trước (REVIEW.md §9). Kiểm phần thay đổi (lệnh `git diff` trong packet) + hồi quy mục “Giữ nguyên”; **giữ nguyên ID** finding còn lỗi; finding đã sửa đưa vào mục “Đã khắc phục ở vòng này”; không đòi thay đổi ngoài phạm vi đã khai trong `REVISIONS.md`, trừ khi lỗi mới do chính lần sửa gây ra. Phát hiện thay đổi **không gắn finding nào** (đụng shell/bố cục/luồng) → ghi `[MAJOR]` “thay đổi ngoài phạm vi hiệu chỉnh — nên là version mới”.
 
 Kết thúc: báo ngắn cho người dùng — verdict, số BLOCKER/MAJOR/NIT/IDEA, 3 finding đáng chú ý nhất, và bước tiếp theo (`business-review` nếu dự án có `BUSINESS-REVIEW.md`; hoặc sửa BLOCKER trước).
 

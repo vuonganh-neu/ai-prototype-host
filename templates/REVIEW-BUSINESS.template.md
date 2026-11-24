@@ -1,4 +1,5 @@
 VERDICT: APPROVE_WITH_NOTES | CHANGES_REQUESTED | BLOCKER
+Revision: rev{{REV}}
 
 # Review Nghiệp vụ (Tầng 2) — {{PROJECT}} / {{FEATURE}} / {{VERSION}} · vòng r{{ROUND}}
 

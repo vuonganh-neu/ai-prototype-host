@@ -22,7 +22,8 @@ Hệ thống này là kho mockup dùng chung (đường dẫn ổn định `~/.c
      ```
    - **KHÔNG** tạo các bản nháp `v1`, `v2` trực tiếp trong thư mục dự án. Mọi bản nháp phải được tạo trong `<kho-mockup>/prototypes/<project-slug>/<feature-slug>/<version-slug>/`.
 2. **Bất biến & Không ghi đè (Immutable Versions)**:
-   - Mỗi lần tạo mới hoặc chỉnh sửa theo phản hồi của người dùng, luôn tạo một phiên bản mới (`v1-minimal`, `v2-dense`, `v3-refined`...) để giữ nguyên các bản cũ phục vụ so sánh trực tiếp trên trình duyệt.
+   - Một version **bất biến từ lúc người thật nhìn thấy nó** (`proto seal` — cổng của người). Từ đó mọi chỉnh sửa, kể cả theo phản hồi của người dùng, luôn tạo một phiên bản mới (`v1-minimal`, `v2-dense`, `v3-refined`...) để giữ nguyên các bản cũ phục vụ so sánh trực tiếp trên trình duyệt.
+   - **Ngoại lệ duy nhất — hiệu chỉnh trước khi khóa**: khi version còn là *nháp* (chưa gửi người) và đang đi qua review máy (Tầng 1/2), được sửa **tại chỗ** theo finding bằng `proto revise` (rev2, rev3; rev4 chỉ khi người xác nhận). Điều kiện, giới hạn và quy trình đầy đủ: [REVIEW.md §9](REVIEW.md). Ngoài ngoại lệ này, **không bao giờ** sửa đè một version.
 3. **Chỉ Bản Chốt mới đưa về Dự án (Clean Handoff)**:
    - Chỉ khi người dùng xác nhận duyệt một phiên bản, mới chạy lệnh `proto promote` để chép bản đó về `<project>/docs/02-mockups/<feature-slug>/`.
 
@@ -83,8 +84,9 @@ Hệ thống này là kho mockup dùng chung (đường dẫn ổn định `~/.c
 ### Bước 4b: Review độc lập — TRƯỚC khi người dùng thật xem
 Reviewer là **phiên khác** (không phải phiên vừa vẽ), nên đừng tự review ở đây.
 1. Chạy `~/.config/mockup/root/bin/proto review-prep <project> <feature> <version>` → lint tĩnh + `packet.md` + prompt có sẵn để dán vào phiên reviewer mới (Tầng 1 `ui-ux-review`, Tầng 2 `business-review` nếu dự án có `BUSINESS-REVIEW.md`).
-2. Còn BLOCKER → làm bản sửa trước; sạch BLOCKER → gửi link Hub cho người dùng thật.
-3. Sau phản hồi: `proto brief <project> <feature> <version> [--human "…"]` → brief cho version kế tiếp (Bước 1, mục 0).
+2. Còn BLOCKER/MAJOR → **hiệu chỉnh tại chỗ** (version chưa khóa): `proto revise <project> <feature> <version> --fixes <ID,…>` → sửa đúng các finding đó → review lại ở phiên reviewer mới (r2, r3…). Chỉ sửa theo finding; đụng shell/bố cục/luồng/cấu trúc dữ liệu → version mới. Tối đa rev3 tự động, rev4 khi người xác nhận. **Giai đoạn thủ công: mỗi bước do người ra lệnh, không tự nối sang bước kế** (REVIEW.md §9.6). Vai Fixer có skill riêng `mockup-fix`; Designer/Reviewer/Fixer là *vai*, agent nào (Antigravity, Cursor, Claude…) cũng đảm nhận được và đổi cho nhau theo REVIEW.md §9.7. Xem bước kế: `proto next <project> <feature> <version>`.
+3. Sạch BLOCKER/MAJOR (hoặc người cho qua có chủ đích) → người chạy `proto seal <project> <feature> <version> --by <tên> [--accept|--assume ID --reason "…"]` → mới gửi link Hub cho người trong dự án / chuyên gia.
+4. Sau phản hồi: `proto brief <project> <feature> <version> [--human "…"]` → brief cho version kế tiếp (Bước 1, mục 0); version đã khóa muốn đổi thì tạo `proto new`.
 - Kết quả review ở `.ops/` (không commit); tri thức chuyên ngành thuộc repo dự án; brief ở `briefs/`. Cần tra cứu quy trình chi tiết mới đọc `REVIEW.md`.
 
 ### Bước 5: Chốt Phương án (Promote) & Tích luỹ Tri thức (Learn)
