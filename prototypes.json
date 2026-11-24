@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-24T17:44:58+07:00",
+  "updated_at": "2026-11-24T18:44:01+07:00",
   "projects": [
     {
       "slug": "editor-platform",
@@ -652,33 +652,33 @@
               "phase": "P01D",
               "stage": "phase",
               "notes": "v2: Giữ shell baseline; chuyển dạng trụ song song, tách DV/trung gian/NV tự tính, người ký có chứng chỉ + cờ chuyển tuyến + disclaimer bản in, SE + phân loại + anisometropia + biểu đồ SE, thang VA đầy đủ, thông số đa tròng kiểm chéo gọng, vòng đời toa bất biến, biện minh lăng kính, sửa tràn ngang/a11y.",
-              "rev": 1,
-              "sealed": false,
+              "rev": 2,
+              "sealed": true,
               "review": {
                 "core": {
-                  "round": 1,
-                  "rev": 1,
-                  "verdict": "CHANGES_REQUESTED",
+                  "round": 2,
+                  "rev": 2,
+                  "verdict": "APPROVE_WITH_NOTES",
                   "counts": {
                     "BLOCKER": 0,
-                    "MAJOR": 5,
-                    "NIT": 7,
+                    "MAJOR": 0,
+                    "NIT": 8,
                     "IDEA": 3
                   }
                 },
                 "business": {
-                  "round": 1,
-                  "rev": 1,
-                  "verdict": "CHANGES_REQUESTED",
+                  "round": 2,
+                  "rev": 2,
+                  "verdict": "APPROVE_WITH_NOTES",
                   "counts": {
                     "BLOCKER": 0,
-                    "MAJOR": 8,
-                    "NIT": 1,
+                    "MAJOR": 0,
+                    "NIT": 2,
                     "IDEA": 1
                   }
                 },
                 "stale": [],
-                "open": 13
+                "open": 0
               }
             }
           ]

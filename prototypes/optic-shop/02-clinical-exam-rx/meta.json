@@ -18,7 +18,50 @@
       "created_at": "2026-11-24T12:16:18+07:00",
       "phase": "P01D",
       "stage": "phase",
-      "notes": "v2: Giữ shell baseline; chuyển dạng trụ song song, tách DV/trung gian/NV tự tính, người ký có chứng chỉ + cờ chuyển tuyến + disclaimer bản in, SE + phân loại + anisometropia + biểu đồ SE, thang VA đầy đủ, thông số đa tròng kiểm chéo gọng, vòng đời toa bất biến, biện minh lăng kính, sửa tràn ngang/a11y."
+      "notes": "v2: Giữ shell baseline; chuyển dạng trụ song song, tách DV/trung gian/NV tự tính, người ký có chứng chỉ + cờ chuyển tuyến + disclaimer bản in, SE + phân loại + anisometropia + biểu đồ SE, thang VA đầy đủ, thông số đa tròng kiểm chéo gọng, vòng đời toa bất biến, biện minh lăng kính, sửa tràn ngang/a11y.",
+      "sealed": true,
+      "rev": 2,
+      "revisions": [
+        {
+          "rev": 2,
+          "at": "2026-11-24T17:52:06+07:00",
+          "scope": "both",
+          "fixes": [
+            "C-01",
+            "C-02",
+            "C-03",
+            "C-04",
+            "C-05",
+            "B-01",
+            "B-02",
+            "B-03",
+            "B-04",
+            "B-05",
+            "B-06",
+            "B-07",
+            "B-08"
+          ],
+          "fixer": "claude",
+          "done": [
+            "C-01",
+            "C-02",
+            "C-03",
+            "C-04",
+            "C-05",
+            "B-01",
+            "B-02",
+            "B-03",
+            "B-04",
+            "B-05",
+            "B-06",
+            "B-07",
+            "B-08"
+          ],
+          "skipped": {}
+        }
+      ],
+      "sealed_at": "2026-11-24T18:43:50+07:00",
+      "sealed_by": "vuonganhvu"
     }
   ]
 }

@@ -11,3 +11,6 @@
 - Đã sửa: C-01, C-02, C-03, C-04, C-05, B-01, B-02, B-03, B-04, B-05, B-06, B-07, B-08
 
 - Chỉnh layout mục 5 (người ký, hiệu lực, trạng thái) theo review tay của người, không có finding ID: lỗi lệch UI do chính bản sửa rev2 gây ra khi sửa C-02/B-06; đã kiểm bằng Playwright ở 1440 và 390.
+## 🔒 Khóa rev2 — 2026-11-24 — bởi vuonganhvu
+- Snapshot: git tag `optic-shop/02-clinical-exam-rx/v2-clinical-rx-sheet@rev2`
+
