@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import hashlib
 import json
 import os
 import re
@@ -307,6 +308,7 @@ def cmd_promote(args: argparse.Namespace) -> None:
     if dest_feat_dir.exists():
         shutil.rmtree(dest_feat_dir)
     shutil.copytree(ver_dir, dest_feat_dir)
+    carry_guide(proj_slug, feat_slug, ver_slug, ver_dir, dest_feat_dir)
 
     # Tạo SPEC-NOTES.md
     spec_tpl_path = TEMPLATES_DIR / "SPEC-NOTES.template.md"
@@ -1004,7 +1006,7 @@ def cmd_install_skill(args: argparse.Namespace) -> None:
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(thin_src, dest)
         print(f"[OK] Đã cài đặt Global Skill mỏng tại: {dest}")
-        for name in ("ui-ux-review", "business-review", "mockup-fix"):
+        for name in ("ui-ux-review", "business-review", "mockup-fix", "guide-demo"):
             d = root / name / "SKILL.md"
             d.parent.mkdir(parents=True, exist_ok=True)
             d.write_text(thin_review_skill(name), encoding="utf-8")
@@ -1827,6 +1829,184 @@ def cmd_revise(args: argparse.Namespace) -> None:
           f"(proto next {proj} {feat} {ver} cho biết bước kế).")
 
 
+# ── Guide demo (TÙY CHỌN, không thuộc cổng review/seal/promote) — xem skill/guide-demo/SKILL.md ──────────────
+# Lớp additive nằm NGOÀI thư mục version: prototypes/<p>/<f>/guide/<v>/ (sidecar nhúng version trong iframe).
+# Version (kể cả đã khóa) không bị sửa file nào; guide đóng dấu "dựng trên version nào" bằng băm nội dung giao diện.
+GUIDE_KIT_DIR = TEMPLATES_DIR / "guide-kit"
+GUIDE_HASH_SUFFIX = {".html", ".css", ".js", ".json", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".woff", ".woff2"}
+GUIDE_ACTIONS = {"reset": [], "say": ["say"], "click": ["target"], "type": ["target", "value"], "select": ["target", "value"],
+                 "expectVisible": ["target"], "expectHidden": ["target"], "expectText": ["target", "contains"], "wait": ["ms"]}
+
+
+def guide_dir_for(proj: str, feat: str, ver: str) -> Path:
+    return PROTOTYPES_DIR / proj / feat / "guide" / ver
+
+
+def version_ui_hash(ver_dir: Path) -> str:
+    """Băm phần giao diện của version (html/css/js/json/ảnh/font); bỏ *.md (REVISIONS.md…) để ghi chú không làm guide 'lỗi thời'."""
+    h = hashlib.sha256()
+    for f in sorted(x for x in ver_dir.rglob("*") if x.is_file() and x.suffix.lower() in GUIDE_HASH_SUFFIX):
+        h.update(str(f.relative_to(ver_dir)).encode("utf-8") + b"\0" + f.read_bytes() + b"\0")
+    return h.hexdigest()[:16]
+
+
+def read_guide_json(gdir: Path) -> dict:
+    gp = gdir / "guide.json"
+    if not gp.is_file():
+        fail(f"Chưa có guide ở {gdir.relative_to(ROOT_DIR)} — chạy `proto guide init <project> <feature> <version>`")
+    return json.loads(gp.read_text(encoding="utf-8"))
+
+
+def write_stamp(gdir: Path, gj: dict, proj: str, feat: str, ver: str, ver_dir: Path) -> dict:
+    entry = version_entry(feature_meta(proj, feat), ver) or {}
+    gj["stamp"] = {"project": proj, "feature": feat, "version": ver, "rev": version_rev(entry),
+                   "sealed": bool(entry.get("sealed")), "date": today_str(), "baseHash": version_ui_hash(ver_dir)}
+    (gdir / "guide.json").write_text(json.dumps(gj, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return gj["stamp"]
+
+
+def guide_stale_note(gdir: Path, ver_dir: Path) -> str:
+    """'' nếu guide khớp version; ngược lại mô tả ngắn lý do. Không bao giờ chặn."""
+    try:
+        st = json.loads((gdir / "guide.json").read_text(encoding="utf-8")).get("stamp", {})
+    except Exception:
+        return "guide.json không đọc được"
+    if not st.get("baseHash"):
+        return "guide chưa đóng dấu (chạy `proto guide stamp`)"
+    return "" if st["baseHash"] == version_ui_hash(ver_dir) else \
+        f"giao diện version đã đổi kể từ khi dựng guide ({st.get('date', '?')}, rev{st.get('rev', '?')}) — chạy lại các kịch bản rồi `proto guide stamp`"
+
+
+def carry_guide(proj: str, feat: str, ver: str, ver_dir: Path, dest_feat_dir: Path) -> None:
+    """Promote: nếu version có guide thì chép cùng (không chặn, không bắt buộc); đổi đường dẫn mockup thành ../index.html."""
+    gdir = guide_dir_for(proj, feat, ver)
+    if not (gdir / "index.html").is_file():
+        return
+    shutil.copytree(gdir, dest_feat_dir / "guide")
+    gp = dest_feat_dir / "guide" / "guide.json"
+    gj = json.loads(gp.read_text(encoding="utf-8"))
+    gj["app"] = "../index.html"
+    gp.write_text(json.dumps(gj, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"[INFO] Đã chép kèm guide demo → {dest_feat_dir / 'guide'} (mở qua http: <thư-mục>/guide/index.html)")
+    note = guide_stale_note(gdir, ver_dir)
+    if note:
+        print(f"[CẢNH BÁO] Guide có thể lỗi thời: {note}. Không chặn chốt; soát lại khi cần dùng guide.", file=sys.stderr)
+
+
+def cmd_guide(args: argparse.Namespace) -> None:
+    proj, feat, ver = args.project.strip(), args.feature.strip(), args.version.strip()
+    ver_dir = PROTOTYPES_DIR / proj / feat / ver
+    if not (ver_dir / "index.html").is_file():
+        fail(f"Không thấy version {proj}/{feat}/{ver}")
+    gdir = guide_dir_for(proj, feat, ver)
+    base_url = get_pages_base_url()
+    url = f"{base_url}/prototypes/{proj}/{feat}/guide/{ver}/index.html" if base_url else ""
+
+    if args.action == "init":
+        if gdir.exists():
+            fail(f"Guide đã tồn tại: {gdir.relative_to(ROOT_DIR)} (không ghi đè). Sửa tại chỗ hoặc xoá thư mục rồi init lại.")
+        if not GUIDE_KIT_DIR.is_dir():
+            fail(f"Thiếu {GUIDE_KIT_DIR}")
+        shutil.copytree(GUIDE_KIT_DIR, gdir)
+        title = args.title or f"Hướng dẫn: {feature_meta(proj, feat).get('title', feat)}"
+        gj = json.loads((gdir / "guide.json").read_text(encoding="utf-8"))
+        gj["title"], gj["app"] = title, f"../../{ver}/index.html"
+        st = write_stamp(gdir, gj, proj, feat, ver, ver_dir)
+        print(f"[OK] Đã tạo guide: {gdir.relative_to(ROOT_DIR)}  (dựng trên {ver} rev{st['rev']}{' · đã khóa' if st['sealed'] else ' · NHÁP'})")
+        print("  Việc kế: khai targets.json + viết scenarios/*.json (từ luồng chính của test case) + scenarios/index.json + voice.json;")
+        print("  chạy thử qua http (vd `python3 -m http.server` ở gốc kho) rồi `proto guide check`. Chi tiết: skill/guide-demo/SKILL.md")
+        if url:
+            print(f"  URL sau khi publish: {url}")
+        return
+
+    if args.action == "stamp":
+        gj = read_guide_json(gdir)
+        st = write_stamp(gdir, gj, proj, feat, ver, ver_dir)
+        print(f"[OK] Đã đóng dấu guide: {ver} rev{st['rev']} · băm {st['baseHash']} · {st['date']}")
+        return
+
+    # check — chỉ đọc, KHÔNG chặn (trừ --strict)
+    gj = read_guide_json(gdir)
+    problems: list[str] = []
+    note = guide_stale_note(gdir, ver_dir)
+    if note:
+        problems.append("LỖI THỜI: " + note)
+    entry = version_entry(feature_meta(proj, feat), ver) or {}
+    st = gj.get("stamp", {})
+    if st.get("rev") and version_rev(entry) != st["rev"]:
+        problems.append(f"version đang ở rev{version_rev(entry)}, guide dựng trên rev{st['rev']}")
+
+    def load(rel: str, default):
+        fp = gdir / rel
+        if not fp.is_file():
+            return default
+        try:
+            return json.loads(fp.read_text(encoding="utf-8"))
+        except Exception as e:
+            problems.append(f"{rel}: JSON hỏng ({e})")
+            return default
+
+    targets = load(gj.get("targets", "targets.json"), {})
+    intents = load(gj.get("intents", "intents.json"), {})
+    src = "\n".join(f.read_text(encoding="utf-8", errors="ignore") for f in ver_dir.rglob("*")
+                    if f.is_file() and f.suffix in {".html", ".js"} and f.stat().st_size < 3_000_000)
+
+    unchecked = 0
+    names_used: set[str] = set()
+    index = load(gj.get("scenarios", "scenarios/index.json"), [])
+    if not index:
+        problems.append("scenarios/index.json trống — guide chưa có kịch bản")
+    for fn in index:
+        sc = load("scenarios/" + fn, None)
+        if not isinstance(sc, dict) or not isinstance(sc.get("steps"), list):
+            problems.append(f"scenarios/{fn}: thiếu mảng steps")
+            continue
+        for k in ("id", "title"):
+            if not sc.get(k):
+                problems.append(f"scenarios/{fn}: thiếu \"{k}\"")
+        todo = list(sc["steps"])
+        while todo:
+            stp = todo.pop()
+            if "use" in stp:
+                it = intents.get(stp["use"])
+                if it is None:
+                    problems.append(f"scenarios/{fn}: intent không tồn tại \"{stp['use']}\"")
+                else:
+                    todo.extend(it.get("steps", []))
+                continue
+            need = GUIDE_ACTIONS.get(stp.get("do"))
+            if need is None:
+                problems.append(f"scenarios/{fn}: hành động không hợp lệ \"{stp.get('do')}\"")
+                continue
+            for fld in need:
+                if fld not in stp:
+                    problems.append(f"scenarios/{fn}: bước {stp.get('do')} thiếu \"{fld}\"")
+            if stp.get("target") and "${" not in stp["target"]:
+                names_used.add(stp["target"])
+    for name in sorted(names_used):
+        css = targets.get(name)
+        if css is None:
+            css = f'[data-testid="{name}"]'
+        m = re.fullmatch(r"#([\w-]+)", css) or re.fullmatch(r'\[data-testid="([^"]+)"\]', css)
+        if not m:
+            unchecked += 1
+        elif m.group(1) not in src:
+            problems.append(f"phần tử \"{name}\" → {css}: không còn thấy \"{m.group(1)}\" trong mã của version")
+
+    print(f"Guide {proj}/{feat}/{ver}: dấu {st.get('version', '?')} rev{st.get('rev', '?')} · {st.get('date', '?')} · {len(index)} kịch bản · {len(names_used)} phần tử trỏ tới"
+          + (f" ({unchecked} selector phức tạp chưa kiểm tĩnh được)" if unchecked else ""))
+    if problems:
+        for pr in problems:
+            print(f"  [!] {pr}")
+        print("  (Chỉ là gợi ý — guide là tài liệu tham khảo, không chặn tiến độ. Chạy thử trên trình duyệt để chắc.)")
+        if args.strict:
+            sys.exit(1)
+    else:
+        print("  [OK] Guide khớp version và mọi phần tử kịch bản còn trong mã.")
+    if url:
+        print(f"  URL: {url}")
+
+
 def cmd_seal(args: argparse.Namespace) -> None:
     """Cổng của NGƯỜI: version chuyển từ nháp sang bất biến (từ đây chỉ tạo version mới)."""
     proj, feat, ver = args.project.strip(), args.feature.strip(), args.version.strip()
@@ -1987,7 +2167,7 @@ def main() -> None:
     p_repo.add_argument("--public", action="store_true", default=True, help="Tạo public repo (mặc định để dùng GitHub Pages Free)")
     p_repo.set_defaults(func=cmd_init_repo)
 
-    p_skill = sub.add_parser("install-skill", help="Cài Global Skill mỏng (mockup-studio + ui-ux-review + business-review) vào ~/.gemini/…; --claude để cài cả vào ~/.claude/skills")
+    p_skill = sub.add_parser("install-skill", help="Cài Global Skill mỏng (mockup-studio + ui-ux-review + business-review + mockup-fix + guide-demo) vào ~/.gemini/…; --claude để cài cả vào ~/.claude/skills")
     p_skill.add_argument("--claude", action="store_true", help="Cài thêm vào ~/.claude/skills/ (Claude Code)")
     p_skill.set_defaults(func=cmd_install_skill)
 
@@ -2062,6 +2242,18 @@ def main() -> None:
     p_sl.add_argument("--reason", help="Lý do cho qua (bắt buộc khi có --accept/--assume)")
     p_sl.add_argument("--project-path", help="Thư mục dự án (worktree) nếu không nằm cạnh kho mockup")
     p_sl.set_defaults(func=cmd_seal)
+
+    p_gd = sub.add_parser(
+        "guide",
+        help="Guide demo TÙY CHỌN cho một version (lớp additive ngoài thư mục version): init = dựng khung, stamp = đóng dấu, check = soát lỗi thời (không chặn)",
+    )
+    p_gd.add_argument("action", choices=["init", "stamp", "check"])
+    p_gd.add_argument("project")
+    p_gd.add_argument("feature")
+    p_gd.add_argument("version")
+    p_gd.add_argument("--title", help="Tiêu đề guide (init)")
+    p_gd.add_argument("--strict", action="store_true", help="check: thoát mã 1 nếu có cảnh báo (mặc định chỉ báo, không chặn)")
+    p_gd.set_defaults(func=cmd_guide)
 
     args = parser.parse_args()
     args.func(args)

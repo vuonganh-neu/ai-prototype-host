@@ -1,0 +1,11 @@
+{
+  "id": "vi-du-luong-chinh",
+  "title": "Tên luồng, viết như người dùng cuối nói (vd: Ghi đơn kính cho khách mới)",
+  "kind": "happy",
+  "steps": [
+    { "do": "reset" },
+    { "do": "say", "say": "Mở đầu: nói một câu về việc luồng này giúp gì cho người dùng." },
+    { "do": "click", "target": "ví dụ.nút_lưu", "say": "Bấm nút Lưu để ghi lại." },
+    { "do": "expectVisible", "target": "ví dụ.nút_lưu" }
+  ]
+}

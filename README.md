@@ -12,12 +12,13 @@ mockup/
 ├── viewer.html                     # Khung Review & So sánh phiên bản (A|B split, responsive)
 ├── prototypes.json                 # Manifest tự động sinh bởi ./bin/proto build
 ├── bin/
-│   └── proto                       # CLI quản lý: new, build, publish, promote, init-project, learn
+│   └── proto                       # CLI quản lý: new, build, publish, promote, init-project, learn, guide
 ├── skill/
 │   ├── SKILL.md                    # Tài liệu quy trình chính (được trỏ tới từ Global Skill)
 │   ├── REVIEW.md                   # Quy trình review độc lập 3 tầng
 │   ├── ui-ux-review/SKILL.md       # Tầng 1: review UI/UX theo quy tắc chung (chạy mọi version)
-│   └── business-review/SKILL.md    # Tầng 2: review nghiệp vụ/chuẩn ngành (tra cứu internet)
+│   ├── business-review/SKILL.md    # Tầng 2: review nghiệp vụ/chuẩn ngành (tra cứu internet)
+│   └── guide-demo/SKILL.md         # (Tùy chọn) guide demo cho người dùng cuối — lớp ngoài version
 ├── knowledge/                      # Ma trận Tri thức Thiết kế tích luỹ theo thời gian
 │   ├── README.md
 │   ├── core-anti-ai-slop.md        # Bộ luật chống thiết kế rập khuôn của AI
@@ -67,6 +68,15 @@ mockup/
 | Claude Code | Plugin `dev-playbook`: skill `dev-playbook:design` + hook đầu phiên in trạng thái design (`proto status --brief`) |
 | Cursor | Khối mockup trong `AGENTS.md` + rule `ui-from-mockup.mdc` (adapter cursor của dev-playbook) — chỉ thực thi theo bản chốt |
 | Antigravity | `proto install-skill` (THIN-SKILL) + khối mockup trong `AGENTS.md` |
+
+## Guide demo (tùy chọn)
+Hướng dẫn thao tác có ▶ tự chạy, Tiếp/Lùi, thuyết minh, chế độ đơn giản cho người dùng cuối — lớp *ngoài* thư mục version (`prototypes/<p>/<f>/guide/<v>/`, khung ở `templates/guide-kit/`), không đổi version đã khóa, không thuộc cổng review/seal/promote. Quy trình: `skill/guide-demo/SKILL.md`.
+```bash
+./bin/proto guide init <project> <feature> <version>    # dựng khung + đóng dấu "dựng trên version nào"
+./bin/proto guide check <project> <feature> <version>   # soát lỗi thời (chỉ báo, không chặn)
+./bin/proto guide stamp <project> <feature> <version>   # đóng dấu lại sau khi đã chạy thử
+```
+`proto promote` tự chép guide (nếu có) sang `<project>/docs/02-mockups/<feature>/guide/`.
 
 ## Review độc lập 3 tầng (xem [skill/REVIEW.md](skill/REVIEW.md))
 ```bash

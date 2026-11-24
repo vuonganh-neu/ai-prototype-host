@@ -113,3 +113,6 @@ Reviewer là **phiên khác** (không phải phiên vừa vẽ), nên đừng t�
    - Bài học mới mâu thuẫn quy tắc cũ → dùng `--supersedes <ID-cũ>` thay vì để hai quy tắc đá nhau.
    - Chạy `proto lint-knowledge` sau khi ghi; lint phải sạch lỗi.
 3. **Thứ tự ưu tiên khi đọc tri thức**: DESIGN-CONTEXT dự án > persona > domain > core (xem mục 4 của `core-anti-ai-slop.md`). Bỏ qua quy tắc ⛔; ⏳ áp dụng mềm.
+
+### Bước 6 (TÙY CHỌN, không thuộc cổng): Guide demo cho người dùng cuối
+Khi cần đào tạo/nghiệm thu với người dùng thật, hoặc chuyên gia cần xem luồng chạy: dựng bản hướng dẫn thao tác (▶ tự chạy, Tiếp/Lùi, thuyết minh, chế độ đơn giản) **bên ngoài thư mục version** — không sửa version đã khóa, không ép code/test theo guide. Chỉ làm khi người yêu cầu; quy trình ở [guide-demo/SKILL.md](guide-demo/SKILL.md).
