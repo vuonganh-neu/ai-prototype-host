@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
@@ -33,6 +34,22 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: "."
+
+      # Artifact vừa upload đôi khi chưa hiện trong API ngay (eventual consistency)
+      # → deploy-pages báo "No artifacts named github-pages were found".
+      # Chờ tối đa ~60s cho tới khi API thấy artifact rồi mới deploy.
+      - name: Wait for Pages artifact to be visible
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in $(seq 1 12); do
+            n=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" \
+              --jq '[.artifacts[] | select(.name=="github-pages" and (.expired|not))] | length')
+            echo "Lần $i: thấy $n artifact github-pages"
+            if [ "$n" -ge 1 ]; then exit 0; fi
+            sleep 5
+          done
+          echo "Artifact chưa hiện sau 60s, vẫn thử deploy."
 
       - name: Deploy to GitHub Pages
         id: deployment
