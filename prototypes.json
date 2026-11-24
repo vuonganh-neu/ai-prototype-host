@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-24T12:31:03+07:00",
+  "updated_at": "2026-11-24T17:44:58+07:00",
   "projects": [
     {
       "slug": "editor-platform",
@@ -28,70 +28,150 @@
               "created_at": "2026-11-18T11:26:43+07:00",
               "phase": "P04B",
               "stage": "phase",
-              "notes": "v1.0 — Bản Baseline P04B CV Editor Module ban đầu"
+              "notes": "v1.0 — Bản Baseline P04B CV Editor Module ban đầu",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v2.5-figma-graphite",
               "created_at": "2026-11-18T11:26:43+07:00",
               "phase": "P04B",
               "stage": "phase",
-              "notes": "v2.5 Mẫu 2 — Giao diện Graphite thuần kiểu Figma/Framer"
+              "notes": "v2.5 Mẫu 2 — Giao diện Graphite thuần kiểu Figma/Framer",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v2.5-warm-atelier",
               "created_at": "2026-11-18T11:26:44+07:00",
               "phase": "P04B",
               "stage": "phase",
-              "notes": "v2.5 Mẫu 3 — Bản giấy kem nghệ thuật với thanh Floating Dock bên dưới"
+              "notes": "v2.5 Mẫu 3 — Bản giấy kem nghệ thuật với thanh Floating Dock bên dưới",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v2a-canva-hybrid",
               "created_at": "2026-11-18T11:26:43+07:00",
               "phase": "P04B",
               "stage": "phase",
-              "notes": "v2.0 Style A — Canva Studio + 4 nút đổi Theme ứng dụng chủ + Kho Template"
+              "notes": "v2.0 Style A — Canva Studio + 4 nút đổi Theme ứng dụng chủ + Kho Template",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v2b-direct-canvas",
               "created_at": "2026-11-18T11:26:43+07:00",
               "phase": "P04B",
               "stage": "phase",
-              "notes": "v2.0 Style B — Direct Canvas tương tác trực tiếp với thanh công cụ nổi"
+              "notes": "v2.0 Style B — Direct Canvas tương tác trực tiếp với thanh công cụ nổi",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v3-crafted-light",
               "created_at": "2026-11-18T11:26:44+07:00",
               "phase": "P04B",
               "stage": "phase",
-              "notes": "v3.0 — Mẫu 1 & 2 Hợp Nhất: 7 tab công cụ + 16 PS Blend Modes + Import Font/SVG"
+              "notes": "v3.0 — Mẫu 1 & 2 Hợp Nhất: 7 tab công cụ + 16 PS Blend Modes + Import Font/SVG",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v4-commercial-full-ux",
               "created_at": "2026-11-18T11:26:44+07:00",
               "phase": "P04B",
               "stage": "phase",
-              "notes": "v4.0 — Kéo thả & Co giãn 8 hướng mọi Block, Section DB, Khổ giấy A4/A5/Slide & Zoom"
+              "notes": "v4.0 — Kéo thả & Co giãn 8 hướng mọi Block, Section DB, Khổ giấy A4/A5/Slide & Zoom",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v5-icon-clean-studio",
               "created_at": "2026-11-18T11:26:44+07:00",
               "phase": "P04B",
               "stage": "phase",
-              "notes": "v5.0 — Thanh công cụ Icon 32x32px, Đổi kiểu từng Section, Bg Alpha & 4 Mẫu bố cục"
+              "notes": "v5.0 — Thanh công cụ Icon 32x32px, Đổi kiểu từng Section, Bg Alpha & 4 Mẫu bố cục",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v6-master-toolkit-studio",
               "created_at": "2026-11-18T11:48:08+07:00",
               "phase": "P04B",
               "stage": "phase",
-              "notes": "v6.0 — Đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12): Đa miền (CV, Poster, Banner, Catalog, Web, Chart, Map, Motion), Rulers/Bleed/SafeArea, Vector Pen & Boolean, Hierarchical Layer Tree, Precision Inspector (X/Y/W/H/CMYK/Stroke/Effects), Motion Timeline & Export Preflight QA"
+              "notes": "v6.0 — Đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12): Đa miền (CV, Poster, Banner, Catalog, Web, Chart, Map, Motion), Rulers/Bleed/SafeArea, Vector Pen & Boolean, Hierarchical Layer Tree, Precision Inspector (X/Y/W/H/CMYK/Stroke/Effects), Motion Timeline & Export Preflight QA",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v7-clean-gdocs-studio",
               "created_at": "2026-11-18T13:29:50+07:00",
               "phase": "P04B",
               "stage": "phase",
-              "notes": "v7.0 — Kế thừa đầy đủ 12 nhóm Toolkit v6: Ẩn số mục (chỉ hiện khi bấm giữ Alt), Đồng nhất 1 font Inter & 100% Tiếng Việt, Thanh công cụ viên thuốc Google Docs + Chân trang cố định kiểu Word, Nút đóng/mở ngăn công cụ cố định không bị mất, Kho chèn Ảnh & Video thật"
+              "notes": "v7.0 — Kế thừa đầy đủ 12 nhóm Toolkit v6: Ẩn số mục (chỉ hiện khi bấm giữ Alt), Đồng nhất 1 font Inter & 100% Tiếng Việt, Thanh công cụ viên thuốc Google Docs + Chân trang cố định kiểu Word, Nút đóng/mở ngăn công cụ cố định không bị mất, Kho chèn Ảnh & Video thật",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             }
           ]
         },
@@ -111,7 +191,15 @@
               "created_at": "2026-11-18T11:26:44+07:00",
               "phase": "P03",
               "stage": "phase",
-              "notes": "v1.0 — Giao diện khung ứng dụng chủ nhúng Editor SDK"
+              "notes": "v1.0 — Giao diện khung ứng dụng chủ nhúng Editor SDK",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             }
           ]
         },
@@ -131,21 +219,45 @@
               "created_at": "2026-11-18T11:26:44+07:00",
               "phase": "P05",
               "stage": "phase",
-              "notes": "v1.0 — 12 mẫu biểu đồ thống kê (Treemap, Funnel, Waterfall, Boxplot, Heatmap, Gauge) & DB"
+              "notes": "v1.0 — 12 mẫu biểu đồ thống kê (Treemap, Funnel, Waterfall, Boxplot, Heatmap, Gauge) & DB",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v6-master-toolkit-chart",
               "created_at": "2026-11-18T12:10:54+07:00",
               "phase": "P05",
               "stage": "phase",
-              "notes": "v6.0 — Bổ sung đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12), Rulers/Guides, Hierarchical Layer Tree, Precision Inspector, Motion Timeline & Export Preflight QA cho Chart Studio"
+              "notes": "v6.0 — Bổ sung đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12), Rulers/Guides, Hierarchical Layer Tree, Precision Inspector, Motion Timeline & Export Preflight QA cho Chart Studio",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v7-clean-gdocs-chart",
               "created_at": "2026-11-18T13:29:50+07:00",
               "phase": "P05",
               "stage": "phase",
-              "notes": "v7.0 — Giao diện 100% Tiếng Việt chuẩn Google Docs/Word, ẩn số mục (giữ Alt để xem), thanh chân trang cố định, chèn Ảnh/Video thật & Biểu đồ ECharts"
+              "notes": "v7.0 — Giao diện 100% Tiếng Việt chuẩn Google Docs/Word, ẩn số mục (giữ Alt để xem), thanh chân trang cố định, chèn Ảnh/Video thật & Biểu đồ ECharts",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             }
           ]
         },
@@ -165,21 +277,45 @@
               "created_at": "2026-11-18T11:26:44+07:00",
               "phase": "P06",
               "stage": "phase",
-              "notes": "v1.0 — 14+ Khối Web, Responsive Desktop/Tablet/Mobile & CMS DB"
+              "notes": "v1.0 — 14+ Khối Web, Responsive Desktop/Tablet/Mobile & CMS DB",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v6-master-toolkit-web",
               "created_at": "2026-11-18T12:10:55+07:00",
               "phase": "P06",
               "stage": "phase",
-              "notes": "v6.0 — Bổ sung đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12), Responsive Breakpoints, Auto-Layout/Constraints, Hierarchical Layer Tree, Precision Inspector & Export QA cho Website Studio"
+              "notes": "v6.0 — Bổ sung đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12), Responsive Breakpoints, Auto-Layout/Constraints, Hierarchical Layer Tree, Precision Inspector & Export QA cho Website Studio",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v7-clean-gdocs-web",
               "created_at": "2026-11-18T13:29:50+07:00",
               "phase": "P06",
               "stage": "phase",
-              "notes": "v7.0 — Giao diện 100% Tiếng Việt chuẩn Google Docs/Word, ẩn số mục (giữ Alt để xem), thanh chân trang cố định, chèn Ảnh/Video thật & Responsive Web"
+              "notes": "v7.0 — Giao diện 100% Tiếng Việt chuẩn Google Docs/Word, ẩn số mục (giữ Alt để xem), thanh chân trang cố định, chèn Ảnh/Video thật & Responsive Web",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             }
           ]
         },
@@ -199,21 +335,45 @@
               "created_at": "2026-11-18T11:26:44+07:00",
               "phase": "P07",
               "stage": "phase",
-              "notes": "v1.0 — Bản đồ Vệ tinh Esri, Google/Apple/Bing & Tàu di chuyển GPS sống"
+              "notes": "v1.0 — Bản đồ Vệ tinh Esri, Google/Apple/Bing & Tàu di chuyển GPS sống",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v6-master-toolkit-map",
               "created_at": "2026-11-18T12:10:55+07:00",
               "phase": "P07",
               "stage": "phase",
-              "notes": "v6.0 — Bổ sung đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12), Spatial Layers, Satellite/Street Tiles, Rulers/Guides, Hierarchical Layer Tree, Precision Inspector & Export QA cho Map Studio"
+              "notes": "v6.0 — Bổ sung đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12), Spatial Layers, Satellite/Street Tiles, Rulers/Guides, Hierarchical Layer Tree, Precision Inspector & Export QA cho Map Studio",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v7-clean-gdocs-map",
               "created_at": "2026-11-18T13:29:50+07:00",
               "phase": "P07",
               "stage": "phase",
-              "notes": "v7.0 — Giao diện 100% Tiếng Việt chuẩn Google Docs/Word, ẩn số mục (giữ Alt để xem), thanh chân trang cố định, chèn Ảnh/Video thật & Bản đồ Vệ tinh"
+              "notes": "v7.0 — Giao diện 100% Tiếng Việt chuẩn Google Docs/Word, ẩn số mục (giữ Alt để xem), thanh chân trang cố định, chèn Ảnh/Video thật & Bản đồ Vệ tinh",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             }
           ]
         },
@@ -233,21 +393,45 @@
               "created_at": "2026-11-18T11:26:44+07:00",
               "phase": "P08",
               "stage": "phase",
-              "notes": "v1.0 — 5 định dạng ấn phẩm + Lật trang sách 3D & Mở phong bì"
+              "notes": "v1.0 — 5 định dạng ấn phẩm + Lật trang sách 3D & Mở phong bì",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v6-master-toolkit-poster",
               "created_at": "2026-11-18T12:10:55+07:00",
               "phase": "P08",
               "stage": "phase",
-              "notes": "v6.0 — Bổ sung đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12), Print Bleed 3mm & Crop Marks, Safe Area, CMYK Profile, Text on Path, Pen/Boolean Vector, Multi-page Flip & Export PDF/X QA"
+              "notes": "v6.0 — Bổ sung đầy đủ 12 nhóm Design Toolkit (Mục 5.1–5.12), Print Bleed 3mm & Crop Marks, Safe Area, CMYK Profile, Text on Path, Pen/Boolean Vector, Multi-page Flip & Export PDF/X QA",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v7-clean-gdocs-poster",
               "created_at": "2026-11-18T13:29:50+07:00",
               "phase": "P08",
               "stage": "phase",
-              "notes": "v7.0 — Giao diện 100% Tiếng Việt chuẩn Google Docs/Word, ẩn số mục (giữ Alt để xem), thanh chân trang cố định, chèn Ảnh/Video thật & Vùng xén lề in 3mm"
+              "notes": "v7.0 — Giao diện 100% Tiếng Việt chuẩn Google Docs/Word, ẩn số mục (giữ Alt để xem), thanh chân trang cố định, chèn Ảnh/Video thật & Vùng xén lề in 3mm",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             }
           ]
         }
@@ -276,28 +460,60 @@
               "created_at": "2026-11-19T11:21:28+07:00",
               "phase": "P00A",
               "stage": "mvp",
-              "notes": "P00A Interactive Functional Prototype: Frontend-only + localStorage state covering Store Operations (POS, Eye Exam/Rx/Lens Config, Lab Kanban/QC, Inventory Ledger, Customer 360/CRM, Warranty, Appointments, Reports/Zalo Sandbox) synced live with Public Website & Customer Eye Book Portal."
+              "notes": "P00A Interactive Functional Prototype: Frontend-only + localStorage state covering Store Operations (POS, Eye Exam/Rx/Lens Config, Lab Kanban/QC, Inventory Ledger, Customer 360/CRM, Warranty, Appointments, Reports/Zalo Sandbox) synced live with Public Website & Customer Eye Book Portal.",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v2-optical-suite",
               "created_at": "2026-11-19T13:34:28+07:00",
               "phase": "P00A",
               "stage": "mvp",
-              "notes": "Phiên bản nâng cấp toàn diện từ phản hồi v1: Sidebar xanh ngọc trầm + Lucide SVG + Be Vietnam Pro; đủ CRUD + Search + Filter + Pagination trên mọi màn hình + Global Search; POS hỗ trợ Card Grid & Compact List/Barcode cho danh mục lớn; Split-view KTV Khúc xạ xem lịch sử & biểu đồ độ cận; CRM Automation; Mobile Responsive chuẩn 390px; Website có Thử kính trực tuyến (Virtual Try-On), xem đa góc cạnh, Biểu đồ thị lực & Trợ lý AI."
+              "notes": "Phiên bản nâng cấp toàn diện từ phản hồi v1: Sidebar xanh ngọc trầm + Lucide SVG + Be Vietnam Pro; đủ CRUD + Search + Filter + Pagination trên mọi màn hình + Global Search; POS hỗ trợ Card Grid & Compact List/Barcode cho danh mục lớn; Split-view KTV Khúc xạ xem lịch sử & biểu đồ độ cận; CRM Automation; Mobile Responsive chuẩn 390px; Website có Thử kính trực tuyến (Virtual Try-On), xem đa góc cạnh, Biểu đồ thị lực & Trợ lý AI.",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v3-complete-platform",
               "created_at": "2026-11-19T16:08:48+07:00",
               "phase": "P00A",
               "stage": "mvp",
-              "notes": "Khắc phục triệt để lỗi fixed sidebar (thêm nút thu gọn/mở rộng) và thêm Footer đầy đủ; POS & Website dùng phân trang dạng scroll (Load-more) + lọc khoảng giá & sắp xếp tên/giá; tách riêng Kho hàng và Sản phẩm (ảnh góc cạnh/video/hiển thị web); thêm Cài đặt hệ thống (User, RBAC, Store info/Logo), Quản trị Website (trang tĩnh), và tính năng Lập kế hoạch Ngân sách & Gợi ý Combo AI cho cả Khách hàng lẫn Nhân viên POS."
+              "notes": "Khắc phục triệt để lỗi fixed sidebar (thêm nút thu gọn/mở rộng) và thêm Footer đầy đủ; POS & Website dùng phân trang dạng scroll (Load-more) + lọc khoảng giá & sắp xếp tên/giá; tách riêng Kho hàng và Sản phẩm (ảnh góc cạnh/video/hiển thị web); thêm Cài đặt hệ thống (User, RBAC, Store info/Logo), Quản trị Website (trang tĩnh), và tính năng Lập kế hoạch Ngân sách & Gợi ý Combo AI cho cả Khách hàng lẫn Nhân viên POS.",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             },
             {
               "version": "v4-guided-demo",
               "created_at": "2026-11-20T17:49:08+07:00",
               "phase": "P00A",
               "stage": "mvp",
-              "notes": "Giữ nguyên UI/UX của v3-complete-platform; thêm lớp demo có hướng dẫn: 4 kịch bản tự chạy (POS bán gọng + tròng cọc 50%, POS chuyển khoản chưa xác nhận, Website đặt lịch → cửa hàng xác nhận, Website bỏ trống SĐT), teleport tới từng bước, thuyết minh giọng tiếng Việt (chọn giọng + từ điển phát âm), tiếng click và nhạc nền bật/tắt riêng. Chỉ giả lập: không latency/mạng, phân quyền là đổi vai trò trên header, SĐT chỉ kiểm bắt buộc nhập (không kiểm định dạng), Zalo chỉ ghi outbox."
+              "notes": "Giữ nguyên UI/UX của v3-complete-platform; thêm lớp demo có hướng dẫn: 4 kịch bản tự chạy (POS bán gọng + tròng cọc 50%, POS chuyển khoản chưa xác nhận, Website đặt lịch → cửa hàng xác nhận, Website bỏ trống SĐT), teleport tới từng bước, thuyết minh giọng tiếng Việt (chọn giọng + từ điển phát âm), tiếng click và nhạc nền bật/tắt riêng. Chỉ giả lập: không latency/mạng, phân quyền là đổi vai trò trên header, SĐT chỉ kiểm bắt buộc nhập (không kiểm định dạng), Zalo chỉ ghi outbox.",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": null,
+                "business": null,
+                "stale": [],
+                "open": 0
+              }
             }
           ]
         },
@@ -317,14 +533,70 @@
               "created_at": "2026-11-23T19:06:24+07:00",
               "phase": "P01D",
               "stage": "phase",
-              "notes": "Form động theo danh mục (Gọng/Kính mát/Tròng/Vật tư), upload ảnh từng góc + Video 360 player, Rich Text Editor mô tả Website & Xem trước trang chi tiết Website"
+              "notes": "Form động theo danh mục (Gọng/Kính mát/Tròng/Vật tư), upload ảnh từng góc + Video 360 player, Rich Text Editor mô tả Website & Xem trước trang chi tiết Website",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": {
+                  "round": 1,
+                  "rev": 1,
+                  "verdict": "CHANGES_REQUESTED",
+                  "counts": {
+                    "BLOCKER": 0,
+                    "MAJOR": 8,
+                    "NIT": 1,
+                    "IDEA": 1
+                  }
+                },
+                "business": {
+                  "round": 1,
+                  "rev": 1,
+                  "verdict": "BLOCKER",
+                  "counts": {
+                    "BLOCKER": 2,
+                    "MAJOR": 7,
+                    "NIT": 1,
+                    "IDEA": 1
+                  }
+                },
+                "stale": [],
+                "open": 17
+              }
             },
             {
               "version": "v2-variants-lens-matrix",
               "created_at": "2026-11-24T12:16:14+07:00",
               "phase": "P01D",
               "stage": "phase",
-              "notes": "v2: Giữ shell baseline; biến thể màu/size, tồn kho & giá tròng theo dải độ + phụ phí gia công, tách kiểu viền/dáng gọng, ED/DBL/trọng lượng, kính áp tròng & đọc sẵn độ, trình soạn thảo có schema + sanitize, undo xoá ảnh, validation, a11y & responsive."
+              "notes": "v2: Giữ shell baseline; biến thể màu/size, tồn kho & giá tròng theo dải độ + phụ phí gia công, tách kiểu viền/dáng gọng, ED/DBL/trọng lượng, kính áp tròng & đọc sẵn độ, trình soạn thảo có schema + sanitize, undo xoá ảnh, validation, a11y & responsive.",
+              "rev": 2,
+              "sealed": true,
+              "review": {
+                "core": {
+                  "round": 2,
+                  "rev": 2,
+                  "verdict": "APPROVE_WITH_NOTES",
+                  "counts": {
+                    "BLOCKER": 0,
+                    "MAJOR": 0,
+                    "NIT": 8,
+                    "IDEA": 3
+                  }
+                },
+                "business": {
+                  "round": 2,
+                  "rev": 2,
+                  "verdict": "CHANGES_REQUESTED",
+                  "counts": {
+                    "BLOCKER": 0,
+                    "MAJOR": 3,
+                    "NIT": 0,
+                    "IDEA": 1
+                  }
+                },
+                "stale": [],
+                "open": 0
+              }
             }
           ]
         },
@@ -344,14 +616,70 @@
               "created_at": "2026-11-23T19:06:25+07:00",
               "phase": "P01D",
               "stage": "phase",
-              "notes": "Split-view đo mắt chuẩn nhãn khoa: SPH/CYL/ADD bước 0.25D hỗ trợ cận (-) & viễn (+), ràng buộc CYL-AXIS 1-180°, PRISM/BASE, PD từng mắt OD/OS, thị lực UCVA/BCVA, đo máy tự động và biểu đồ đa tật khúc xạ"
+              "notes": "Split-view đo mắt chuẩn nhãn khoa: SPH/CYL/ADD bước 0.25D hỗ trợ cận (-) & viễn (+), ràng buộc CYL-AXIS 1-180°, PRISM/BASE, PD từng mắt OD/OS, thị lực UCVA/BCVA, đo máy tự động và biểu đồ đa tật khúc xạ",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": {
+                  "round": 1,
+                  "rev": 1,
+                  "verdict": "CHANGES_REQUESTED",
+                  "counts": {
+                    "BLOCKER": 0,
+                    "MAJOR": 7,
+                    "NIT": 3,
+                    "IDEA": 1
+                  }
+                },
+                "business": {
+                  "round": 1,
+                  "rev": 1,
+                  "verdict": "BLOCKER",
+                  "counts": {
+                    "BLOCKER": 3,
+                    "MAJOR": 7,
+                    "NIT": 3,
+                    "IDEA": 1
+                  }
+                },
+                "stale": [],
+                "open": 17
+              }
             },
             {
               "version": "v2-clinical-rx-sheet",
               "created_at": "2026-11-24T12:16:18+07:00",
               "phase": "P01D",
               "stage": "phase",
-              "notes": "v2: Giữ shell baseline; chuyển dạng trụ song song, tách DV/trung gian/NV tự tính, người ký có chứng chỉ + cờ chuyển tuyến + disclaimer bản in, SE + phân loại + anisometropia + biểu đồ SE, thang VA đầy đủ, thông số đa tròng kiểm chéo gọng, vòng đời toa bất biến, biện minh lăng kính, sửa tràn ngang/a11y."
+              "notes": "v2: Giữ shell baseline; chuyển dạng trụ song song, tách DV/trung gian/NV tự tính, người ký có chứng chỉ + cờ chuyển tuyến + disclaimer bản in, SE + phân loại + anisometropia + biểu đồ SE, thang VA đầy đủ, thông số đa tròng kiểm chéo gọng, vòng đời toa bất biến, biện minh lăng kính, sửa tràn ngang/a11y.",
+              "rev": 1,
+              "sealed": false,
+              "review": {
+                "core": {
+                  "round": 1,
+                  "rev": 1,
+                  "verdict": "CHANGES_REQUESTED",
+                  "counts": {
+                    "BLOCKER": 0,
+                    "MAJOR": 5,
+                    "NIT": 7,
+                    "IDEA": 3
+                  }
+                },
+                "business": {
+                  "round": 1,
+                  "rev": 1,
+                  "verdict": "CHANGES_REQUESTED",
+                  "counts": {
+                    "BLOCKER": 0,
+                    "MAJOR": 8,
+                    "NIT": 1,
+                    "IDEA": 1
+                  }
+                },
+                "stale": [],
+                "open": 13
+              }
             }
           ]
         }

@@ -18,7 +18,70 @@
       "created_at": "2026-11-24T12:16:14+07:00",
       "phase": "P01D",
       "stage": "phase",
-      "notes": "v2: Giữ shell baseline; biến thể màu/size, tồn kho & giá tròng theo dải độ + phụ phí gia công, tách kiểu viền/dáng gọng, ED/DBL/trọng lượng, kính áp tròng & đọc sẵn độ, trình soạn thảo có schema + sanitize, undo xoá ảnh, validation, a11y & responsive."
+      "notes": "v2: Giữ shell baseline; biến thể màu/size, tồn kho & giá tròng theo dải độ + phụ phí gia công, tách kiểu viền/dáng gọng, ED/DBL/trọng lượng, kính áp tròng & đọc sẵn độ, trình soạn thảo có schema + sanitize, undo xoá ảnh, validation, a11y & responsive.",
+      "sealed": true,
+      "rev": 2,
+      "revisions": [
+        {
+          "rev": 2,
+          "at": "2026-11-24T16:56:40+07:00",
+          "scope": "both",
+          "fixes": [
+            "C-01",
+            "C-02",
+            "C-03",
+            "C-04",
+            "B-01",
+            "B-02",
+            "B-03",
+            "B-04",
+            "B-05",
+            "B-06",
+            "B-07"
+          ],
+          "fixer": "antigravity",
+          "done": [
+            "C-01",
+            "C-02",
+            "C-03",
+            "C-04",
+            "B-03",
+            "B-06",
+            "B-07"
+          ],
+          "skipped": {
+            "B-01": "B-01: can version moi & cho chuyen gia (ton theo o SPHxCYL doi cau truc du lieu; dai so/chong/ho da sua o C-03); B-02: can version moi (tach truc mau x size doi cau truc du lieu & Giu nguyen); B-04: cho chuyen gia & can version moi (moc do/chat lieu gong khoan can KTV chot); B-05: cho chuyen gia & can version moi (pham vi ban kinh ap trong cho chu cua hang quyet)",
+            "B-02": "B-01: can version moi & cho chuyen gia (ton theo o SPHxCYL doi cau truc du lieu; dai so/chong/ho da sua o C-03); B-02: can version moi (tach truc mau x size doi cau truc du lieu & Giu nguyen); B-04: cho chuyen gia & can version moi (moc do/chat lieu gong khoan can KTV chot); B-05: cho chuyen gia & can version moi (pham vi ban kinh ap trong cho chu cua hang quyet)",
+            "B-04": "B-01: can version moi & cho chuyen gia (ton theo o SPHxCYL doi cau truc du lieu; dai so/chong/ho da sua o C-03); B-02: can version moi (tach truc mau x size doi cau truc du lieu & Giu nguyen); B-04: cho chuyen gia & can version moi (moc do/chat lieu gong khoan can KTV chot); B-05: cho chuyen gia & can version moi (pham vi ban kinh ap trong cho chu cua hang quyet)",
+            "B-05": "B-01: can version moi & cho chuyen gia (ton theo o SPHxCYL doi cau truc du lieu; dai so/chong/ho da sua o C-03); B-02: can version moi (tach truc mau x size doi cau truc du lieu & Giu nguyen); B-04: cho chuyen gia & can version moi (moc do/chat lieu gong khoan can KTV chot); B-05: cho chuyen gia & can version moi (pham vi ban kinh ap trong cho chu cua hang quyet)"
+          }
+        }
+      ],
+      "sealed_at": "2026-11-24T17:44:58+07:00",
+      "sealed_by": "Chủ dự án",
+      "accepted": [
+        {
+          "id": "B-02",
+          "sev": "MAJOR",
+          "kind": "accepted",
+          "reason": "MVP giới thiệu, chưa có chuyên gia/chủ cửa hàng: B-05 tạm chấp nhận không bán kính áp tròng hoặc giữ như hiện tại; B-02 tạm quản lý thông số chung cấp sản phẩm; B-04 giữ mặc định hiện tại chờ KTV/lab xác nhận mốc độ và chất liệu",
+          "at": "2026-11-24T17:44:58+07:00"
+        },
+        {
+          "id": "B-05",
+          "sev": "MAJOR",
+          "kind": "accepted",
+          "reason": "MVP giới thiệu, chưa có chuyên gia/chủ cửa hàng: B-05 tạm chấp nhận không bán kính áp tròng hoặc giữ như hiện tại; B-02 tạm quản lý thông số chung cấp sản phẩm; B-04 giữ mặc định hiện tại chờ KTV/lab xác nhận mốc độ và chất liệu",
+          "at": "2026-11-24T17:44:58+07:00"
+        },
+        {
+          "id": "B-04",
+          "sev": "MAJOR",
+          "kind": "assumed",
+          "reason": "MVP giới thiệu, chưa có chuyên gia/chủ cửa hàng: B-05 tạm chấp nhận không bán kính áp tròng hoặc giữ như hiện tại; B-02 tạm quản lý thông số chung cấp sản phẩm; B-04 giữ mặc định hiện tại chờ KTV/lab xác nhận mốc độ và chất liệu",
+          "at": "2026-11-24T17:44:58+07:00"
+        }
+      ]
     }
   ]
 }

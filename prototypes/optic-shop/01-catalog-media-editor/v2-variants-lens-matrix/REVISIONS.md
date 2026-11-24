@@ -11,3 +11,9 @@
 - Đã sửa: C-01, C-02, C-03, C-04, B-03, B-06, B-07
 - Không sửa: B-01, B-02, B-04, B-05 — B-01: can version moi & cho chuyen gia (ton theo o SPHxCYL doi cau truc du lieu; dai so/chong/ho da sua o C-03); B-02: can version moi (tach truc mau x size doi cau truc du lieu & Giu nguyen); B-04: cho chuyen gia & can version moi (moc do/chat lieu gong khoan can KTV chot); B-05: cho chuyen gia & can version moi (pham vi ban kinh ap trong cho chu cua hang quyet)
 
+## 🔒 Khóa rev2 — 2026-11-24 — bởi Chủ dự án
+- Snapshot: git tag `optic-shop/01-catalog-media-editor/v2-variants-lens-matrix@rev2`
+- Chấp nhận có chủ đích: B-02, B-05
+- Giả định chờ chuyên gia xác nhận: B-04
+- Lý do: MVP giới thiệu, chưa có chuyên gia/chủ cửa hàng: B-05 tạm chấp nhận không bán kính áp tròng hoặc giữ như hiện tại; B-02 tạm quản lý thông số chung cấp sản phẩm; B-04 giữ mặc định hiện tại chờ KTV/lab xác nhận mốc độ và chất liệu
+
