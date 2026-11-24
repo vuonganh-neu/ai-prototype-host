@@ -451,7 +451,19 @@ html, body {
   overflow: hidden;
 }
 
-.table-wrap { width: 100%; overflow-x: auto; }
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  background:
+    linear-gradient(to right, #FFFFFF 30%, rgba(255, 255, 255, 0)),
+    linear-gradient(to left, #FFFFFF 30%, rgba(255, 255, 255, 0)) 100% 0,
+    radial-gradient(farthest-side at 0 50%, rgba(15, 61, 56, 0.14), rgba(15, 61, 56, 0)),
+    radial-gradient(farthest-side at 100% 50%, rgba(15, 61, 56, 0.14), rgba(15, 61, 56, 0)) 100% 0;
+  background-repeat: no-repeat;
+  background-color: #FFFFFF;
+  background-size: 36px 100%, 36px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
 .data-table { width: 100%; border-collapse: collapse; min-width: 960px; }
 .data-table th {
   text-align: left;
@@ -686,7 +698,21 @@ html, body {
 .chip-toggle input { width: 15px; height: 15px; accent-color: var(--accent-primary); margin: 0; }
 
 /* Sub-tables (Variants / Lens Power Tiers) */
-.sub-table-wrap { width: 100%; overflow-x: auto; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); }
+.sub-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(to right, #FFFFFF 30%, rgba(255, 255, 255, 0)),
+    linear-gradient(to left, #FFFFFF 30%, rgba(255, 255, 255, 0)) 100% 0,
+    radial-gradient(farthest-side at 0 50%, rgba(15, 61, 56, 0.16), rgba(15, 61, 56, 0)),
+    radial-gradient(farthest-side at 100% 50%, rgba(15, 61, 56, 0.16), rgba(15, 61, 56, 0)) 100% 0;
+  background-repeat: no-repeat;
+  background-color: #FFFFFF;
+  background-size: 32px 100%, 32px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
 .sub-table { width: 100%; border-collapse: collapse; min-width: 640px; }
 .sub-table th {
   text-align: left;
@@ -698,12 +724,42 @@ html, body {
   border-bottom: 1px solid var(--border-subtle);
   white-space: nowrap;
 }
+.sub-table th.num, .sub-table td.num { text-align: right; }
 .sub-table td {
   padding: 7px 8px;
   border-bottom: 1px solid var(--border-subtle);
   vertical-align: middle;
 }
 .sub-table .input, .sub-table .select { padding: 5px 8px; font-size: 12.5px; }
+.num-input { text-align: right; font-variant-numeric: tabular-nums; }
+.scroll-hint { display: none; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+
+/* Lens power range pair (C-03) */
+.tier-range-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.tier-range-pair .input { width: 78px; }
+.tier-range-sep { color: var(--text-muted); font-size: 12px; }
+.tier-row-err td { background: #FFF5F5; }
+.tier-row-warn td { background: #FFFBEB; }
+.tier-msg { font-size: 12px; margin-top: 3px; font-weight: 500; }
+.tier-msg-err { color: var(--err-text); }
+.tier-msg-warn { color: var(--warn-text); }
+
+/* KTV approval row in WebDesc (B-06) */
+.approval-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-subtle);
+}
+.approval-row .input { flex: 1; min-width: 200px; }
 
 /* ==================== MEDIA TAB ==================== */
 .variant-media-bar {
@@ -958,6 +1014,28 @@ html, body {
 }
 .toast-undo-btn:hover { background: rgba(255, 255, 255, 0.25); }
 
+/* ==================== CONFIRM DIALOG (C-01 / B-03) ==================== */
+.confirm-backdrop { z-index: 105; }
+.confirm-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(440px, 92vw);
+  background: var(--bg-surface);
+  border-radius: 12px;
+  padding: 18px 20px;
+  z-index: 110;
+  box-shadow: 0 22px 54px rgba(15, 35, 32, 0.3);
+  border: 1px solid var(--border-subtle);
+}
+.confirm-head { margin-bottom: 8px; }
+.confirm-title { margin: 0; font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.confirm-message { margin: 0 0 16px; font-size: 13.5px; color: var(--text-secondary); line-height: 1.5; }
+.confirm-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.btn-danger { background: var(--err-text); color: #FFFFFF; }
+.btn-danger:hover { background: #991B1B; }
+
 /* ==================== RESPONSIVE (1440 / 768 / 390) ==================== */
 @media (max-width: 960px) {
   .web-preview-grid { grid-template-columns: 1fr; }
@@ -974,11 +1052,40 @@ html, body {
     z-index: 85;
   }
   .app-body { margin-left: 0; }
-  .mobile-menu-btn { display: inline-flex; }
+  .mobile-menu-btn { display: inline-flex; min-width: 44px; min-height: 44px; }
   .app-header { padding: 8px 14px; }
   .app-header-center { display: none; }
   .app-main { padding: 14px; }
   .grid-2, .grid-3, .media-grid { grid-template-columns: 1fr; }
+  .scroll-hint { display: block; }
+
+  /* C-04: >= 44px touch targets in drawer on tablet/mobile */
+  .drawer .btn,
+  .drawer .btn-sm,
+  .drawer .icon-btn,
+  .drawer .tab-btn,
+  .drawer .input,
+  .drawer .select,
+  .drawer .variant-pill,
+  .drawer .editor-tool-btn,
+  .drawer .chip-toggle,
+  .drawer .toggle-inline {
+    min-height: 44px;
+  }
+  .drawer .icon-btn,
+  .drawer .btn-danger-ghost {
+    min-width: 44px;
+  }
+  .drawer .sub-table .input,
+  .drawer .sub-table .select {
+    min-height: 44px;
+    padding: 8px 10px;
+  }
+  .drawer .toggle-inline input,
+  .drawer .chip-toggle input {
+    width: 22px;
+    height: 22px;
+  }
 }
 
 @media (max-width: 520px) {

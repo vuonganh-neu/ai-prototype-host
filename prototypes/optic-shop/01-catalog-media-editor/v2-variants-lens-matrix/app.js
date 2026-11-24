@@ -30,7 +30,7 @@
   const COATINGS = [
     { id: 'hard_coat', label: 'Chống trầy (Hard Coat)' },
     { id: 'ar_hmc', label: 'Chống chói HMC / AR' },
-    { id: 'blue_cut', label: 'Lọc ánh sáng xanh' },
+    { id: 'blue_cut', label: 'Cắt ánh sáng xanh bước sóng ngắn (400–420nm)' },
     { id: 'photochromic', label: 'Đổi màu ra nắng' },
     { id: 'uv400', label: 'Chống tia UV400' },
     { id: 'hydrophobic', label: 'Trượt nước / Chống bám vân tay' },
@@ -53,7 +53,160 @@
 
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
   const fmtVnd = (n) => new Intl.NumberFormat('vi-VN').format(Math.round(Number(n) || 0)) + 'đ';
+  const fmtNum = (n) => new Intl.NumberFormat('vi-VN').format(Math.round(Number(n) || 0));
+  const parseNumInput = (raw) => {
+    const cleaned = String(raw ?? '').replace(/[.\s,]/g, '');
+    if (cleaned === '' || cleaned === '-') return Number.NaN;
+    return Number(cleaned);
+  };
   const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
+
+  function isValidHttpsUrl(raw) {
+    const str = String(raw || '').trim();
+    if (!str || /[\s"'<>]/.test(str)) return false;
+    try {
+      const u = new URL(str);
+      return u.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }
+
+  function sanitizeImageUrl(raw) {
+    const str = String(raw || '').trim();
+    if (!str) return '';
+    if (/^data:image\/(?:png|jpeg|jpg|webp|gif|svg\+xml);/i.test(str) && !/["'<>]/.test(str)) {
+      return str;
+    }
+    if (isValidHttpsUrl(str)) {
+      try {
+        return new URL(str).href;
+      } catch {
+        return '';
+      }
+    }
+    return '';
+  }
+
+  function fmtDiopter(v) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return '—';
+    const fixed = Math.abs(n).toFixed(2);
+    if (n > 0) return `+${fixed}`;
+    if (n < 0) return `−${fixed}`;
+    return '0.00';
+  }
+
+  function isQuarterStep(v) {
+    return Number.isFinite(v) && Math.abs(Math.round(v * 4) - v * 4) < 1e-6;
+  }
+
+  function sortPowerTiers(tiers) {
+    tiers.sort((a, b) => {
+      const sa = Number(a.sphFrom);
+      const sb = Number(b.sphFrom);
+      if (sa !== sb) return sa - sb;
+      const ca = Number(a.cylFrom);
+      const cb = Number(b.cylFrom);
+      return ca - cb;
+    });
+  }
+
+  function analyzePowerTiers(tiers) {
+    const list = tiers || [];
+    const rowErrors = list.map(() => []);
+    const rowWarnings = list.map(() => []);
+    const validIdx = [];
+
+    list.forEach((t, idx) => {
+      const sf = Number(t.sphFrom);
+      const st = Number(t.sphTo);
+      const cf = Number(t.cylFrom);
+      const ct = Number(t.cylTo);
+      let ok = true;
+      if (!Number.isFinite(sf) || !Number.isFinite(st)) {
+        rowErrors[idx].push('Dải SPH phải là số hợp lệ.');
+        ok = false;
+      } else {
+        if (!isQuarterStep(sf) || !isQuarterStep(st)) {
+          rowErrors[idx].push('SPH phải theo bước 0.25 D.');
+          ok = false;
+        }
+        if (sf < -20 || st > 20 || sf > 20 || st < -20) {
+          rowErrors[idx].push('SPH phải nằm trong khoảng −20.00 đến +20.00 D.');
+          ok = false;
+        }
+        if (sf > st) {
+          rowErrors[idx].push('SPH bị đảo chiều (Từ phải ≤ Đến).');
+          ok = false;
+        }
+      }
+      if (!Number.isFinite(cf) || !Number.isFinite(ct)) {
+        rowErrors[idx].push('Dải CYL phải là số hợp lệ.');
+        ok = false;
+      } else {
+        if (!isQuarterStep(cf) || !isQuarterStep(ct)) {
+          rowErrors[idx].push('CYL phải theo bước 0.25 D.');
+          ok = false;
+        }
+        if (cf < -8 || ct > 0 || cf > 0 || ct < -8) {
+          rowErrors[idx].push('CYL phải nằm trong khoảng −8.00 đến 0.00 D.');
+          ok = false;
+        }
+        if (cf > ct) {
+          rowErrors[idx].push('CYL bị đảo chiều (Từ phải ≤ Đến).');
+          ok = false;
+        }
+      }
+      if (!(Number(t.price) > 0)) {
+        rowErrors[idx].push('Giá bán/đôi phải > 0.');
+      }
+      if (!Number.isFinite(Number(t.stockPairs)) || Number(t.stockPairs) < 0) {
+        rowErrors[idx].push('Tồn kho không được âm.');
+      }
+      if (ok) validIdx.push(idx);
+    });
+
+    // Check 2D rectangle overlap (inclusive with 0.25D grid)
+    for (let i = 0; i < validIdx.length; i++) {
+      for (let j = i + 1; j < validIdx.length; j++) {
+        const ia = validIdx[i];
+        const ib = validIdx[j];
+        const a = list[ia];
+        const b = list[ib];
+        const sphOverlap = Math.max(Number(a.sphFrom), Number(b.sphFrom)) <= Math.min(Number(a.sphTo), Number(b.sphTo)) + 1e-6;
+        const cylOverlap = Math.max(Number(a.cylFrom), Number(b.cylFrom)) <= Math.min(Number(a.cylTo), Number(b.cylTo)) + 1e-6;
+        if (sphOverlap && cylOverlap) {
+          rowErrors[ia].push(`Chồng lấn dải độ với dòng ${ib + 1}.`);
+          rowErrors[ib].push(`Chồng lấn dải độ với dòng ${ia + 1}.`);
+        }
+      }
+    }
+
+    // Check SPH gaps within same CYL band
+    const byCyl = new Map();
+    validIdx.forEach((idx) => {
+      const t = list[idx];
+      const key = `${Number(t.cylFrom).toFixed(2)}|${Number(t.cylTo).toFixed(2)}`;
+      if (!byCyl.has(key)) byCyl.set(key, []);
+      byCyl.get(key).push(idx);
+    });
+    byCyl.forEach((indices) => {
+      indices.sort((a, b) => Number(list[a].sphFrom) - Number(list[b].sphFrom));
+      for (let k = 1; k < indices.length; k++) {
+        const prevIdx = indices[k - 1];
+        const currIdx = indices[k];
+        const prevTo = Number(list[prevIdx].sphTo);
+        const currFrom = Number(list[currIdx].sphFrom);
+        if (currFrom - prevTo > 0.25 + 1e-6) {
+          rowWarnings[currIdx].push(`Hở dải SPH từ ${fmtDiopter(prevTo + 0.25)} đến ${fmtDiopter(currFrom - 0.25)} D so với dòng ${prevIdx + 1}.`);
+        }
+      }
+    });
+
+    const hasErrors = rowErrors.some((arr) => arr.length > 0);
+    return { rowErrors, rowWarnings, hasErrors };
+  }
 
   function makeSampleSvgDataUrl(shape, color, angle, label) {
     const strokeW = angle === 'dims' ? 2.2 : 2.8;
@@ -101,12 +254,14 @@
         material: 'MR-8 High-Index',
         stockMode: 'POWER_MATRIX',
         leadTimeDays: 3,
-        coatings: ['hard_coat', 'ar_hmc', 'blue_cut', 'uv400'],
+        coatings: ['hard_coat', 'ar_hmc', 'uv400'],
         surcharges: ['rimless_drill', 'edge_polish'],
         powerTiers: [
-          { id: 'T1', sphRange: '0.00 → −4.00 D', cylRange: '0.00 → −2.00 D', stockPairs: 24, price: 650000 },
-          { id: 'T2', sphRange: '−4.25 → −6.00 D', cylRange: '0.00 → −2.00 D', stockPairs: 14, price: 890000 },
-          { id: 'T3', sphRange: '−6.25 → −8.00 D', cylRange: '−2.25 → −4.00 D', stockPairs: 4, price: 1250000 }
+          { id: 'T1', sphFrom: -8.0, sphTo: -6.25, cylFrom: -4.0, cylTo: -2.25, stockPairs: 4, price: 1250000 },
+          { id: 'T2', sphFrom: -8.0, sphTo: -6.25, cylFrom: -2.0, cylTo: 0.0, stockPairs: 6, price: 1150000 },
+          { id: 'T3', sphFrom: -6.0, sphTo: -4.25, cylFrom: -2.0, cylTo: 0.0, stockPairs: 14, price: 890000 },
+          { id: 'T4', sphFrom: -4.0, sphTo: 0.0, cylFrom: -2.0, cylTo: 0.0, stockPairs: 24, price: 650000 },
+          { id: 'T5', sphFrom: 0.25, sphTo: 2.0, cylFrom: -2.0, cylTo: 0.0, stockPairs: 10, price: 650000 }
         ]
       };
     }
@@ -215,7 +370,7 @@
           { type: 'heading', text: 'Thiết kế siêu nhẹ cho người đeo kính cả ngày' },
           { type: 'paragraph', text: 'Khung Beta-Titanium đàn hồi cao, trọng lượng chỉ 13.5g kết hợp đệm mũi cao phù hợp sống mũi người Việt.' },
           { type: 'spec_table' },
-          { type: 'optometrist_box', text: 'Khuyên dùng cho khách có độ cận đến −8.00 D và khoảng PD 61–69 mm. Bản viền tròn giúp che cạnh tròng tốt khi kết hợp chiết suất 1.67.' }
+          { type: 'optometrist_box', text: 'Khuyên dùng cho khách có độ cận đến −8.00 D và khoảng PD 61–69 mm. Bản viền tròn giúp che cạnh tròng tốt khi kết hợp chiết suất 1.67.', approved: true, approvedBy: 'KTV. Nguyễn Minh Tâm (CCHN-KX-0412)' }
         ]
       },
       {
@@ -240,7 +395,7 @@
           { type: 'heading', text: 'Chống trầy gấp 3 lần và chống chói tối ưu' },
           { type: 'paragraph', text: 'Giá bán và tình trạng tồn kho thay đổi theo dải độ SPH/CYL. Tròng độ cao hoặc ghép lăng kính đặt hãng 3–5 ngày.' },
           { type: 'spec_table' },
-          { type: 'optometrist_box', text: 'Phù hợp độ cận −2.00 D đến −6.00 D. Với gọng khoan không viền, vui lòng bật phụ phí khoan ốc chống nứt.' }
+          { type: 'optometrist_box', text: 'Phù hợp độ cận −2.00 D đến −6.00 D. Với gọng khoan không viền, vui lòng bật phụ phí khoan ốc chống nứt.', approved: false, approvedBy: '' }
         ]
       },
       {
@@ -476,14 +631,14 @@
   function toVideoEmbedHtml(url) {
     const raw = String(url || '').trim();
     if (!raw) return '<div class="muted-xs">Chưa có link video 360°</div>';
+    if (!isValidHttpsUrl(raw)) {
+      return '<div class="field-error">Chỉ chấp nhận đường dẫn video hợp lệ bắt đầu bằng https://</div>';
+    }
     const ytMatch = raw.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
     if (ytMatch) {
-      return `<iframe src="https://www.youtube-nocookie.com/embed/${ytMatch[1]}" title="Video 360 độ sản phẩm" allowfullscreen></iframe>`;
+      return `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(ytMatch[1])}" title="Video 360 độ sản phẩm" allowfullscreen></iframe>`;
     }
-    if (/^https:\/\//i.test(raw)) {
-      return `<div style="padding:18px;text-align:center"><div style="font-weight:700;margin-bottom:6px">Video 360° ngoài (HTTPS)</div><div class="mono muted-xs">${esc(raw)}</div></div>`;
-    }
-    return '<div class="field-error">Chỉ chấp nhận đường dẫn video bắt đầu bằng https://</div>';
+    return `<div style="padding:18px;text-align:center"><div style="font-weight:700;margin-bottom:6px">Video 360° ngoài (HTTPS)</div><div class="mono muted-xs">${esc(new URL(raw).href)}</div></div>`;
   }
 
   // ==================== SAFE SANITIZER & REUSABLE BLOCK RENDERER (B-09) ====================
@@ -529,7 +684,7 @@
     return `<div class="reusable-box"><strong>Bảng thông số kỹ thuật (Khối tự đồng bộ)</strong><table style="width:100%;margin-top:6px;border-collapse:collapse;font-size:12.5px">${rows.map(([k, v]) => `<tr><td style="padding:3px 6px 3px 0;color:#4B5B58;width:42%">${esc(k)}</td><td style="padding:3px 0;font-weight:600">${esc(v)}</td></tr>`).join('')}</table></div>`;
   }
 
-  function renderSafeDocBlocksHtml(p) {
+  function renderSafeDocBlocksHtml(p, isEditorPreview = false) {
     const blocks = p.docBlocks || [];
     if (!blocks.length) return '<p class="muted-xs">Chưa có nội dung mô tả Website.</p>';
     return `<div class="safe-html-render">${blocks.map((b) => {
@@ -541,7 +696,13 @@
       }
       if (b.type === 'spec_table') return renderSpecsSummaryHtml(p);
       if (b.type === 'optometrist_box') {
-        return `<div class="reusable-box" style="background:#E0F2FE;border-color:#BAE6FD;color:#0369A1"><strong>Khuyến nghị từ KTV Khúc xạ:</strong> ${sanitizeTextInline(b.text)}</div>`;
+        const approver = String(b.approvedBy || '').trim();
+        if (b.approved && approver) {
+          return `<div class="reusable-box" style="background:#E0F2FE;border-color:#BAE6FD;color:#0369A1"><strong>Khuyến nghị chuyên môn</strong> <span class="muted-xs" style="color:#0369A1">(Đã duyệt bởi: ${esc(approver)})</span><div style="margin-top:4px">${sanitizeTextInline(b.text)}</div></div>`;
+        }
+        return isEditorPreview
+          ? `<div class="reusable-box" style="background:#FEF3C7;border-color:#FDE68A;color:#B45309"><strong>Khối khuyến nghị chuyên môn (Chưa duyệt — ẩn trên Website):</strong> Cần người có chứng chỉ khúc xạ nhập tên và xác nhận duyệt trước khi hiển thị công khai.</div>`
+          : '';
       }
       return '';
     }).join('')}</div>`;
@@ -614,7 +775,7 @@
     }
 
     tbody.innerHTML = list.map((p) => {
-      const thumb = getPrimaryThumb(p);
+      const thumb = sanitizeImageUrl(getPrimaryThumb(p));
       const totalStock = getTotalStock(p);
       const mediaCount = countMediaSlots(p);
       const varSwatches = (p.variants || []).length
@@ -627,7 +788,7 @@
       return `<tr>
         <td>
           <div class="prod-cell">
-            <div class="prod-thumb">${thumb ? `<img src="${thumb}" alt="${esc(p.name)}" />` : `<span class="muted-xs">Ảnh</span>`}</div>
+            <div class="prod-thumb">${thumb ? `<img src="${esc(thumb)}" alt="${esc(p.name)}" />` : `<span class="muted-xs">Ảnh</span>`}</div>
             <div>
               <div class="prod-name">${esc(p.name)}</div>
               <div class="prod-meta"><span class="mono">${esc(p.sku)}</span><span>·</span><span>${esc(p.brand)}</span></div>
@@ -670,30 +831,100 @@
 
   function validateDraft(draft) {
     const errors = {};
+    const checkRange = (key, val, min, max, label, unit = '') => {
+      const n = Number(val);
+      if (val === '' || val === null || val === undefined || !Number.isFinite(n) || n < min || n > max) {
+        errors[key] = `${label} phải nằm trong khoảng ${min}–${max}${unit ? ' ' + unit : ''}.`;
+      }
+    };
+
     if (!String(draft.name || '').trim()) errors.name = 'Vui lòng nhập tên sản phẩm.';
+
+    // Collect all SKUs from OTHER products (both main SKU and variant SKUs) for global uniqueness (B-03)
+    const otherSkus = new Map();
+    products.forEach((p) => {
+      if (p.id === draft.id) return;
+      if (p.sku) otherSkus.set(p.sku.trim().toLowerCase(), p.name);
+      (p.variants || []).forEach((v) => {
+        if (v.sku) otherSkus.set(v.sku.trim().toLowerCase(), `${p.name} (biến thể ${v.colorName})`);
+      });
+    });
+
     const skuTrim = String(draft.sku || '').trim();
     if (!skuTrim) {
       errors.sku = 'Vui lòng nhập mã SKU chính.';
-    } else {
-      const dup = products.find((p) => p.id !== draft.id && p.sku.toLowerCase() === skuTrim.toLowerCase());
-      if (dup) errors.sku = `Mã SKU "${skuTrim}" đã trùng với sản phẩm "${dup.name}".`;
+    } else if (otherSkus.has(skuTrim.toLowerCase())) {
+      errors.sku = `Mã SKU "${skuTrim}" đã trùng với "${otherSkus.get(skuTrim.toLowerCase())}".`;
     }
+
     if (draft.category !== 'LENS_BLANK' && !hasVariants(draft.category)) {
-      if (Number(draft.salePrice) < 0 || Number.isNaN(Number(draft.salePrice))) {
+      if (!Number.isFinite(Number(draft.salePrice)) || Number(draft.salePrice) < 0) {
         errors.salePrice = 'Giá bán không được là số âm.';
       }
+      if (!Number.isFinite(Number(draft.stockQty)) || Number(draft.stockQty) < 0) {
+        errors.stockQty = 'Tồn kho không được là số âm.';
+      }
     }
+
+    const s = draft.specs || {};
+    if (draft.category === 'FRAME' || draft.category === 'SUNGLASSES') {
+      checkRange('specA', s.aMm, 35, 68, 'A (Rộng mắt)', 'mm');
+      checkRange('specDbl', s.dblMm, 12, 26, 'DBL (Cầu mũi)', 'mm');
+      checkRange('specTemple', s.templeMm, 120, 160, 'Càng kính', 'mm');
+      checkRange('specB', s.bMm, 24, 60, 'B (Cao tròng)', 'mm');
+      checkRange('specEd', s.edMm, 40, 72, 'ED (Đ.kính hiệu dụng)', 'mm');
+      if (!errors.specA && !errors.specEd && Number(s.edMm) < Number(s.aMm)) {
+        errors.specEd = `ED (${s.edMm} mm) phải lớn hơn hoặc bằng A (${s.aMm} mm).`;
+      }
+      checkRange('specWeight', s.weightG, 4, 80, 'Trọng lượng', 'g');
+      checkRange('specMaxSph', s.maxSphLimit, 1, 15, 'Giới hạn độ tối đa', '±D');
+    } else if (draft.category === 'LENS_BLANK') {
+      checkRange('lensLeadTime', s.leadTimeDays, 1, 30, 'Thời gian đặt hãng', 'ngày');
+    } else if (draft.category === 'CONTACT_LENS') {
+      checkRange('clBc', s.bcMm, 8.0, 9.2, 'Độ cong nền BC', 'mm');
+      checkRange('clDia', s.diaMm, 13.5, 15.0, 'Đường kính DIA', 'mm');
+      checkRange('clWater', s.waterContentPct, 20, 80, 'Độ ẩm', '%');
+      checkRange('clDkt', s.dkT, 10, 200, 'Hệ số thấm oxy Dk/t');
+    } else if (draft.category === 'READING_GLASSES') {
+      checkRange('rdPd', s.standardPdMm, 56, 70, 'Khoảng cách đồng tử PD', 'mm');
+      checkRange('rdWeight', s.weightG, 4, 80, 'Trọng lượng', 'g');
+    }
+
     if (hasVariants(draft.category)) {
       if (!draft.variants || !draft.variants.length) {
         errors.variants = 'Gọng kính / Kính mát cần ít nhất 1 biến thể màu/size.';
       } else {
-        const badVar = draft.variants.find((v) => !v.colorName.trim() || !v.sku.trim() || Number(v.price) < 0 || Number(v.stockQty) < 0);
-        if (badVar) errors.variants = 'Kiểm tra lại bảng biến thể: tên màu, SKU bắt buộc và giá/tồn kho không được âm.';
+        const seenVarSkus = new Set();
+        const varErrs = [];
+        draft.variants.forEach((v, idx) => {
+          const vSku = String(v.sku || '').trim();
+          const vKey = vSku.toLowerCase();
+          if (!String(v.colorName || '').trim() || !vSku || !Number.isFinite(Number(v.price)) || Number(v.price) < 0 || !Number.isFinite(Number(v.stockQty)) || Number(v.stockQty) < 0) {
+            varErrs.push(`Dòng ${idx + 1}: tên màu, SKU bắt buộc và giá/tồn kho không được âm.`);
+          } else if (skuTrim && vKey === skuTrim.toLowerCase()) {
+            varErrs.push(`Dòng ${idx + 1}: SKU "${vSku}" trùng với SKU chính của sản phẩm.`);
+          } else if (seenVarSkus.has(vKey)) {
+            varErrs.push(`Dòng ${idx + 1}: SKU biến thể "${vSku}" bị trùng trong bảng.`);
+          } else if (otherSkus.has(vKey)) {
+            varErrs.push(`Dòng ${idx + 1}: SKU "${vSku}" đã trùng với "${otherSkus.get(vKey)}".`);
+          }
+          if (vSku) seenVarSkus.add(vKey);
+        });
+        if (varErrs.length) errors.variants = varErrs.join(' ');
       }
     }
+
     if (draft.category === 'LENS_BLANK') {
-      const badTier = (draft.specs.powerTiers || []).find((t) => !t.sphRange.trim() || Number(t.price) <= 0 || Number(t.stockPairs) < 0);
-      if (badTier) errors.powerTiers = 'Kiểm tra lại bảng dải độ tròng: dải SPH bắt buộc, giá > 0 và tồn kho không âm.';
+      const tiers = draft.specs.powerTiers || [];
+      if (!tiers.length) {
+        errors.powerTiers = 'Tròng kính cần ít nhất 1 dải độ (SPH × CYL).';
+      } else {
+        const analysis = analyzePowerTiers(tiers);
+        if (analysis.hasErrors) {
+          const firstRow = analysis.rowErrors.findIndex((r) => r.length > 0);
+          errors.powerTiers = `Bảng dải độ có lỗi (dòng ${firstRow + 1}: ${analysis.rowErrors[firstRow][0]}). Vui lòng kiểm tra các dòng được đánh dấu đỏ.`;
+        }
+      }
     }
     return errors;
   }
@@ -757,12 +988,56 @@
     renderDrawerBody();
   }
 
+  let confirmHandlers = null;
+
+  function openConfirmDialog({ title, message, confirmLabel = 'Xác nhận', cancelLabel = 'Tiếp tục sửa', danger = false, onConfirm, onCancel }) {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMessage').textContent = message;
+    const okBtn = document.getElementById('confirmOkBtn');
+    const cancelBtn = document.getElementById('confirmCancelBtn');
+    okBtn.textContent = confirmLabel;
+    cancelBtn.textContent = cancelLabel;
+    okBtn.className = danger ? 'btn btn-danger' : 'btn btn-primary';
+    confirmHandlers = { onConfirm, onCancel };
+    document.getElementById('confirmBackdrop').classList.remove('hidden');
+    document.getElementById('confirmModal').classList.remove('hidden');
+    cancelBtn.focus();
+  }
+
+  function closeConfirmDialog(confirmed = false) {
+    const handlers = confirmHandlers;
+    confirmHandlers = null;
+    document.getElementById('confirmBackdrop').classList.add('hidden');
+    document.getElementById('confirmModal').classList.add('hidden');
+    if (handlers) {
+      if (confirmed && handlers.onConfirm) handlers.onConfirm();
+      if (!confirmed && handlers.onCancel) handlers.onCancel();
+    }
+  }
+
+  function requestCloseDrawer() {
+    if (!editingDraft) return;
+    if (!isDirty) {
+      closeDrawer();
+      return;
+    }
+    openConfirmDialog({
+      title: 'Bỏ thay đổi?',
+      message: 'Bạn có thay đổi chưa lưu. Nếu đóng ngay bây giờ, mọi chỉnh sửa vừa nhập sẽ bị mất.',
+      confirmLabel: 'Bỏ thay đổi',
+      cancelLabel: 'Tiếp tục sửa',
+      danger: true,
+      onConfirm: () => closeDrawer()
+    });
+  }
+
   function closeDrawer() {
     document.getElementById('drawerBackdrop').classList.add('hidden');
     const drawer = document.getElementById('editorDrawer');
     drawer.classList.add('hidden');
     drawer.setAttribute('aria-hidden', 'true');
     editingDraft = null;
+    isDirty = false;
   }
 
   function syncTabButtons() {
@@ -807,13 +1082,13 @@
           </div>
 
           <div class="grid-4" style="margin-top:12px">
-            <div class="field"><label for="specA">A — Rộng mắt (mm)</label><input id="specA" type="number" step="0.5" min="35" max="68" class="input mono" value="${s.aMm}" /></div>
-            <div class="field"><label for="specDbl">DBL — Cầu mũi (mm)</label><input id="specDbl" type="number" step="0.5" min="12" max="26" class="input mono" value="${s.dblMm}" /></div>
-            <div class="field"><label for="specTemple">Càng kính (mm)</label><input id="specTemple" type="number" step="1" min="120" max="160" class="input mono" value="${s.templeMm}" /></div>
-            <div class="field"><label for="specB">B — Cao tròng (mm)</label><input id="specB" type="number" step="0.5" min="24" max="60" class="input mono" value="${s.bMm}" /></div>
-            <div class="field"><label for="specEd">ED — Đ.kính hiệu dụng (mm)</label><input id="specEd" type="number" step="0.5" min="40" max="72" class="input mono" value="${s.edMm}" /></div>
-            <div class="field"><label for="specWeight">Trọng lượng (g)</label><input id="specWeight" type="number" step="0.5" min="4" max="80" class="input mono" value="${s.weightG}" /></div>
-            <div class="field"><label for="specMaxSph">Giới hạn độ tối đa (±D)</label><input id="specMaxSph" type="number" step="0.5" min="1" max="15" class="input mono" value="${s.maxSphLimit}" /></div>
+            <div class="field"><label for="specA">A — Rộng mắt (mm)</label><input id="specA" type="number" step="0.5" min="35" max="68" class="input mono num-input" aria-invalid="${fieldErrors.specA ? 'true' : 'false'}" value="${s.aMm}" />${errHtml('specA')}</div>
+            <div class="field"><label for="specDbl">DBL — Cầu mũi (mm)</label><input id="specDbl" type="number" step="0.5" min="12" max="26" class="input mono num-input" aria-invalid="${fieldErrors.specDbl ? 'true' : 'false'}" value="${s.dblMm}" />${errHtml('specDbl')}</div>
+            <div class="field"><label for="specTemple">Càng kính (mm)</label><input id="specTemple" type="number" step="1" min="120" max="160" class="input mono num-input" aria-invalid="${fieldErrors.specTemple ? 'true' : 'false'}" value="${s.templeMm}" />${errHtml('specTemple')}</div>
+            <div class="field"><label for="specB">B — Cao tròng (mm)</label><input id="specB" type="number" step="0.5" min="24" max="60" class="input mono num-input" aria-invalid="${fieldErrors.specB ? 'true' : 'false'}" value="${s.bMm}" />${errHtml('specB')}</div>
+            <div class="field"><label for="specEd">ED — Đ.kính hiệu dụng (mm)</label><input id="specEd" type="number" step="0.5" min="40" max="72" class="input mono num-input" aria-invalid="${fieldErrors.specEd ? 'true' : 'false'}" value="${s.edMm}" />${errHtml('specEd')}</div>
+            <div class="field"><label for="specWeight">Trọng lượng (g)</label><input id="specWeight" type="number" step="0.5" min="4" max="80" class="input mono num-input" aria-invalid="${fieldErrors.specWeight ? 'true' : 'false'}" value="${s.weightG}" />${errHtml('specWeight')}</div>
+            <div class="field"><label for="specMaxSph">Giới hạn độ tối đa (±D)</label><input id="specMaxSph" type="number" step="0.5" min="1" max="15" class="input mono num-input" aria-invalid="${fieldErrors.specMaxSph ? 'true' : 'false'}" value="${s.maxSphLimit}" />${errHtml('specMaxSph')}</div>
             <div class="field"><label for="specNosePad">Đệm mũi</label><input id="specNosePad" class="input" value="${esc(s.nosePad || '')}" /></div>
           </div>
 
@@ -833,6 +1108,7 @@
             <button type="button" class="btn btn-secondary btn-sm" id="addVariantBtn">+ Thêm biến thể</button>
           </div>
           ${errHtml('variants')}
+          <div class="scroll-hint">Vuốt ngang bảng để xem thêm cột giá bán, tồn kho và thao tác →</div>
           <div class="sub-table-wrap">
             <table class="sub-table">
               <thead>
@@ -841,8 +1117,8 @@
                   <th>Mã màu</th>
                   <th>Size (A-DBL-Càng)</th>
                   <th>SKU biến thể</th>
-                  <th>Giá bán (đ)</th>
-                  <th>Tồn kho</th>
+                  <th class="num">Giá bán (đ)</th>
+                  <th class="num">Tồn kho</th>
                   <th></th>
                 </tr>
               </thead>
@@ -853,8 +1129,8 @@
                     <td><input type="color" aria-label="Chọn màu hex biến thể ${idx + 1}" data-var-idx="${idx}" data-var-field="colorHex" value="${esc(v.colorHex)}" style="width:40px;height:30px;padding:2px;border:1px solid #CBD6D5;border-radius:6px;background:#FFF" /></td>
                     <td><input type="text" class="input mono" aria-label="Kích thước biến thể ${idx + 1}" data-var-idx="${idx}" data-var-field="sizeLabel" value="${esc(v.sizeLabel)}" /></td>
                     <td><input type="text" class="input mono" aria-label="SKU biến thể ${idx + 1}" data-var-idx="${idx}" data-var-field="sku" value="${esc(v.sku)}" /></td>
-                    <td><input type="number" class="input mono" aria-label="Giá biến thể ${idx + 1}" data-var-idx="${idx}" data-var-field="price" value="${v.price}" /></td>
-                    <td><input type="number" class="input mono" aria-label="Tồn kho biến thể ${idx + 1}" data-var-idx="${idx}" data-var-field="stockQty" value="${v.stockQty}" style="width:74px" /></td>
+                    <td class="num"><input type="text" inputmode="numeric" class="input mono num-input" aria-label="Giá biến thể ${idx + 1}" data-var-idx="${idx}" data-var-field="price" data-fmt-price="1" value="${esc(fmtNum(v.price))}" /></td>
+                    <td class="num"><input type="number" class="input mono num-input" aria-label="Tồn kho biến thể ${idx + 1}" data-var-idx="${idx}" data-var-field="stockQty" value="${v.stockQty}" style="width:74px" /></td>
                     <td><button type="button" class="btn btn-danger-ghost btn-sm" data-del-var="${idx}" aria-label="Xóa biến thể ${idx + 1}">Xóa</button></td>
                   </tr>
                 `).join('')}
@@ -901,9 +1177,12 @@
           <div class="section-head">
             <div>
               <h3 class="section-title">Tồn kho &amp; Bảng giá theo Dải độ (SPH × CYL)</h3>
-              <div class="muted-xs">Mỗi độ là một mã phôi riêng — chọn giữ tồn theo ma trận độ hoặc đặt hãng theo đơn Rx.</div>
+              <div class="muted-xs">Nhập khoảng số từ–đến theo bước 0.25 D (Từ ≤ Đến). Hệ thống tự kiểm chồng lấn và cảnh báo hở dải ngay tại dòng.</div>
             </div>
-            <button type="button" class="btn btn-secondary btn-sm" id="addTierBtn">+ Thêm dải độ</button>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button type="button" class="btn btn-secondary btn-sm" id="sortTiersBtn">Sắp theo SPH</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="addTierBtn">+ Thêm dải độ</button>
+            </div>
           </div>
 
           <div class="grid-2" style="margin-bottom:12px">
@@ -916,37 +1195,63 @@
             </div>
             <div class="field">
               <label for="lensLeadTime">Thời gian đặt hãng (ngày làm việc)</label>
-              <input id="lensLeadTime" type="number" min="1" max="30" class="input mono" value="${s.leadTimeDays || 3}" />
+              <input id="lensLeadTime" type="number" min="1" max="30" class="input mono num-input" aria-invalid="${fieldErrors.lensLeadTime ? 'true' : 'false'}" value="${s.leadTimeDays || 3}" />
+              ${errHtml('lensLeadTime')}
             </div>
           </div>
 
           ${errHtml('powerTiers')}
+          ${(() => {
+            const tiers = s.powerTiers || [];
+            const analysis = analyzePowerTiers(tiers);
+            return `
+          <div class="scroll-hint">Vuốt ngang bảng để xem thêm cột CYL, giá bán và tồn kho →</div>
           <div class="sub-table-wrap">
             <table class="sub-table">
               <thead>
                 <tr>
-                  <th>Dải độ cầu (SPH)</th>
-                  <th>Dải độ trụ (CYL)</th>
-                  <th>Giá bán / đôi (đ)</th>
-                  <th>${s.stockMode === 'RX_ORDER' ? 'Trạng thái' : 'Tồn kho (đôi)'}</th>
+                  <th>SPH Từ → Đến (D)</th>
+                  <th>CYL Từ → Đến (D)</th>
+                  <th class="num">Giá bán / đôi (đ)</th>
+                  <th class="num">${s.stockMode === 'RX_ORDER' ? 'Trạng thái' : 'Tồn kho (đôi)'}</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
-                ${(s.powerTiers || []).map((t, idx) => `
-                  <tr>
-                    <td><input type="text" class="input mono" aria-label="Dải SPH dòng ${idx + 1}" data-tier-idx="${idx}" data-tier-field="sphRange" value="${esc(t.sphRange)}" /></td>
-                    <td><input type="text" class="input mono" aria-label="Dải CYL dòng ${idx + 1}" data-tier-idx="${idx}" data-tier-field="cylRange" value="${esc(t.cylRange)}" /></td>
-                    <td><input type="number" class="input mono" aria-label="Giá bán dải độ dòng ${idx + 1}" data-tier-idx="${idx}" data-tier-field="price" value="${t.price}" /></td>
-                    <td>${s.stockMode === 'RX_ORDER'
+                ${tiers.map((t, idx) => {
+                  const errs = analysis.rowErrors[idx] || [];
+                  const warns = analysis.rowWarnings[idx] || [];
+                  const rowCls = errs.length ? 'tier-row-err' : (warns.length ? 'tier-row-warn' : '');
+                  return `
+                  <tr class="${rowCls}">
+                    <td>
+                      <div class="tier-range-pair">
+                        <input type="number" step="0.25" min="-20" max="20" class="input mono num-input" aria-label="SPH từ dòng ${idx + 1}" data-tier-idx="${idx}" data-tier-field="sphFrom" value="${t.sphFrom}" />
+                        <span class="tier-range-sep">→</span>
+                        <input type="number" step="0.25" min="-20" max="20" class="input mono num-input" aria-label="SPH đến dòng ${idx + 1}" data-tier-idx="${idx}" data-tier-field="sphTo" value="${t.sphTo}" />
+                      </div>
+                      ${errs.map((m) => `<div class="tier-msg tier-msg-err">${esc(m)}</div>`).join('')}
+                      ${warns.map((m) => `<div class="tier-msg tier-msg-warn">${esc(m)}</div>`).join('')}
+                    </td>
+                    <td>
+                      <div class="tier-range-pair">
+                        <input type="number" step="0.25" min="-8" max="0" class="input mono num-input" aria-label="CYL từ dòng ${idx + 1}" data-tier-idx="${idx}" data-tier-field="cylFrom" value="${t.cylFrom}" />
+                        <span class="tier-range-sep">→</span>
+                        <input type="number" step="0.25" min="-8" max="0" class="input mono num-input" aria-label="CYL đến dòng ${idx + 1}" data-tier-idx="${idx}" data-tier-field="cylTo" value="${t.cylTo}" />
+                      </div>
+                    </td>
+                    <td class="num"><input type="text" inputmode="numeric" class="input mono num-input" aria-label="Giá bán dải độ dòng ${idx + 1}" data-tier-idx="${idx}" data-tier-field="price" data-fmt-price="1" value="${esc(fmtNum(t.price))}" /></td>
+                    <td class="num">${s.stockMode === 'RX_ORDER'
                       ? '<span class="badge badge-info">Đặt hãng</span>'
-                      : `<input type="number" class="input mono" aria-label="Tồn kho đôi dòng ${idx + 1}" data-tier-idx="${idx}" data-tier-field="stockPairs" value="${t.stockPairs}" style="width:82px" />`}</td>
+                      : `<input type="number" class="input mono num-input" aria-label="Tồn kho đôi dòng ${idx + 1}" data-tier-idx="${idx}" data-tier-field="stockPairs" value="${t.stockPairs}" style="width:82px" />`}</td>
                     <td><button type="button" class="btn btn-danger-ghost btn-sm" data-del-tier="${idx}" aria-label="Xóa dải độ dòng ${idx + 1}">Xóa</button></td>
                   </tr>
-                `).join('')}
+                `;
+                }).join('')}
               </tbody>
             </table>
-          </div>
+          </div>`;
+          })()}
 
           <div class="field" style="margin-top:12px">
             <label>Phụ phí gia công Lab áp dụng</label>
@@ -970,11 +1275,11 @@
                 ${['Cầu (Spherical)', 'Loạn thị (Toric)', 'Đa tròng (Multifocal)', 'Tròng màu thẩm mỹ'].map((opt) => `<option value="${opt}" ${s.clType === opt ? 'selected' : ''}>${opt}</option>`).join('')}
               </select>
             </div>
-            <div class="field"><label for="clBc">Độ cong nền BC (mm)</label><input id="clBc" type="number" step="0.1" min="8.0" max="9.2" class="input mono" value="${s.bcMm}" /></div>
-            <div class="field"><label for="clDia">Đường kính DIA (mm)</label><input id="clDia" type="number" step="0.1" min="13.5" max="15.0" class="input mono" value="${s.diaMm}" /></div>
+            <div class="field"><label for="clBc">Độ cong nền BC (mm)</label><input id="clBc" type="number" step="0.1" min="8.0" max="9.2" class="input mono num-input" aria-invalid="${fieldErrors.clBc ? 'true' : 'false'}" value="${s.bcMm}" />${errHtml('clBc')}</div>
+            <div class="field"><label for="clDia">Đường kính DIA (mm)</label><input id="clDia" type="number" step="0.1" min="13.5" max="15.0" class="input mono num-input" aria-invalid="${fieldErrors.clDia ? 'true' : 'false'}" value="${s.diaMm}" />${errHtml('clDia')}</div>
             <div class="field"><label for="clPower">Dải độ (Power)</label><input id="clPower" class="input mono" value="${esc(s.powerRange || '')}" /></div>
-            <div class="field"><label for="clWater">Độ ẩm (%)</label><input id="clWater" type="number" min="20" max="80" class="input mono" value="${s.waterContentPct}" /></div>
-            <div class="field"><label for="clDkt">Hệ số thấm oxy (Dk/t)</label><input id="clDkt" type="number" min="10" max="200" class="input mono" value="${s.dkT}" /></div>
+            <div class="field"><label for="clWater">Độ ẩm (%)</label><input id="clWater" type="number" min="20" max="80" class="input mono num-input" aria-invalid="${fieldErrors.clWater ? 'true' : 'false'}" value="${s.waterContentPct}" />${errHtml('clWater')}</div>
+            <div class="field"><label for="clDkt">Hệ số thấm oxy (Dk/t)</label><input id="clDkt" type="number" min="10" max="200" class="input mono num-input" aria-invalid="${fieldErrors.clDkt ? 'true' : 'false'}" value="${s.dkT}" />${errHtml('clDkt')}</div>
           </div>
           <div class="grid-2" style="margin-top:12px">
             <div class="field">
@@ -998,8 +1303,8 @@
                 ${['+1.00 D', '+1.25 D', '+1.50 D', '+1.75 D', '+2.00 D', '+2.25 D', '+2.50 D', '+2.75 D', '+3.00 D', '+3.50 D'].map((opt) => `<option value="${opt}" ${s.readPower === opt ? 'selected' : ''}>${opt}</option>`).join('')}
               </select>
             </div>
-            <div class="field"><label for="rdPd">Khoảng cách đồng tử chuẩn PD (mm)</label><input id="rdPd" type="number" min="56" max="70" class="input mono" value="${s.standardPdMm}" /></div>
-            <div class="field"><label for="rdWeight">Trọng lượng (g)</label><input id="rdWeight" type="number" class="input mono" value="${s.weightG}" /></div>
+            <div class="field"><label for="rdPd">Khoảng cách đồng tử chuẩn PD (mm)</label><input id="rdPd" type="number" min="56" max="70" class="input mono num-input" aria-invalid="${fieldErrors.rdPd ? 'true' : 'false'}" value="${s.standardPdMm}" />${errHtml('rdPd')}</div>
+            <div class="field"><label for="rdWeight">Trọng lượng (g)</label><input id="rdWeight" type="number" class="input mono num-input" aria-invalid="${fieldErrors.rdWeight ? 'true' : 'false'}" value="${s.weightG}" />${errHtml('rdWeight')}</div>
           </div>
         </div>
       `;
@@ -1042,12 +1347,13 @@
           ${(!hasVariants(d.category) && d.category !== 'LENS_BLANK') ? `
             <div class="field">
               <label for="prodPrice">Giá bán (VNĐ) <span class="req">*</span></label>
-              <input id="prodPrice" type="number" class="input mono" aria-invalid="${fieldErrors.salePrice ? 'true' : 'false'}" value="${d.salePrice}" />
+              <input id="prodPrice" type="text" inputmode="numeric" class="input mono num-input" data-fmt-price="1" aria-invalid="${fieldErrors.salePrice ? 'true' : 'false'}" value="${esc(fmtNum(d.salePrice))}" />
               ${errHtml('salePrice')}
             </div>
             <div class="field">
               <label for="prodStock">Tồn kho hiện tại</label>
-              <input id="prodStock" type="number" min="0" class="input mono" value="${d.stockQty}" />
+              <input id="prodStock" type="number" min="0" class="input mono num-input" aria-invalid="${fieldErrors.stockQty ? 'true' : 'false'}" value="${d.stockQty}" />
+              ${errHtml('stockQty')}
             </div>
           ` : ''}
         </div>
@@ -1088,15 +1394,16 @@
       ${variantBar}
       <div class="media-grid">
         ${ANGLES.map((a) => {
-          const url = active.holder[a.key] || '';
+          const rawUrl = active.holder[a.key] || '';
+          const safeUrl = sanitizeImageUrl(rawUrl);
           return `
             <div class="media-slot">
               <div class="media-slot-head">
                 <span class="media-slot-title">${esc(a.label)}</span>
-                <span class="badge ${url ? 'badge-ok' : 'badge-neutral'}">${url ? 'Đã có ảnh' : 'Trống'}</span>
+                <span class="badge ${safeUrl ? 'badge-ok' : 'badge-neutral'}">${safeUrl ? 'Đã có ảnh' : 'Trống'}</span>
               </div>
               <div class="media-preview-box">
-                ${url ? `<img src="${url}" alt="${esc(a.label)} — ${esc(active.label)}" />` : `<span class="muted-xs">Chưa có ảnh cho góc này</span>`}
+                ${safeUrl ? `<img src="${esc(safeUrl)}" alt="${esc(a.label)} — ${esc(active.label)}" />` : `<span class="muted-xs">Chưa có ảnh cho góc này</span>`}
               </div>
               <div class="media-actions">
                 <label class="btn btn-secondary btn-sm" style="cursor:pointer">
@@ -1104,10 +1411,10 @@
                   <input type="file" accept="image/*" data-upload-angle="${a.key}" aria-label="Tải ảnh lên cho ${esc(a.label)}" style="display:none" />
                 </label>
                 <button type="button" class="btn btn-secondary btn-sm" data-sample-angle="${a.key}">Dùng ảnh mẫu</button>
-                ${url ? `<button type="button" class="btn btn-danger-ghost btn-sm" data-clear-angle="${a.key}">Xóa</button>` : ''}
+                ${safeUrl ? `<button type="button" class="btn btn-danger-ghost btn-sm" data-clear-angle="${a.key}">Xóa</button>` : ''}
               </div>
               <div class="url-row">
-                <input type="url" class="input" id="urlInput_${a.key}" aria-label="Dán đường dẫn ảnh cho ${esc(a.label)}" placeholder="Dán URL ảnh https://..." value="${url.startsWith('http') ? esc(url) : ''}" />
+                <input type="url" class="input" id="urlInput_${a.key}" aria-label="Dán đường dẫn ảnh cho ${esc(a.label)}" placeholder="Dán URL ảnh https://..." value="${safeUrl.startsWith('https://') ? esc(safeUrl) : ''}" />
                 <button type="button" class="btn btn-secondary btn-sm" data-apply-url="${a.key}">Áp dụng</button>
               </div>
             </div>
@@ -1167,7 +1474,14 @@
           ${blocks.map((b, idx) => `
             <div class="editor-block-card">
               <div class="editor-block-head">
-                <span style="font-size:12px;font-weight:700;color:#4B5B58">${esc(blockLabels[b.type] || b.type)}</span>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span style="font-size:12px;font-weight:700;color:#4B5B58">${esc(blockLabels[b.type] || b.type)}</span>
+                  ${b.type === 'optometrist_box'
+                    ? (b.approved && String(b.approvedBy || '').trim()
+                      ? `<span class="badge badge-ok">Đã duyệt</span>`
+                      : `<span class="badge badge-warn">Chưa duyệt — ẩn trên Website</span>`)
+                    : ''}
+                </div>
                 <div style="display:flex;gap:6px">
                   <button type="button" class="btn btn-secondary btn-sm" data-move-up="${idx}" ${idx === 0 ? 'disabled' : ''}>↑</button>
                   <button type="button" class="btn btn-danger-ghost btn-sm" data-del-block="${idx}">Xóa khối</button>
@@ -1176,6 +1490,15 @@
               ${b.type === 'spec_table'
                 ? '<div class="muted-xs">Tự động lấy thông số mới nhất từ Tab 1 khi hiển thị lên Website.</div>'
                 : `<textarea class="textarea" aria-label="${esc(blockLabels[b.type])}" data-block-idx="${idx}" rows="${b.type === 'heading' ? 1 : 3}">${esc(b.text || '')}</textarea>`}
+              ${b.type === 'optometrist_box' ? `
+                <div class="approval-row">
+                  <label class="toggle-inline">
+                    <input type="checkbox" data-opt-approve="${idx}" ${b.approved ? 'checked' : ''} />
+                    <span>Đã được KTV có chứng chỉ duyệt</span>
+                  </label>
+                  <input type="text" class="input" data-opt-approver="${idx}" aria-label="Tên và số chứng chỉ người duyệt khối ${idx + 1}" placeholder="Tên KTV & số CCHN (vd: KTV. Nguyễn Minh Tâm · CCHN-...)" value="${esc(b.approvedBy || '')}" />
+                </div>
+              ` : ''}
             </div>
           `).join('')}
         </div>
@@ -1186,7 +1509,7 @@
         <button type="button" class="btn btn-secondary btn-sm" id="toggleMobileDescBtn">${mobilePreviewDesc ? 'Chuyển sang Desktop' : 'Xem trước Mobile (390px)'}</button>
       </div>
       <div class="editor-preview-frame ${mobilePreviewDesc ? 'mobile-sim' : ''}" id="liveSanitizedPreview">
-        ${renderSafeDocBlocksHtml(editingDraft)}
+        ${renderSafeDocBlocksHtml(editingDraft, true)}
       </div>
     `;
   }
@@ -1215,24 +1538,45 @@
     bindVal('prodName', (v) => { d.name = v; document.getElementById('drawerTitle').textContent = v || 'Sản phẩm mới'; });
     bindVal('prodSku', (v) => { d.sku = v; });
     bindVal('prodBrand', (v) => { d.brand = v; });
-    bindVal('prodPrice', (v) => { d.salePrice = Number(v); });
     bindVal('prodStock', (v) => { d.stockQty = Number(v); });
+
+    const prodPriceEl = document.getElementById('prodPrice');
+    if (prodPriceEl) {
+      prodPriceEl.onfocus = () => { prodPriceEl.value = Number.isFinite(Number(d.salePrice)) ? String(Math.round(Number(d.salePrice))) : ''; };
+      prodPriceEl.oninput = () => { d.salePrice = parseNumInput(prodPriceEl.value); markDirty(); };
+      prodPriceEl.onblur = () => { if (Number.isFinite(d.salePrice)) prodPriceEl.value = fmtNum(d.salePrice); };
+    }
 
     const catEl = document.getElementById('prodCat');
     if (catEl) {
       catEl.onchange = () => {
-        d.category = catEl.value;
-        d.specs = defaultSpecsForCategory(d.category);
-        if (hasVariants(d.category) && (!d.variants || !d.variants.length)) {
-          d.variants = [{
-            id: 'VAR-' + Date.now(), colorName: 'Đen Nhám', colorHex: '#1E293B',
-            sizeLabel: '49-20-145', sku: (d.sku || 'FRM') + '-BLK', stockQty: 5, price: d.salePrice || 1200000,
-            media: { front: '', angle45: '', side: '', dims: '' }
-          }];
-          activeMediaVariantId = d.variants[0].id;
-        }
-        markDirty();
-        renderDrawerBody();
+        const nextCat = catEl.value;
+        const prevCat = d.category;
+        if (nextCat === prevCat) return;
+        const applyCatChange = () => {
+          d.category = nextCat;
+          d.specs = defaultSpecsForCategory(d.category);
+          if (hasVariants(d.category) && (!d.variants || !d.variants.length)) {
+            d.variants = [{
+              id: 'VAR-' + Date.now(), colorName: 'Đen Nhám', colorHex: '#1E293B',
+              sizeLabel: '49-20-145', sku: (d.sku || 'FRM') + '-BLK', stockQty: 5, price: d.salePrice || 1200000,
+              media: { front: '', angle45: '', side: '', dims: '' }
+            }];
+            activeMediaVariantId = d.variants[0].id;
+          }
+          clearErrors();
+          markDirty();
+          renderDrawerBody();
+        };
+        openConfirmDialog({
+          title: 'Đổi danh mục sản phẩm?',
+          message: `Đổi từ "${CATEGORIES[prevCat]}" sang "${CATEGORIES[nextCat]}" sẽ xóa toàn bộ thông số kỹ thuật hiện tại (kể cả bảng dải độ nếu có). Bạn có chắc chắn muốn đổi?`,
+          confirmLabel: 'Đổi danh mục',
+          cancelLabel: 'Giữ nguyên',
+          danger: true,
+          onConfirm: applyCatChange,
+          onCancel: () => { catEl.value = prevCat; }
+        });
       };
     }
 
@@ -1278,12 +1622,28 @@
     }
 
     document.querySelectorAll('[data-var-idx]').forEach((inp) => {
-      inp.oninput = () => {
-        const v = d.variants[Number(inp.dataset.varIdx)];
-        const f = inp.dataset.varField;
-        v[f] = (f === 'price' || f === 'stockQty') ? Number(inp.value) : inp.value;
-        markDirty();
-      };
+      const idx = Number(inp.dataset.varIdx);
+      const f = inp.dataset.varField;
+      if (f === 'price') {
+        inp.onfocus = () => {
+          const val = d.variants[idx].price;
+          inp.value = Number.isFinite(Number(val)) ? String(Math.round(Number(val))) : '';
+        };
+        inp.oninput = () => {
+          d.variants[idx].price = parseNumInput(inp.value);
+          markDirty();
+        };
+        inp.onblur = () => {
+          const val = d.variants[idx].price;
+          if (Number.isFinite(val)) inp.value = fmtNum(val);
+        };
+      } else {
+        inp.oninput = () => {
+          const v = d.variants[idx];
+          v[f] = f === 'stockQty' ? Number(inp.value) : inp.value;
+          markDirty();
+        };
+      }
     });
     document.querySelectorAll('[data-del-var]').forEach((btn) => {
       btn.onclick = () => {
@@ -1326,21 +1686,52 @@
       };
     });
 
+    const sortTiersBtn = document.getElementById('sortTiersBtn');
+    if (sortTiersBtn) {
+      sortTiersBtn.onclick = () => {
+        sortPowerTiers(d.specs.powerTiers || []);
+        markDirty();
+        renderDrawerBody();
+        showToast('Đã sắp xếp bảng dải độ theo thứ tự SPH.');
+      };
+    }
+
     const addTierBtn = document.getElementById('addTierBtn');
     if (addTierBtn) {
       addTierBtn.onclick = () => {
-        d.specs.powerTiers.push({ id: 'T' + Date.now(), sphRange: '−8.25 → −10.00 D', cylRange: '0.00 → −2.00 D', stockPairs: 2, price: 1550000 });
+        d.specs.powerTiers.push({ id: 'T' + Date.now(), sphFrom: -10.0, sphTo: -8.25, cylFrom: -2.0, cylTo: 0.0, stockPairs: 2, price: 1550000 });
+        sortPowerTiers(d.specs.powerTiers);
         markDirty();
         renderDrawerBody();
       };
     }
     document.querySelectorAll('[data-tier-idx]').forEach((inp) => {
-      inp.oninput = () => {
-        const t = d.specs.powerTiers[Number(inp.dataset.tierIdx)];
-        const f = inp.dataset.tierField;
-        t[f] = (f === 'price' || f === 'stockPairs') ? Number(inp.value) : inp.value;
-        markDirty();
-      };
+      const idx = Number(inp.dataset.tierIdx);
+      const f = inp.dataset.tierField;
+      if (f === 'price') {
+        inp.onfocus = () => {
+          const val = d.specs.powerTiers[idx].price;
+          inp.value = Number.isFinite(Number(val)) ? String(Math.round(Number(val))) : '';
+        };
+        inp.oninput = () => {
+          d.specs.powerTiers[idx].price = parseNumInput(inp.value);
+          markDirty();
+        };
+        inp.onblur = () => {
+          const val = d.specs.powerTiers[idx].price;
+          if (Number.isFinite(val)) inp.value = fmtNum(val);
+          renderDrawerBody();
+        };
+      } else {
+        inp.oninput = () => {
+          const t = d.specs.powerTiers[idx];
+          t[f] = inp.value === '' ? Number.NaN : Number(inp.value);
+          markDirty();
+        };
+        inp.onchange = () => {
+          renderDrawerBody();
+        };
+      }
     });
     document.querySelectorAll('[data-del-tier]').forEach((btn) => {
       btn.onclick = () => {
@@ -1348,7 +1739,8 @@
         const removed = d.specs.powerTiers.splice(idx, 1)[0];
         markDirty();
         renderDrawerBody();
-        showToast(`Đã xóa dải độ "${removed.sphRange}".`, () => {
+        const label = `${fmtDiopter(removed.sphFrom)} → ${fmtDiopter(removed.sphTo)} D`;
+        showToast(`Đã xóa dải độ "${label}".`, () => {
           d.specs.powerTiers.splice(idx, 0, removed);
           renderDrawerBody();
         });
@@ -1434,12 +1826,12 @@
       btn.onclick = () => {
         const key = btn.dataset.applyUrl;
         const val = document.getElementById(`urlInput_${key}`).value.trim();
-        if (val && !/^https:\/\//i.test(val)) {
-          showToast('Vui lòng nhập đường dẫn ảnh bắt đầu bằng https://');
+        if (val && !isValidHttpsUrl(val)) {
+          showToast('URL ảnh không hợp lệ. Chỉ chấp nhận đường dẫn https:// sạch (không chứa khoảng trắng hoặc ký tự đặc biệt).');
           return;
         }
         const prev = active.holder[key] || '';
-        active.holder[key] = val;
+        active.holder[key] = val ? new URL(val).href : '';
         markDirty();
         renderDrawerBody();
         showToast('Đã cập nhật URL ảnh.', () => {
@@ -1452,7 +1844,12 @@
     const videoBtn = document.getElementById('applyVideoBtn');
     if (videoBtn) {
       videoBtn.onclick = () => {
-        editingDraft.videoUrl = document.getElementById('videoUrlInput').value.trim();
+        const raw = document.getElementById('videoUrlInput').value.trim();
+        if (raw && !isValidHttpsUrl(raw)) {
+          showToast('URL video không hợp lệ. Chỉ chấp nhận đường dẫn https:// hợp lệ.');
+          return;
+        }
+        editingDraft.videoUrl = raw ? new URL(raw).href : '';
         markDirty();
         renderDrawerBody();
         showToast('Đã cập nhật đường dẫn Video 360°.');
@@ -1491,7 +1888,13 @@
           spec_table: '',
           optometrist_box: 'Khuyến nghị từ KTV Khúc xạ Minh Quang...'
         };
-        editingDraft.docBlocks.push(type === 'spec_table' ? { type } : { type, text: defaults[type] });
+        editingDraft.docBlocks.push(
+          type === 'spec_table'
+            ? { type }
+            : (type === 'optometrist_box'
+              ? { type, text: defaults[type], approved: false, approvedBy: '' }
+              : { type, text: defaults[type] })
+        );
         markDirty();
         renderDrawerBody();
       };
@@ -1511,7 +1914,25 @@
       ta.oninput = () => {
         editingDraft.docBlocks[Number(ta.dataset.blockIdx)].text = ta.value;
         markDirty();
-        document.getElementById('liveSanitizedPreview').innerHTML = renderSafeDocBlocksHtml(editingDraft);
+        document.getElementById('liveSanitizedPreview').innerHTML = renderSafeDocBlocksHtml(editingDraft, true);
+      };
+    });
+
+    document.querySelectorAll('[data-opt-approve]').forEach((cb) => {
+      cb.onchange = () => {
+        const block = editingDraft.docBlocks[Number(cb.dataset.optApprove)];
+        block.approved = cb.checked;
+        markDirty();
+        renderDrawerBody();
+      };
+    });
+
+    document.querySelectorAll('[data-opt-approver]').forEach((inp) => {
+      inp.oninput = () => {
+        const block = editingDraft.docBlocks[Number(inp.dataset.optApprover)];
+        block.approvedBy = inp.value;
+        markDirty();
+        document.getElementById('liveSanitizedPreview').innerHTML = renderSafeDocBlocksHtml(editingDraft, true);
       };
     });
 
@@ -1563,10 +1984,11 @@
     const hasVar = hasVariants(p.category) && p.variants && p.variants.length > 0;
     const currentVar = hasVar ? (p.variants[previewVariantIdx] || p.variants[0]) : null;
     const mediaHolder = currentVar ? currentVar.media : p.media;
+    const safeMediaUrl = previewMediaKey === 'video' ? '' : sanitizeImageUrl(mediaHolder[previewMediaKey]);
     const stageHtml = previewMediaKey === 'video'
       ? toVideoEmbedHtml(p.videoUrl)
-      : (mediaHolder[previewMediaKey]
-        ? `<img src="${mediaHolder[previewMediaKey]}" alt="${esc(p.name)}" />`
+      : (safeMediaUrl
+        ? `<img src="${esc(safeMediaUrl)}" alt="${esc(p.name)}" />`
         : `<div class="muted-xs">Chưa có ảnh ở góc này</div>`);
 
     const displaySku = currentVar ? currentVar.sku : p.sku;
@@ -1678,9 +2100,25 @@
       e.preventDefault();
       openCmdk();
     } else if (e.key === 'Escape') {
-      closeCmdk();
-      closeWebPreview();
-      closeMobileSidebar();
+      if (!document.getElementById('confirmModal').classList.contains('hidden')) {
+        closeConfirmDialog(false);
+        return;
+      }
+      if (!document.getElementById('cmdkModal').classList.contains('hidden')) {
+        closeCmdk();
+        return;
+      }
+      if (!document.getElementById('previewModal').classList.contains('hidden')) {
+        closeWebPreview();
+        return;
+      }
+      if (document.getElementById('storeSidebar').classList.contains('mobile-open')) {
+        closeMobileSidebar();
+        return;
+      }
+      if (editingDraft) {
+        requestCloseDrawer();
+      }
     }
   });
 
@@ -1702,9 +2140,13 @@
     if (editingDraft) { editingDraft.showOnWeb = e.target.checked; markDirty(); }
   };
 
-  document.getElementById('closeDrawerBtn').onclick = closeDrawer;
-  document.getElementById('cancelDrawerBtn').onclick = closeDrawer;
-  document.getElementById('drawerBackdrop').onclick = closeDrawer;
+  document.getElementById('closeDrawerBtn').onclick = requestCloseDrawer;
+  document.getElementById('cancelDrawerBtn').onclick = requestCloseDrawer;
+  document.getElementById('drawerBackdrop').onclick = requestCloseDrawer;
+
+  document.getElementById('confirmOkBtn').onclick = () => closeConfirmDialog(true);
+  document.getElementById('confirmCancelBtn').onclick = () => closeConfirmDialog(false);
+  document.getElementById('confirmBackdrop').onclick = () => closeConfirmDialog(false);
 
   document.getElementById('openWebPreviewBtn').onclick = openWebPreview;
   document.getElementById('closePreviewBtn').onclick = closeWebPreview;
@@ -1724,6 +2166,9 @@
       return;
     }
 
+    if (editingDraft.category === 'LENS_BLANK' && editingDraft.specs.powerTiers) {
+      sortPowerTiers(editingDraft.specs.powerTiers);
+    }
     if (isNewProduct) {
       products.unshift(deepClone(editingDraft));
     } else {
