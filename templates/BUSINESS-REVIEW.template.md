@@ -35,5 +35,15 @@
 ## 7. Chuyên gia Xác nhận (người thật)
 - <vai trò/người có thể xác nhận các điểm AI không kết luận được>
 
-## 8. Nhật ký Cập nhật
+## 8. Sổ giả định (chờ chuyên gia / người dùng cuối xác nhận)
+> Dành cho MVP chưa có chuyên gia: mục cần chuyên gia được chọn **mặc định theo khuyến nghị tốt nhất hiện có** (nghiêng về phía an toàn) để đi tiếp (`proto seal --assume`). Chỉ người duyệt mới ghi vào đây; reviewer chỉ đề xuất. Quy trình: `skill/REVIEW.md` §9.5.
+> **Mức rủi ro**: `giao diện` · `dữ liệu` · `an toàn` (giả định mức an toàn nên có người có chuyên môn xem qua trước khi thử nghiệm với khách thật).
+> **Refactor nếu sai**: `nhỏ` (đổi hằng số/copy) · `vừa` (đổi luồng/validate) · `lớn` (đổi mô hình dữ liệu).
+
+| ID | Giả định (mặc định đã chọn) | Nguồn / độ tin cậy | Mức rủi ro | Refactor nếu sai | Ai xác nhận | Trạng thái |
+| :-: | :--- | :--- | :---: | :---: | :--- | :---: |
+
+*(Trạng thái: `⏳ chờ xác nhận` · `✅ đã xác nhận` · `🔁 sai — đã/đang sửa`. Sau thử nghiệm có ý kiến chuyên gia → cập nhật dòng này + quy tắc BR-xx tương ứng ở mục 3.)*
+
+## 9. Nhật ký Cập nhật
 - {{DATE}} — khởi tạo từ `proto init-project`.

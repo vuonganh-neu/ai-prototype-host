@@ -117,6 +117,10 @@ def build_manifest_data() -> dict:
                     "phase": v_info.get("phase", ""),
                     "stage": v_info.get("stage", ""),
                     "notes": v_info.get("notes", ""),
+                    # Trạng thái công khai cho Hub: bản hiệu chỉnh, đã khóa chưa, tóm tắt review (không chứa nội dung finding)
+                    "rev": version_rev(v_info),
+                    "sealed": bool(v_info.get("sealed")),
+                    "review": review_summary(proj_dir.name, feat_dir.name, v_slug, v_info),
                 })
 
             if not versions and not meta:
@@ -172,7 +176,9 @@ def cmd_new(args: argparse.Namespace) -> None:
         print(
             f"[CHẶN GHI ĐÈ] Phiên bản '{proj_slug}/{feat_slug}/{ver_slug}' đã tồn tại!\n"
             f"Theo quy tắc Immutable Iterations (Không ghi đè lịch sử), hãy tạo phiên bản mới "
-            f"(ví dụ: v2, v3, v2-refined) để giữ lại bản cũ phục vụ so sánh.",
+            f"(ví dụ: v2, v3, v2-refined) để giữ lại bản cũ phục vụ so sánh.\n"
+            f"Ngoại lệ: nếu version đó CHƯA khóa (chưa `proto seal`, chưa tới tay người) và bạn chỉ sửa theo finding của review "
+            f"→ dùng `proto revise {proj_slug} {feat_slug} {ver_slug} --fixes …` (skill/REVIEW.md §9), không tạo version mới.",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -230,6 +236,8 @@ def cmd_new(args: argparse.Namespace) -> None:
         "phase": phase,
         "stage": stage,
         "notes": args.notes or "",
+        "rev": 1,
+        "sealed": False,
     })
     meta["versions"] = versions
     meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -314,6 +322,11 @@ def cmd_promote(args: argparse.Namespace) -> None:
         history_lines.append(f"  - `{v_id}` — {marker}: {v_note} {link_str}".strip())
 
     ver_notes = args.notes or next((v.get("notes", "") for v in meta.get("versions", []) if v.get("version") == ver_slug), "Đã duyệt giao diện và tương tác.")
+    assumed = [a for v in meta.get("versions", []) if v.get("version") == ver_slug for a in v.get("accepted", []) if a.get("kind") == "assumed"]
+    if assumed:  # giả định chờ chuyên gia → mang sang phase doc dưới dạng "chốt tạm"
+        ver_notes += "\n\n**Giả định chờ chuyên gia xác nhận (chốt tạm — có thể phải refactor):** " + \
+            "; ".join(f"{a['id']} ({a.get('reason', '')})" for a in assumed)
+        print(f"[INFO] {len(assumed)} giả định chờ chuyên gia được ghi vào SPEC-NOTES: {', '.join(a['id'] for a in assumed)}")
 
     spec_content = (
         spec_tpl.replace("{{FEATURE_TITLE}}", meta.get("title", feat_slug))
@@ -625,6 +638,9 @@ def agent_block(proj_slug: str) -> str:
         "- **Review mockup độc lập** (trước khi người dùng thật xem): Tầng 1 skill `ui-ux-review`, Tầng 2 skill `business-review` "
         f"(đọc `docs/02-mockups/BUSINESS-REVIEW.md` của repo này) — bắt đầu bằng `{STABLE_ROOT_DISPLAY}/bin/proto review-prep {proj_slug} <màn-hình> <version>`. "
         "Kết quả ở `.ops/` của kho mockup (không commit); tri thức nghiệp vụ chỉ nằm trong repo này, không chép sang kho mockup.\n"
+        "- **Sửa mockup theo kết quả review** (version chưa khóa): skill `mockup-fix` — chỉ khi người ra lệnh, đúng một bước rồi dừng. "
+        f"Phân vai Designer/Fixer/Reviewer/người khóa và việc đổi agent giữa các bước: `{STABLE_ROOT_DISPLAY}/skill/REVIEW.md` §9.7; "
+        f"xem bước kế tiếp: `{STABLE_ROOT_DISPLAY}/bin/proto next {proj_slug} <màn-hình> <version>`.\n"
         f"{hub}"
         f"{BLOCK_END}\n"
     )
@@ -988,7 +1004,7 @@ def cmd_install_skill(args: argparse.Namespace) -> None:
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(thin_src, dest)
         print(f"[OK] Đã cài đặt Global Skill mỏng tại: {dest}")
-        for name in ("ui-ux-review", "business-review"):
+        for name in ("ui-ux-review", "business-review", "mockup-fix"):
             d = root / name / "SKILL.md"
             d.parent.mkdir(parents=True, exist_ok=True)
             d.write_text(thin_review_skill(name), encoding="utf-8")
@@ -1152,13 +1168,110 @@ def static_lint(ver_dir: Path) -> list[dict]:
     return issues
 
 
-def review_prompt(tier: str, proj: str, feat: str, ver: str, packet: Path, out: Path) -> str:
+# ── Hiệu chỉnh tại chỗ (revN) & khóa version — xem skill/REVIEW.md §9 ─────────────
+AUTO_REV_MAX = 3   # agent chạy tự động tối đa tới rev3
+HARD_REV_MAX = 4   # người xác nhận (--confirm-extra) mới được lên rev4; không hơn
+FIX_ID_RE = re.compile(r"^[A-Z]-\d+$")
+SCOPE_TIERS = {"ui": ("core",), "logic": ("business",), "both": ("core", "business")}
+
+
+def version_entry(meta: dict, ver: str) -> dict | None:
+    return next((v for v in meta.get("versions", []) if v.get("version") == ver), None)
+
+
+def save_feature_meta(proj: str, feat: str, meta: dict) -> None:
+    p = PROTOTYPES_DIR / proj / feat / "meta.json"
+    p.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def version_rev(entry: dict) -> int:
+    try:
+        return max(1, int(entry.get("rev") or 1))
+    except (TypeError, ValueError):
+        return 1
+
+
+def load_revs(rdir: Path) -> dict:
+    p = rdir / "revs.json"
+    if p.is_file():
+        try:
+            return json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+    return {}
+
+
+def record_review_rev(rdir: Path, tier: str, rnd: int, rev: int, agent: str = "") -> None:
+    """Ghi 'báo cáo vòng rnd của tầng này review bản revN' (không commit, nằm cạnh báo cáo)."""
+    data = load_revs(rdir)
+    data.setdefault(tier, {})[str(rnd)] = rev
+    if agent:
+        data.setdefault("agents", {})[f"{tier}-r{rnd}"] = agent
+    (rdir / "revs.json").write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def reviewed_rev(rdir: Path, tier: str, rnd: int) -> int:
+    return int(load_revs(rdir).get(tier, {}).get(str(rnd), 1))  # báo cáo cũ chưa ghi → coi là rev1
+
+
+def stale_tiers(entry: dict, rdir: Path) -> list[str]:
+    """Tầng nào có báo cáo mới nhất nhưng đã có hiệu chỉnh chạm tầng đó sau lần review ấy."""
+    out = []
+    for t in ("core", "business"):
+        lr = latest_report(rdir, t)
+        if not lr:
+            continue
+        rr = reviewed_rev(rdir, t, lr[0])
+        if any(r.get("rev", 0) > rr and t in SCOPE_TIERS.get(r.get("scope", "both"), ("core", "business"))
+               for r in entry.get("revisions", [])):
+            out.append(t)
+    return out
+
+
+def parse_ids(raw: str | None) -> list[str]:
+    return [x.strip().upper() for x in (raw or "").split(",") if x.strip()]
+
+
+def snapshot_rev(proj: str, feat: str, ver: str, rev: int) -> str:
+    """Chốt trạng thái hiện tại của version thành git tag <p>/<f>/<v>@revN (commit cục bộ, không push)."""
+    if not (ROOT_DIR / ".git").exists():
+        fail("Kho mockup chưa là git repo — không chụp snapshot được (chạy `proto init-repo`).")
+    rel = f"prototypes/{proj}/{feat}/{ver}"
+    tag = f"{proj}/{feat}/{ver}@rev{rev}"
+    try:
+        if run_cmd(["git", "rev-parse", "-q", "--verify", f"refs/tags/{tag}"], check=False).returncode == 0:
+            fail(f"Tag {tag} đã tồn tại — rev{rev} đã được chụp trước đó.")
+        run_cmd(["git", "add", "--", rel])
+        if run_cmd(["git", "diff", "--cached", "--quiet", "--", rel], check=False).returncode != 0:
+            run_cmd(["git", "commit", "-m", f"chore(mockup): snapshot {proj}/{feat}/{ver} rev{rev}", "--", rel])
+        run_cmd(["git", "tag", tag])
+    except subprocess.CalledProcessError as e:
+        fail(f"git lỗi khi chụp snapshot: {(e.stderr or e.stdout or '').strip()}")
+    return tag
+
+
+def append_revisions(ver_dir: Path, proj: str, feat: str, ver: str, block: str) -> Path:
+    p = ver_dir / "REVISIONS.md"
+    head = ""
+    if not p.is_file():
+        head = (f"# Nhật ký hiệu chỉnh — {proj}/{feat}/{ver}\n\n"
+                "> Sửa tại chỗ theo finding review khi version CHƯA khóa (quy tắc: skill/REVIEW.md §9). "
+                "File này được publish — chỉ ghi ID finding, không chép số liệu nhạy cảm hay nội dung nghiệp vụ độc quyền.\n\n")
+    with p.open("a", encoding="utf-8") as fh:
+        fh.write(head + block.rstrip() + "\n\n")
+    return p
+
+
+def review_prompt(tier: str, proj: str, feat: str, ver: str, packet: Path, out: Path, rev: int = 1) -> str:
     skill = "ui-ux-review" if tier == "core" else "business-review"
+    again = (f"\nĐây là vòng review lại bản hiệu chỉnh rev{rev}: làm theo REVIEW.md §9 (kiểm phần thay đổi + hồi quy; giữ nguyên ID "
+             f"finding còn lỗi; finding đã sửa ghi ở mục “Đã khắc phục ở vòng này”)." if rev > 1 else "")
     return (
         f"Bạn là REVIEWER ĐỘC LẬP (phiên mới, không liên quan người đã vẽ mockup). Chỉ đọc, không sửa `prototypes/**`.\n"
         f"Làm theo skill `{skill}`: {STABLE_ROOT_DISPLAY}/skill/{skill}/SKILL.md (skill tự dẫn tới phần còn lại).\n"
-        f"Mục tiêu: {proj}/{feat}/{ver}. Đọc packet: {packet}\n"
-        f"Ghi báo cáo vào: {out} — dòng đầu tiên là `VERDICT: …`; mỗi finding đúng một dòng `- [SEVERITY] ID `vị trí` — …`."
+        f"Mục tiêu: {proj}/{feat}/{ver} (bản rev{rev}). Đọc packet: {packet}{again}\n"
+        f"Ghi báo cáo vào: {out} — dòng đầu tiên là `VERDICT: …`, dòng thứ hai là `Revision: rev{rev}`; "
+        f"mỗi finding đúng một dòng `- [SEVERITY] ID `vị trí` — …`."
     )
 
 
@@ -1170,10 +1283,16 @@ def cmd_review_prep(args: argparse.Namespace) -> None:
     meta = feature_meta(proj, feat)
     vinfo = next((v for v in meta.get("versions", []) if v.get("version") == ver), {})
     prev = previous_version(meta, ver)
+    if vinfo and "rev" not in vinfo:  # version cũ (trước khi có quy trình rev) → đưa vào quy trình mới: rev1, chưa khóa
+        vinfo["rev"], vinfo["sealed"] = 1, False
+        save_feature_meta(proj, feat, meta)
+    rev, sealed = version_rev(vinfo), bool(vinfo.get("sealed"))
     pd = project_dir_for(proj, args.project_path, required=False)
     rdir = reviews_dir_for(proj, feat, ver)
     rdir.mkdir(parents=True, exist_ok=True)
     tiers = ["core", "business"] if args.tier == "both" else [args.tier]
+    if sealed:
+        print(f"[CẢNH BÁO] {ver} đã KHÓA (đã tới tay người) — review thêm được nhưng không sửa tại chỗ; muốn đổi → `proto new` + brief.", file=sys.stderr)
 
     biz_pack = business_pack_path(pd)
     if "business" in tiers and not biz_pack.is_file():
@@ -1230,12 +1349,39 @@ def cmd_review_prep(args: argparse.Namespace) -> None:
     )
     prompts = "\n\n".join(
         f"### Prompt cho reviewer {t} (r{rounds[t]})\n```text\n"
-        + review_prompt(t, proj, feat, ver, rdir / "packet.md", rdir / f"{t}-r{rounds[t]}.md") + "\n```"
+        + review_prompt(t, proj, feat, ver, rdir / "packet.md", rdir / f"{t}-r{rounds[t]}.md", rev) + "\n```"
         for t in tiers
     )
+    agent = (getattr(args, "agent", "") or "").strip()
+    for t in tiers:
+        record_review_rev(rdir, t, rounds[t], rev, agent)
+    last_rev = (vinfo.get("revisions") or [{}])[-1] if rev > 1 else {}
+    if agent and last_rev.get("fixer", "").strip().lower() == agent.lower():
+        print(f"[CẢNH BÁO] Agent `{agent}` vừa SỬA rev{rev} — luật độc lập (REVIEW.md §2) cần reviewer là phiên mới và nên khác agent/model "
+              f"với người sửa. Đổi agent hoặc xác nhận có chủ đích.", file=sys.stderr)
+    if rev > 1 and not last_rev.get("done") and not last_rev.get("skipped"):
+        print(f"[CẢNH BÁO] Chưa có `proto fixed` cho rev{rev} — fixer chưa khai đã sửa/bỏ finding nào; review vẫn chạy được nhưng thiếu ngữ cảnh.", file=sys.stderr)
+    rev_md = ""
+    if rev > 1:
+        declared = ""
+        if last_rev.get("done") or last_rev.get("skipped"):
+            sk = "; ".join(f"{k} ({v})" for k, v in (last_rev.get("skipped") or {}).items())
+            declared = (f"- Fixer khai (rev{rev}{', agent ' + last_rev['fixer'] if last_rev.get('fixer') else ''}): "
+                        f"đã sửa {', '.join(last_rev.get('done') or []) or '—'}" + (f" · KHÔNG sửa: {sk}" if sk else "") + "\n")
+        prior = [f"- Báo cáo {t} gần nhất của chính version này: {lr[1]}"
+                 for t in ("core", "business") if (lr := latest_report(rdir, t))]
+        rev_md = (
+            f"\n## Vòng hiệu chỉnh — đang ở rev{rev} (sửa tại chỗ theo finding, version chưa khóa)\n"
+            "> Đây là vòng review lại. Làm theo REVIEW.md §9: kiểm **phần thay đổi** + hồi quy mục “Giữ nguyên”; giữ nguyên ID finding còn lỗi; "
+            "finding đã sửa ghi ở mục “Đã khắc phục ở vòng này”. Không đòi thay đổi ngoài danh sách đã sửa.\n"
+            f"- Nhật ký hiệu chỉnh: {ver_dir / 'REVISIONS.md'}\n"
+            f"- Xem thay đổi: `git -C {ROOT_DIR} diff {proj}/{feat}/{ver}@rev{rev - 1} -- prototypes/{proj}/{feat}/{ver}`\n"
+            + declared + "\n".join(prior) + "\n"
+        )
     packet = f"""# Review Packet — {proj} / {feat} / {ver}
 
 - **Sinh lúc**: {now_iso()} · **Phase**: {vinfo.get('phase') or '∅'} · **Stage**: {vinfo.get('stage') or '∅'}
+- **Revision**: rev{rev} · {'🔒 đã khóa' if sealed else 'nháp (chưa khóa — sửa tại chỗ được theo finding, tối đa rev' + str(AUTO_REV_MAX) + ' tự động)'}
 - **Persona**: `{persona or '∅'}` · **Domain**: `{domain or '∅'}` · **Bản chốt hiện hành**: `{meta.get('approved_version') or '—'}` · **Bản trước**: `{prev or '—'}`
 - **Ghi chú version**: {vinfo.get('notes') or '(không có)'}
 - **Xem**: {(base + f'/viewer.html?project={proj}&feature={feat}&version={ver}') if base else '(chưa có URL Pages)'} · local: `{ver_dir / 'index.html'}`
@@ -1254,7 +1400,7 @@ def cmd_review_prep(args: argparse.Namespace) -> None:
 
 ## Từ vòng trước
 {chr(10).join(prev_lines) if prev_lines else '- (đây là version đầu tiên của màn hình)'}
-
+{rev_md}
 ## File của version
 {files_md}
 
@@ -1262,7 +1408,8 @@ def cmd_review_prep(args: argparse.Namespace) -> None:
 """
     out = rdir / "packet.md"
     out.write_text(packet, encoding="utf-8")
-    print(f"[OK] Tầng 0 — lint: {counts['MAJOR']} MAJOR · {counts['WARN']} WARN · {counts['INFO']} INFO")
+    build_manifest()  # làm mới nhãn trạng thái review cho Hub
+    print(f"[OK] Tầng 0 — lint: {counts['MAJOR']} MAJOR · {counts['WARN']} WARN · {counts['INFO']} INFO · bản rev{rev}")
     print(f"[OK] Packet: {out}")
     for t in tiers:
         print(f"→ Tầng {1 if t == 'core' else 2} ({t}): mở phiên MỚI, chạy skill "
@@ -1271,18 +1418,27 @@ def cmd_review_prep(args: argparse.Namespace) -> None:
 
 def review_state(proj: str, pd: Path, feat: str, ver: str) -> dict:
     rdir = reviews_dir_for(proj, feat, ver)
+    entry = version_entry(feature_meta(proj, feat), ver) or {}
     st: dict = {"packet": (rdir / "packet.md").is_file(), "human": (rdir / "human.md").is_file(),
-                "brief": brief_path_for(proj, feat, ver).is_file(), "core": None, "business": None}
+                "brief": brief_path_for(proj, feat, ver).is_file(), "core": None, "business": None,
+                "rev": version_rev(entry), "sealed": bool(entry.get("sealed")), "legacy": "rev" not in entry,
+                "accepted": {a.get("id"): a for a in entry.get("accepted", [])}}
+    open_items = []
     for t in ("core", "business"):
         lr = latest_report(rdir, t)
         if lr:
             rep = parse_report(lr[1])
-            st[t] = {"round": lr[0], "verdict": rep["verdict"], "counts": rep["counts"]}
+            st[t] = {"round": lr[0], "verdict": rep["verdict"], "counts": rep["counts"], "rev": reviewed_rev(rdir, t, lr[0])}
+            open_items += [{"id": f["id"], "sev": f["sev"], "tier": t} for f in rep["findings"]
+                           if f["sev"] in ("BLOCKER", "MAJOR") and f["id"] not in st["accepted"]]
+    st["open"] = open_items
+    st["stale"] = stale_tiers(entry, rdir)
     st["needs_business"] = business_pack_path(pd).is_file()
     t1, t2 = st["core"], st["business"]
-    blocked = any(x and (x["verdict"] == "BLOCKER" or x["counts"]["BLOCKER"] > 0) for x in (t1, t2))
-    st["ready_for_human"] = bool(t1) and (bool(t2) or not st["needs_business"]) and not blocked
+    blocked = any(i["sev"] == "BLOCKER" for i in open_items) or \
+        any(x and x["verdict"] == "BLOCKER" and x["counts"]["BLOCKER"] == 0 for x in (t1, t2))
     st["blocked"] = blocked
+    st["ready_for_human"] = bool(t1) and (bool(t2) or not st["needs_business"]) and not open_items and not st["stale"]
     return st
 
 
@@ -1290,7 +1446,27 @@ def fmt_tier(x: dict | None) -> str:
     if not x:
         return "—"
     c = x["counts"]
-    return f"r{x['round']} {x['verdict'].replace('_', ' ').lower()} ({c['BLOCKER']}B/{c['MAJOR']}M/{c['NIT']}N/{c['IDEA']}I)"
+    return f"r{x['round']}@rev{x.get('rev', 1)} {x['verdict'].replace('_', ' ').lower()} ({c['BLOCKER']}B/{c['MAJOR']}M/{c['NIT']}N/{c['IDEA']}I)"
+
+
+def review_summary(proj: str, feat: str, ver: str, entry: dict) -> dict:
+    """Tóm tắt công khai cho Hub: chỉ vòng/rev/verdict/số lượng — KHÔNG có nội dung finding."""
+    try:
+        rdir = reviews_dir_for(proj, feat, ver)
+        out: dict = {"core": None, "business": None}
+        accepted = {a.get("id") for a in entry.get("accepted", [])}
+        open_n = 0
+        for t in ("core", "business"):
+            lr = latest_report(rdir, t)
+            if lr:
+                rep = parse_report(lr[1])
+                out[t] = {"round": lr[0], "rev": reviewed_rev(rdir, t, lr[0]), "verdict": rep["verdict"], "counts": rep["counts"]}
+                open_n += sum(1 for f in rep["findings"] if f["sev"] in ("BLOCKER", "MAJOR") and f["id"] not in accepted)
+        out["stale"] = stale_tiers(entry, rdir)
+        out["open"] = open_n
+        return out
+    except Exception:
+        return {}
 
 
 def cmd_review_status(args: argparse.Namespace) -> None:
@@ -1317,8 +1493,19 @@ def cmd_review_status(args: argparse.Namespace) -> None:
     print(f"Review — {args.project}   (T0 packet · T1 ui-ux · T2 nghiệp vụ · T3 người dùng · brief)")
     for s, v, st in rows:
         t2 = fmt_tier(st["business"]) if (st["needs_business"] or st["business"]) else "n/a (chưa có BUSINESS-REVIEW.md)"
-        flag = "⛔ BLOCKER" if st["blocked"] else ("✅ sẵn sàng cho người dùng thật" if st["ready_for_human"] else "⏳ chờ review AI")
-        print(f"  {s}/{v}\n    T0 {'✓' if st['packet'] else '—'} · T1 {fmt_tier(st['core'])} · T2 {t2} · "
+        if st["sealed"]:
+            flag = "🔒 đã khóa (đã tới tay người)"
+        elif st["blocked"]:
+            flag = "⛔ còn BLOCKER chưa xử lý/chấp nhận"
+        elif st["stale"]:
+            flag = f"🔁 đã sửa sau review — cần review lại: {', '.join(st['stale'])}"
+        elif st["open"]:
+            flag = f"⚠️ còn {len(st['open'])} BLOCKER/MAJOR chưa sửa/chấp nhận ({', '.join(i['id'] or '?' for i in st['open'][:5])})"
+        elif st["ready_for_human"]:
+            flag = "✅ qua cổng máy — người có thể `proto seal` rồi gửi link"
+        else:
+            flag = "⏳ chờ review AI"
+        print(f"  {s}/{v}  [rev{st['rev']}]\n    T0 {'✓' if st['packet'] else '—'} · T1 {fmt_tier(st['core'])} · T2 {t2} · "
               f"T3 {'✓' if st['human'] else '—'} · brief {'✓' if st['brief'] else '—'}   {flag}")
 
 
@@ -1329,9 +1516,13 @@ def cmd_brief(args: argparse.Namespace) -> None:
     meta = feature_meta(proj, feat)
     vinfo = next((v for v in meta.get("versions", []) if v.get("version") == ver), {})
 
+    accepted_map = {a.get("id"): a for a in (vinfo.get("accepted") or [])}
     human = rdir / "human.md"
+    if args.human and "rev" in vinfo and not vinfo.get("sealed"):
+        print(f"[CẢNH BÁO] {ver} chưa `proto seal` mà đã có phản hồi người thật — nên khóa trước để ghi nhận mốc "
+              f"(từ đây mọi thay đổi là version mới).", file=sys.stderr)
     if args.human:
-        head = "" if human.is_file() else f"# Phản hồi người dùng thật (Tầng 3) — {proj}/{feat}/{ver}\n\n"
+        head ="" if human.is_file() else f"# Phản hồi người dùng thật (Tầng 3) — {proj}/{feat}/{ver}\n\n"
         with human.open("a", encoding="utf-8") as fh:
             fh.write(head + "".join(f"- [{today_str()}] {h}\n" for h in args.human))
         print(f"[OK] Đã ghi {len(args.human)} phản hồi vào {human}")
@@ -1361,6 +1552,11 @@ def cmd_brief(args: argparse.Namespace) -> None:
             if f["sev"] == "IDEA":
                 ideas.append(f"| {f['id'] or '—'} | {txt} | ? | ? | ⬜ |")
             else:
+                acc = accepted_map.get(f["id"])
+                if acc:  # người đã cho qua có chủ đích khi khóa → mặc định Defer, ghi lý do
+                    kind = "giả định chờ chuyên gia" if acc.get("kind") == "assumed" else "chấp nhận có chủ đích"
+                    rows.append(f"| {f['id']} | {f['sev']} | {tag} | {txt} | Defer | đã {kind} khi khóa: {acc.get('reason', '')} |".replace("\n", " "))
+                    continue
                 dec = "Adopt" if f["sev"] in ("BLOCKER", "MAJOR") else "⬜"
                 rows.append(f"| {f['id'] or '—'} | {f['sev']} | {tag} | {txt} | {dec} | |")
         keep += [f"- {l.lstrip('-').strip()}" for l in md_section(rep["text"], "Đã kiểm & sạch")]
@@ -1398,9 +1594,307 @@ def review_gate_warnings(proj: str, feat: str, ver: str, pd: Path) -> list[str]:
         msgs.append("chưa có báo cáo Tầng 1 (ui-ux-review)")
     if st["needs_business"] and not st["business"]:
         msgs.append("chưa có báo cáo Tầng 2 (business-review) dù dự án có BUSINESS-REVIEW.md")
+    if st["stale"]:
+        msgs.append(f"bản đã đổi sau lần review cuối — cần review lại tầng: {', '.join(st['stale'])}")
     if st["blocked"]:
-        msgs.append("còn BLOCKER chưa xử lý")
+        msgs.append("còn BLOCKER chưa xử lý/chấp nhận")
+    elif st["open"]:
+        msgs.append(f"còn MAJOR chưa sửa/chấp nhận ({', '.join(i['id'] or '?' for i in st['open'][:5])})")
+    if not st["legacy"] and not st["sealed"]:
+        msgs.append("chưa qua cổng người (`proto seal`)")
     return msgs
+
+
+def latest_finding_ids(rdir: Path) -> dict[str, str]:
+    """ID → mức của mọi finding (trừ IDEA) trong báo cáo mới nhất của mỗi tầng."""
+    out: dict[str, str] = {}
+    for t in ("core", "business"):
+        lr = latest_report(rdir, t)
+        if lr:
+            for f in parse_report(lr[1])["findings"]:
+                if f["id"] and f["sev"] != "IDEA":
+                    out[f["id"]] = f["sev"]
+    return out
+
+
+def fix_prompt(proj: str, feat: str, ver: str, rev: int, packet: Path) -> str:
+    return (
+        f"Bạn là FIXER (phiên mới, không phải reviewer của vòng này). Làm theo skill `mockup-fix`: "
+        f"{STABLE_ROOT_DISPLAY}/skill/mockup-fix/SKILL.md (file đó tự dẫn tới phần còn lại).\n"
+        f"Mục tiêu: {proj}/{feat}/{ver} — sửa tại chỗ lên rev{rev}. Đọc fix packet: {packet}\n"
+        f"Chỉ sửa đúng các finding trong packet, chỉ trong thư mục version. Sửa xong chạy `proto fixed` (lệnh có trong packet) rồi DỪNG và báo; "
+        f"KHÔNG chạy review, KHÔNG `proto seal`, KHÔNG tạo version mới."
+    )
+
+
+def build_fix_packet(proj: str, feat: str, ver: str, cur: int, nxt: int, ids: list[str], scope: str,
+                     rdir: Path, ver_dir: Path, note: str) -> str:
+    """Gói việc cho FIXER: agent-agnostic, tự đủ. Chứa nguyên văn finding cần sửa (từ báo cáo mới nhất của mỗi tầng)."""
+    rows, keep = [], []
+    for t, tag in (("core", "T1"), ("business", "T2")):
+        lr = latest_report(rdir, t)
+        if not lr:
+            continue
+        rep = parse_report(lr[1])
+        for f in rep["findings"]:
+            if f["id"] in ids:
+                rows.append(f"- [{f['sev']}] {f['id']} ({tag} · {lr[1].name}) {f['text']}")
+        keep += [f"- {l.lstrip('-').strip()}" for l in md_section(rep["text"], "Đã kiểm & sạch")]
+    missing = [i for i in ids if not any(f" {i} " in r for r in rows)]
+    cmd_fixed_ex = f"proto fixed {proj} {feat} {ver} --done {','.join(ids)} [--skip ID --why \"lý do\"] --agent <tên-agent>"
+    return f"""# Fix Packet — {proj} / {feat} / {ver} · rev{cur} → rev{nxt}
+
+- **Sinh lúc**: {now_iso()} · **Phạm vi review lại**: {scope} · **Ghi chú**: {note or '—'}
+- **Thư mục được sửa (và CHỈ thư mục này)**: `{ver_dir}`
+- **Nhật ký hiệu chỉnh**: `{ver_dir / 'REVISIONS.md'}` (đã có mục rev{nxt}) · **Snapshot trước khi sửa**: git tag `{proj}/{feat}/{ver}@rev{cur}`
+- Quy trình đầy đủ (chỉ đọc khi cần): `{STABLE_ROOT_DISPLAY}/skill/REVIEW.md` §9 · vai Fixer: `{STABLE_ROOT_DISPLAY}/skill/mockup-fix/SKILL.md`
+
+## Việc cần làm — sửa ĐÚNG các finding sau (không thêm việc ngoài danh sách)
+{chr(10).join(rows) or '- (không trích được nội dung finding — đọc trực tiếp báo cáo mới nhất ở ' + str(rdir) + ')'}
+{('> Không thấy trong báo cáo mới nhất: ' + ', '.join(missing)) if missing and rows else ''}
+
+## Giữ nguyên (không được phá khi sửa)
+- Khung điều hướng (tên menu, icon, thứ tự, layout shell), bố cục và luồng chính, token đã chốt trong DESIGN-CONTEXT.
+{chr(10).join(keep) or ''}
+
+## Ranh giới — gặp là DỪNG và báo người (không tự quyết)
+- Cần đổi shell / bố cục / luồng / cấu trúc dữ liệu để sửa được finding → không làm; ghi vào `--skip ID --why "cần version mới"`.
+- Finding cần chuyên gia mà chưa có đáp án → không đoán; `--skip ID --why "chờ chuyên gia"` (người sẽ `--assume` khi khóa).
+- Không chạy review, không `proto seal`, không `proto new`, không `proto publish`, không sửa file ngoài thư mục trên, không sửa `BUSINESS-REVIEW.md`.
+
+## Khi xong
+```bash
+{cmd_fixed_ex}
+```
+Rồi báo người: finding nào đã sửa, finding nào bỏ (vì sao), file đã đổi. Dừng — người quyết định bước review lại.
+"""
+
+
+def cmd_fixed(args: argparse.Namespace) -> None:
+    """Fixer khai kết quả sau khi sửa (agent nào cũng gọi được) → ghi REVISIONS.md; không chạy review."""
+    proj, feat, ver = args.project.strip(), args.feature.strip(), args.version.strip()
+    meta = feature_meta(proj, feat)
+    entry = version_entry(meta, ver)
+    if entry is None or not entry.get("revisions"):
+        fail(f"{ver} chưa có hiệu chỉnh nào đang mở — chạy `proto revise` trước.")
+    if entry.get("sealed"):
+        fail(f"{ver} đã khóa — không khai kết quả sửa.")
+    rec = entry["revisions"][-1]
+    if rec.get("rev") != version_rev(entry):
+        fail("Bản ghi hiệu chỉnh cuối không khớp rev hiện tại.")
+    planned = set(rec.get("fixes", []))
+    done, skip = parse_ids(args.done), parse_ids(args.skip)
+    stray = [i for i in done + skip if i not in planned]
+    if stray:
+        fail(f"ID không nằm trong danh sách sửa của rev{rec['rev']}: {', '.join(stray)} (đã khai: {', '.join(sorted(planned))}). "
+             f"Sửa ngoài danh sách = ngoài phạm vi hiệu chỉnh.")
+    if skip and not (args.why or "").strip():
+        fail("Bỏ finding phải nói lý do: --why \"…\" (vd: cần version mới / chờ chuyên gia).")
+    left = sorted(planned - set(done) - set(skip))
+    rec["done"] = done
+    rec["skipped"] = {i: args.why.strip() for i in skip}
+    if args.agent:
+        rec["fixer"] = args.agent.strip()
+    save_feature_meta(proj, feat, meta)
+    lines = [f"### rev{rec['rev']} — kết quả sửa ({today_str()}{', agent ' + rec['fixer'] if rec.get('fixer') else ''})",
+             f"- Đã sửa: {', '.join(done) or '—'}"]
+    if skip:
+        lines.append(f"- Không sửa: {', '.join(skip)} — {args.why.strip()}")
+    if left:
+        lines.append(f"- Chưa khai: {', '.join(left)}")
+    append_revisions(PROTOTYPES_DIR / proj / feat / ver, proj, feat, ver, "\n".join(lines) + "\n")
+    build_manifest()
+    print(f"[OK] rev{rec['rev']}: đã sửa {len(done)} · bỏ {len(skip)} · chưa khai {len(left)}" + (f" ({', '.join(left)})" if left else ""))
+    print("→ DỪNG. Báo người kết quả; review lại chỉ khi người ra lệnh.")
+
+
+def cmd_next(args: argparse.Namespace) -> None:
+    """Chỉ đọc: cho biết version đang ở đâu và các bước kế tiếp (người chọn; agent không tự nối)."""
+    proj, feat, ver = args.project.strip(), args.feature.strip(), args.version.strip()
+    meta = feature_meta(proj, feat)
+    entry = version_entry(meta, ver)
+    if entry is None:
+        fail(f"{ver} chưa có trong meta.json của {feat}.")
+    pd = project_dir_for(proj, args.project_path, required=False)
+    st = review_state(proj, pd, feat, ver)
+    last = (entry.get("revisions") or [{}])[-1] if st["rev"] > 1 else {}
+    pp = f" --project-path {args.project_path}" if args.project_path else ""
+    base = f"{proj} {feat} {ver}"
+    print(f"{base} · rev{st['rev']} · {'🔒 ĐÃ KHÓA' if st['sealed'] else 'nháp (chưa khóa)'}")
+    print(f"  T1 {fmt_tier(st['core'])} · T2 {fmt_tier(st['business']) if (st['needs_business'] or st['business']) else 'n/a'}")
+    steps: list[tuple[str, str, str]] = []  # (vai, mô tả, lệnh)
+    if st["sealed"]:
+        steps.append(("Người", "Gửi link cho người trong dự án / chuyên gia; sau phản hồi:",
+                      f"proto brief {base} --human \"…\"  →  rồi `proto new` version mới"))
+    else:
+        for t, label in (("core", "Tầng 1"), ("business", "Tầng 2")):
+            if not st[t] and (t == "core" or st["needs_business"]):
+                steps.append(("Reviewer", f"{label} chưa có báo cáo — mở phiên MỚI:", f"proto review-prep {base} --tier {t}{pp} [--agent <tên>]"))
+        for t in st["stale"]:
+            steps.append(("Reviewer", f"{'Tầng 1' if t == 'core' else 'Tầng 2'} lỗi thời (đã sửa sau lần review cuối) — review lại ở phiên MỚI:",
+                          f"proto review-prep {base} --tier {t}{pp} [--agent <tên>]"))
+        if st["rev"] > 1 and not (last.get("done") or last.get("skipped")):
+            steps.append(("Fixer", f"rev{st['rev']} đang mở nhưng chưa khai kết quả — fixer chạy sau khi sửa xong:",
+                          f"proto fixed {base} --done ID,… [--skip ID --why \"…\"] --agent <tên>"))
+        if st["open"]:
+            ids = ",".join(i["id"] for i in st["open"] if i["id"])
+            nxt = st["rev"] + 1
+            gate = "" if nxt <= AUTO_REV_MAX else f" --confirm-extra \"<lý do — chỉ khi người đã xác nhận>\"" if nxt <= HARD_REV_MAX else ""
+            if nxt > HARD_REV_MAX:
+                steps.append(("Người", f"Đã tới trần rev{HARD_REV_MAX} — còn {len(st['open'])} BLOCKER/MAJOR: tạo version mới kèm brief, hoặc cho qua:",
+                              f"proto seal {base} --by <tên> --accept|--assume {ids} --reason \"…\"{pp}"))
+            else:
+                steps.append(("Fixer", f"Còn {len(st['open'])} BLOCKER/MAJOR — sửa tại chỗ (rev{nxt}):", f"proto revise {base} --fixes {ids}{gate}"))
+                steps.append(("Người", "…hoặc cho qua có chủ đích (chấp nhận / giả định chờ chuyên gia):",
+                              f"proto seal {base} --by <tên> --accept|--assume {ids} --reason \"…\"{pp}"))
+        elif st["ready_for_human"]:
+            steps.append(("Người", "Qua cổng máy — khóa rồi gửi link:", f"proto seal {base} --by <tên>{pp}"))
+    print("Bước kế tiếp (người chọn MỘT; mỗi bước một phiên agent mới, agent không tự nối bước sau):")
+    for i, (role, desc, cmd) in enumerate(steps, 1):
+        print(f"  {i}. [{role}] {desc}\n       {cmd}")
+    if not steps:
+        print("  (không có bước tự động nào — xem review-status)")
+    fixer = last.get("fixer")
+    if fixer and not st["sealed"]:
+        print(f"  Gợi ý độc lập: rev{st['rev']} do `{fixer}` sửa → nên để agent/model KHÁC review (REVIEW.md §9.7).")
+
+
+def cmd_revise(args: argparse.Namespace) -> None:
+    """Mở bản hiệu chỉnh kế tiếp: chụp snapshot revN hiện tại rồi ghi nhận sẽ sửa theo finding nào.
+    Lệnh KHÔNG sửa mockup và KHÔNG tự chạy review — người ra lệnh từng bước."""
+    proj, feat, ver = args.project.strip(), args.feature.strip(), args.version.strip()
+    ver_dir = PROTOTYPES_DIR / proj / feat / ver
+    if not (ver_dir / "index.html").is_file():
+        fail(f"Không thấy phiên bản {proj}/{feat}/{ver} trong kho mockup.")
+    meta = feature_meta(proj, feat)
+    entry = version_entry(meta, ver)
+    if entry is None:
+        fail(f"{ver} chưa có trong meta.json của {feat}.")
+    if entry.get("sealed"):
+        fail(f"{ver} đã KHÓA (đã tới tay người) — không sửa tại chỗ. Tạo version mới: `proto brief {proj} {feat} {ver}` rồi `proto new`.")
+    rdir = reviews_dir_for(proj, feat, ver)
+    known = latest_finding_ids(rdir)
+    if not known:
+        fail(f"Chưa có báo cáo review nào cho {ver} — hiệu chỉnh chỉ để sửa theo finding của review (REVIEW.md §9).")
+
+    cur = version_rev(entry)
+    nxt = cur + 1
+    if nxt > HARD_REV_MAX:
+        fail(f"Đã tới rev{cur} — trần là rev{HARD_REV_MAX}. Còn vấn đề cấu trúc → tạo version mới kèm brief.")
+    if nxt > AUTO_REV_MAX and not args.confirm_extra:
+        fail(f"rev{nxt} vượt mức tự động (rev{AUTO_REV_MAX}). Cần NGƯỜI xác nhận trong chat rồi chạy lại kèm "
+             f"--confirm-extra \"<lý do>\" (agent không tự thêm cờ này).")
+
+    raw = parse_ids(args.fixes)
+    ids = sorted(known) if raw == ["ALL"] else raw
+    if not ids:
+        fail("Cần --fixes ID1,ID2 (hoặc --fixes all) — mỗi thay đổi phải gắn một finding; thay đổi không có ID thuộc version mới.")
+    bad = [i for i in ids if not FIX_ID_RE.match(i)]
+    if bad:
+        fail(f"ID không hợp lệ: {', '.join(bad)} (dạng C-03 / B-07).")
+    unknown = [i for i in ids if i not in known]
+    if unknown:
+        print(f"[CẢNH BÁO] ID không thấy trong báo cáo mới nhất: {', '.join(unknown)}", file=sys.stderr)
+
+    tag = snapshot_rev(proj, feat, ver, cur)
+    entry.setdefault("sealed", False)
+    entry["rev"] = nxt
+    rec = {"rev": nxt, "at": now_iso(), "scope": args.scope, "fixes": ids}
+    if args.note:
+        rec["note"] = args.note
+    if args.confirm_extra:
+        rec["extra"] = args.confirm_extra
+    if args.agent:
+        rec["fixer"] = args.agent.strip()
+    entry.setdefault("revisions", []).append(rec)
+    save_feature_meta(proj, feat, meta)
+    block = (f"## rev{nxt} — {today_str()}\n- Sửa theo finding: {', '.join(ids)}\n- Phạm vi: {args.scope} "
+             f"(review lại: {', '.join('Tầng ' + ('1' if t == 'core' else '2') for t in SCOPE_TIERS[args.scope])})\n"
+             f"- Snapshot trước khi sửa: git tag `{tag}`\n"
+             + (f"- Ghi chú: {args.note}\n" if args.note else "")
+             + (f"- Vượt rev{AUTO_REV_MAX}: người đã xác nhận — {args.confirm_extra}\n" if args.confirm_extra else ""))
+    p = append_revisions(ver_dir, proj, feat, ver, block)
+    fix_packet = rdir / "fix-packet.md"
+    fix_packet.write_text(build_fix_packet(proj, feat, ver, cur, nxt, ids, args.scope, rdir, ver_dir, args.note or ""), encoding="utf-8")
+    build_manifest()
+    print(f"[OK] {proj}/{feat}/{ver}: rev{cur} → rev{nxt} (snapshot {tag}); sẽ sửa theo: {', '.join(ids)}")
+    print(f"     Nhật ký: {p}")
+    print(f"     Fix packet (đầu vào cho agent sửa — agent nào cũng đọc được): {fix_packet}")
+    print("\n--- Prompt dán vào phiên MỚI của agent sửa (Antigravity / Cursor / Claude…) ---")
+    print(fix_prompt(proj, feat, ver, nxt, fix_packet))
+    print("--- hết prompt ---")
+    print("→ Sau khi agent sửa xong nó chạy `proto fixed` rồi DỪNG. Review lại chỉ khi người ra lệnh "
+          f"(proto next {proj} {feat} {ver} cho biết bước kế).")
+
+
+def cmd_seal(args: argparse.Namespace) -> None:
+    """Cổng của NGƯỜI: version chuyển từ nháp sang bất biến (từ đây chỉ tạo version mới)."""
+    proj, feat, ver = args.project.strip(), args.feature.strip(), args.version.strip()
+    if not (PROTOTYPES_DIR / proj / feat / ver / "index.html").is_file():
+        fail(f"Không thấy phiên bản {proj}/{feat}/{ver} trong kho mockup.")
+    meta = feature_meta(proj, feat)
+    entry = version_entry(meta, ver)
+    if entry is None:
+        fail(f"{ver} chưa có trong meta.json của {feat}.")
+    if entry.get("sealed"):
+        fail(f"{ver} đã khóa lúc {entry.get('sealed_at', '?')}.")
+    if not args.by.strip():
+        fail("Cần --by <tên người cho qua> — máy không tự khóa.")
+    pd = project_dir_for(proj, args.project_path, required=False)
+    st = review_state(proj, pd, feat, ver)
+
+    hard = []
+    if not st["core"]:
+        hard.append("chưa có báo cáo Tầng 1")
+    if st["needs_business"] and not st["business"]:
+        hard.append("chưa có báo cáo Tầng 2 dù dự án có BUSINESS-REVIEW.md")
+    if st["stale"]:
+        hard.append(f"bản đã đổi sau lần review cuối — review lại tầng: {', '.join(st['stale'])}")
+    if hard:
+        fail(f"Chưa qua cổng máy: {'; '.join(hard)}. (Thiếu/lỗi thời review không thể cho qua bằng --accept.)")
+
+    open_ids = {i["id"]: i for i in st["open"] if i["id"]}
+    noid = [i for i in st["open"] if not i["id"]]
+    accept, assume = parse_ids(args.accept), parse_ids(args.assume)
+    both = set(accept) & set(assume)
+    if both:
+        fail(f"ID vừa --accept vừa --assume: {', '.join(sorted(both))}")
+    unknown = [i for i in accept + assume if i not in open_ids]
+    if unknown:
+        fail(f"Không phải BLOCKER/MAJOR đang mở: {', '.join(unknown)}. Đang mở: {', '.join(open_ids) or '(không)'}")
+    if accept or assume:
+        if not (args.reason or "").strip():
+            fail("Cho qua BLOCKER/MAJOR phải nói lý do: --reason \"…\" (ghi vào meta + REVISIONS.md, có thể công khai — không ghi dữ liệu nhạy cảm).")
+    left = [i for i in open_ids if i not in accept and i not in assume]
+    if left or noid:
+        extra = f"; {len(noid)} finding thiếu ID (không cho qua được — yêu cầu reviewer gắn ID)" if noid else ""
+        fail("Còn BLOCKER/MAJOR chưa xử lý: " + ", ".join(f"{i}({open_ids[i]['sev']})" for i in left) + extra +
+             "\n  → Sửa (proto revise) hoặc cho qua có chủ đích: --accept ID,… (chấp nhận) / --assume ID,… (giả định chờ chuyên gia) kèm --reason.")
+    blockers = [i for i in accept + assume if open_ids[i]["sev"] == "BLOCKER"]
+    if blockers:
+        print(f"[CẢNH BÁO] Bạn đang cho qua BLOCKER: {', '.join(blockers)} — được ghi tên + lý do vào nhật ký.", file=sys.stderr)
+
+    rev = version_rev(entry)
+    tag = snapshot_rev(proj, feat, ver, rev)
+    now = now_iso()
+    entry["rev"], entry["sealed"], entry["sealed_at"], entry["sealed_by"] = rev, True, now, args.by.strip()
+    for kind, group in (("accepted", accept), ("assumed", assume)):
+        for i in group:
+            entry.setdefault("accepted", []).append({"id": i, "sev": open_ids[i]["sev"], "kind": kind,
+                                                     "reason": args.reason.strip(), "at": now})
+    save_feature_meta(proj, feat, meta)
+    lines = [f"## 🔒 Khóa rev{rev} — {today_str()} — bởi {args.by.strip()}", f"- Snapshot: git tag `{tag}`"]
+    if accept:
+        lines.append(f"- Chấp nhận có chủ đích: {', '.join(accept)}")
+    if assume:
+        lines.append(f"- Giả định chờ chuyên gia xác nhận: {', '.join(assume)}")
+    if accept or assume:
+        lines.append(f"- Lý do: {args.reason.strip()}")
+    append_revisions(PROTOTYPES_DIR / proj / feat / ver, proj, feat, ver, "\n".join(lines) + "\n")
+    build_manifest()
+    print(f"[OK] Đã KHÓA {proj}/{feat}/{ver} ở rev{rev} (bởi {args.by.strip()}). Gửi link cho người trong dự án.")
+    print(f"→ Từ đây không sửa tại chỗ: phản hồi không hợp → `proto brief {proj} {feat} {ver} --human …` rồi `proto new` version mới.")
+    print("→ Chạy `proto publish` khi cần cập nhật nhãn trạng thái trên Hub (lệnh đó commit + push).")
 
 
 def main() -> None:
@@ -1504,6 +1998,7 @@ def main() -> None:
     p_rp.add_argument("--tier", choices=["core", "business", "both"], default="both",
                       help="core = ui-ux-review (chạy mọi version) · business = business-review · both (mặc định)")
     p_rp.add_argument("--project-path", help="Thư mục dự án nếu không nằm cạnh kho mockup")
+    p_rp.add_argument("--agent", help="Tên agent sẽ review (cảnh báo nếu trùng agent vừa sửa rev này)")
     p_rp.set_defaults(func=cmd_review_prep)
 
     p_rs = sub.add_parser("review-status", help="Trạng thái review 3 tầng của dự án (bản mới nhất mỗi màn hình)")
@@ -1521,6 +2016,52 @@ def main() -> None:
     p_br.add_argument("--human", action="append", help="Phản hồi của người dùng thật (Tầng 3); lặp cờ cho nhiều ý, ghi vào human.md")
     p_br.add_argument("--force", action="store_true", help="Sinh lại brief (mất quyết định đã điền)")
     p_br.set_defaults(func=cmd_brief)
+
+    p_rv = sub.add_parser(
+        "revise",
+        help="Mở bản hiệu chỉnh kế tiếp (revN→revN+1) của version CHƯA khóa để sửa tại chỗ theo finding review; chụp snapshot, không tự review",
+    )
+    p_rv.add_argument("project")
+    p_rv.add_argument("feature")
+    p_rv.add_argument("version")
+    p_rv.add_argument("--fixes", required=True, help="ID finding sẽ sửa, cách nhau dấu phẩy (vd B-01,C-03) hoặc `all`")
+    p_rv.add_argument("--scope", choices=["ui", "logic", "both"], default="both",
+                      help="ui → cần Tầng 1 review lại · logic → Tầng 2 · both (mặc định)")
+    p_rv.add_argument("--note", help="Ghi chú ngắn cho nhật ký (không ghi dữ liệu nhạy cảm)")
+    p_rv.add_argument("--confirm-extra", help=f"Chỉ khi NGƯỜI đã xác nhận: cho lên rev{HARD_REV_MAX} (vượt rev{AUTO_REV_MAX}); giá trị = lý do")
+    p_rv.add_argument("--agent", help="Tên agent sẽ sửa (antigravity/cursor/claude…) — để cảnh báo nếu chính agent này lại review")
+    p_rv.set_defaults(func=cmd_revise)
+
+    p_fx = sub.add_parser("fixed", help="Fixer khai kết quả sau khi sửa (đã sửa/bỏ finding nào) → ghi REVISIONS.md; không chạy review")
+    p_fx.add_argument("project")
+    p_fx.add_argument("feature")
+    p_fx.add_argument("version")
+    p_fx.add_argument("--done", default="", help="ID đã sửa, cách nhau dấu phẩy")
+    p_fx.add_argument("--skip", default="", help="ID không sửa được (đụng cấu trúc / chờ chuyên gia…)")
+    p_fx.add_argument("--why", help="Lý do bỏ (bắt buộc khi có --skip)")
+    p_fx.add_argument("--agent", help="Tên agent đã sửa")
+    p_fx.set_defaults(func=cmd_fixed)
+
+    p_nx = sub.add_parser("next", help="Chỉ đọc: version đang ở đâu + các bước kế tiếp (vai, lệnh) để người chọn giao cho agent nào")
+    p_nx.add_argument("project")
+    p_nx.add_argument("feature")
+    p_nx.add_argument("version")
+    p_nx.add_argument("--project-path", help="Thư mục dự án (worktree) nếu không nằm cạnh kho mockup")
+    p_nx.set_defaults(func=cmd_next)
+
+    p_sl = sub.add_parser(
+        "seal",
+        help="Cổng của người: khóa version (bất biến) trước khi gửi link cho người trong dự án; BLOCKER/MAJOR chỉ qua được khi người --accept/--assume + lý do",
+    )
+    p_sl.add_argument("project")
+    p_sl.add_argument("feature")
+    p_sl.add_argument("version")
+    p_sl.add_argument("--by", required=True, help="Người cho qua (vai trò/bí danh; sẽ được publish)")
+    p_sl.add_argument("--accept", help="ID BLOCKER/MAJOR chấp nhận có chủ đích, cách nhau dấu phẩy")
+    p_sl.add_argument("--assume", help="ID BLOCKER/MAJOR cần chuyên gia nhưng chọn mặc định theo khuyến nghị để đi tiếp (Sổ giả định)")
+    p_sl.add_argument("--reason", help="Lý do cho qua (bắt buộc khi có --accept/--assume)")
+    p_sl.add_argument("--project-path", help="Thư mục dự án (worktree) nếu không nằm cạnh kho mockup")
+    p_sl.set_defaults(func=cmd_seal)
 
     args = parser.parse_args()
     args.func(args)

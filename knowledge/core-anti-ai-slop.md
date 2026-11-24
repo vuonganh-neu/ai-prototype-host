@@ -50,8 +50,9 @@ Mọi prototype sinh ra trong hệ thống này **BẮT BUỘC** tuân thủ cá
 
 1. **Lần đầu thiết kế một tính năng**:
    - Khuyến khích tạo 2 phương án có triết lý bố cục khác nhau rõ rệt (ví dụ `v1-minimal` và `v2-dense`, hoặc `v1-floating-toolbar` và `v2-docked-sidebar`) để người dùng dễ so sánh và chọn hướng.
-2. **Khi người dùng phản hồi chỉnh sửa**:
+2. **Khi người dùng phản hồi chỉnh sửa** (version đã tới tay người = đã khóa):
    - **Tuyệt đối không ghi đè** lên phiên bản cũ (`v1`).
+   - *Duy nhất một ngoại lệ:* version còn là nháp, chưa gửi người, đang sửa theo finding của review máy → hiệu chỉnh tại chỗ có kiểm soát (`proto revise`, tối đa rev3 tự động / rev4 khi người xác nhận) — xem `skill/REVIEW.md` §9.
    - Luôn tạo phiên bản mới (`v2`, `v3`...) để người dùng dùng thanh **Version Switcher** trên trang Preview đối chiếu trực tiếp trước/sau.
 
 ---

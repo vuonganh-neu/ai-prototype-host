@@ -98,6 +98,24 @@ mockup/
    ```bash
    ./bin/proto publish -m "feat(editor-platform): add 01-canvas-toolbar v1 & v2"
    ```
+3b. **Hiệu chỉnh tại chỗ & khóa version** (chỉ cho version CHƯA tới tay người; quy tắc đầy đủ: `skill/REVIEW.md` §9):
+   ```bash
+   # Sau review rN, người quyết định "chạy fix": chụp snapshot revN, nâng lên revN+1, ghi nhật ký (KHÔNG tự sửa, KHÔNG tự review)
+   ./bin/proto revise optic-shop 02-clinical-exam-rx v2-clinical-rx-sheet --fixes B-01,B-02 --scope both
+   # (rev4 chỉ khi người xác nhận:  --confirm-extra "lý do")
+
+   # Review lại → phiên reviewer MỚI, chỉ khi người ra lệnh
+   ./bin/proto review-prep optic-shop 02-clinical-exam-rx v2-clinical-rx-sheet --project-path <worktree>
+
+   # Cổng của người: khóa version trước khi gửi link. BLOCKER/MAJOR còn mở chỉ qua khi người nêu ID + lý do
+   ./bin/proto seal optic-shop 02-clinical-exam-rx v2-clinical-rx-sheet --by <tên> --project-path <worktree> \
+     [--accept B-03 | --assume B-04 --reason "…"]
+   # Xem đang ở đâu + bước kế (vai + lệnh) để giao cho agent nào tùy ý; fixer khai kết quả sau khi sửa
+   ./bin/proto next optic-shop 02-clinical-exam-rx v2-clinical-rx-sheet --project-path <worktree>
+   ./bin/proto fixed optic-shop 02-clinical-exam-rx v2-clinical-rx-sheet --done B-01,B-02 --agent antigravity
+   ```
+   Agent đổi vai cho nhau được (vd Antigravity sửa → Claude review): `--agent <tên>` ở `revise`/`fixed`/`review-prep` để máy cảnh báo khi trùng. Cài skill mỏng cho Claude + Antigravity: `./bin/proto install-skill --claude`; Cursor/Codex đọc khối `mockup` trong `AGENTS.md` (`proto init-project`).
+   Hub hiện nhãn: `Chưa review` · `Nháp revN · T1 rN … · T2 rN …` · `🔒 Đã khóa`.
 4. **Chốt phiên bản ưng ý và chép sạch sẽ về thư mục dự án**:
    ```bash
    ./bin/proto promote editor-platform 01-canvas-toolbar v2-docked \

@@ -137,6 +137,20 @@
       color: #FCD34D;
     }
 
+    .rev-chip {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #A1A1AA;
+      white-space: nowrap;
+    }
+    .rev-chip.is-sealed { background: rgba(96, 165, 250, 0.18); color: #93C5FD; }
+    .rev-chip.is-ok { background: rgba(74, 222, 128, 0.16); color: #86EFAC; }
+    .rev-chip.is-warn { background: rgba(251, 191, 36, 0.16); color: #FCD34D; }
+    .rev-chip.is-bad { background: rgba(248, 113, 113, 0.18); color: #FCA5A5; }
+
     .scope-btn {
       white-space: nowrap;
     }
@@ -514,6 +528,29 @@
       return `<span class="phase-chip ${v.stage === 'mvp' ? 'is-mvp' : ''}">${v.phase}${v.stage === 'mvp' ? '·MVP' : ''}</span>`;
     }
 
+    const VERDICT_SHORT = { APPROVE_WITH_NOTES: 'ổn, có ghi chú', CHANGES_REQUESTED: 'cần sửa', BLOCKER: 'BLOCKER' };
+
+    // Trạng thái review/khóa của version (từ prototypes.json): chip ngắn + mô tả đầy đủ
+    function revState(v) {
+      if (!v) return { cls: '', short: '', long: '' };
+      const rev = v.rev || 1;
+      const r = v.review || {};
+      const tiers = [['T1', r.core], ['T2', r.business]].filter(([, x]) => x);
+      if (v.sealed) return { cls: 'is-sealed', short: `🔒 rev${rev}`, long: `Đã khóa · rev${rev} (đã tới tay người — mọi thay đổi là version mới)` };
+      if (!tiers.length) return { cls: '', short: `rev${rev}`, long: `Chưa review · rev${rev}` };
+      const parts = tiers.map(([n, x]) => `${n} r${x.round} ${VERDICT_SHORT[x.verdict] || x.verdict}`).join(' · ');
+      const stale = (r.stale || []).length > 0;
+      const open = r.open || 0;
+      const cls = stale || open ? (tiers.some(([, x]) => x.verdict === 'BLOCKER') ? 'is-bad' : 'is-warn') : 'is-ok';
+      const extra = stale ? ' · cần review lại' : open ? ` · còn ${open} BLOCKER/MAJOR` : '';
+      return { cls, short: `rev${rev}${stale ? ' ↻' : ''}`, long: `Nháp rev${rev} · ${parts}${extra}` };
+    }
+
+    function revChip(v) {
+      const s = revState(v);
+      return s.short ? `<span class="rev-chip ${s.cls}" title="${s.long}">${s.short}</span>` : '';
+    }
+
     function getProtoUrl(ver) {
       return `./prototypes/${encodeURIComponent(state.project)}/${encodeURIComponent(state.feature)}/${encodeURIComponent(ver)}/index.html`;
     }
@@ -626,6 +663,7 @@
         btn.innerHTML = `
           <span>${idx + 1}. ${v.version}</span>
           ${phaseChip(v)}
+          ${revChip(v)}
           ${isApp ? '<span class="dot-approved" title="Bản đã chốt"></span>' : ''}
         `;
         btn.onclick = () => {
@@ -644,6 +682,7 @@
           <strong>[${state.version}]</strong>
           ${currVerObj.phase ? `<span style="color:#A1A1AA;">${currVerObj.stage === 'mvp' ? 'MVP · ' : ''}${currVerObj.phase} ·</span>` : ''}
           ${isCurrApproved ? '<span style="color:#4ADE80;font-weight:600;"> (BẢN ĐÃ CHỐT)</span> ' : ''}
+          ${isCurrApproved ? '' : `<span class="rev-chip ${revState(currVerObj).cls}">${revState(currVerObj).long}</span> `}
           ${currVerObj.notes || 'Không có ghi chú thêm.'}
         </span>
       `;
